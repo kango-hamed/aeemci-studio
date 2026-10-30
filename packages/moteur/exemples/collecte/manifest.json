@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.1",
+  "generateur": { "nom": "exemple-synthetique", "version": "0.0.1" },
+  "document": { "nom_fichier": "collecte.psd", "largeur_px": 1080, "hauteur_px": 1080 },
+  "gabarit": {
+    "version": "1.0",
+    "champs": [
+      { "nom": "date", "type": "date", "libelle": "Date de clôture", "obligatoire": true },
+      { "nom": "collecte", "type": "nombre", "libelle": "Montant collecté", "obligatoire": true },
+      { "nom": "progression", "type": "jauge", "libelle": "Montant collecté (jauge)", "min": 0, "max": 3047900 },
+      { "nom": "message", "type": "texte", "libelle": "Message", "obligatoire": false, "max_caracteres": 400 }
+    ],
+    "plans": [
+      {
+        "plan": "Post carré",
+        "largeur_px": 1080,
+        "hauteur_px": 1080,
+        "fond": "fond-collecte.png",
+        "zones": [
+          { "champ": "date", "forme": "point", "ancre": { "x": 180, "ligne_de_base": 262 }, "largeur_max": 170, "format": "EEE", "exemple": "Sam",
+            "texte": { "nom_postscript": "Montserrat-Medium", "taille_px": 48, "couleur": "#FFFFFF", "alignement": "centre" } },
+          { "champ": "date", "forme": "point", "ancre": { "x": 360, "ligne_de_base": 262 }, "largeur_max": 110, "format": "d", "exemple": "15",
+            "texte": { "nom_postscript": "Montserrat-Bold", "taille_px": 48, "couleur": "#FFFFFF", "alignement": "centre", "faux_gras": true } },
+          { "champ": "date", "forme": "point", "ancre": { "x": 615, "ligne_de_base": 262 }, "largeur_max": 310, "format": "MMMM yyyy", "exemple": "Novembre 2026",
+            "texte": { "nom_postscript": "Montserrat-Bold", "taille_px": 44, "couleur": "#FFFFFF", "alignement": "centre" } },
+          { "champ": "collecte", "forme": "point", "ancre": { "x": 540, "ligne_de_base": 560 }, "largeur_max": 900, "modele": "Collecté : {valeur} f CFA",
+            "texte": { "nom_postscript": "Montserrat-Bold", "taille_px": 72, "couleur": "#1A6012", "alignement": "centre" }, "debordement": { "mode": "reduire", "taille_min_px": 40 } },
+          { "champ": "progression", "cadre": { "x": 90, "y": 610, "largeur": 900, "hauteur": 50 }, "jauge": { "sens": "horizontal", "min": 0, "max": 3047900, "couleur": "#F29400" } },
+          { "champ": "message", "forme": "box", "cadre": { "x": 120, "y": 730, "largeur": 840, "hauteur": 200 }, "debordement": { "mode": "reduire", "taille_min_px": 22 },
+            "texte": { "nom_postscript": "Outfit-Regular", "taille_px": 34, "interlignage_px": 46, "approche_em": 0.02, "couleur": "#272727", "alignement": "centre" } }
+        ]
+      }
+    ]
+  }
+}

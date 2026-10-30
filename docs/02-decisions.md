@@ -1,0 +1,34 @@
+# 02 · Décisions
+
+Format : date — décision — raison. « Proposé » = à confirmer.
+
+## 30/10/2026
+
+- **Le générateur est le premier composant d'une plateforme de gestion d'association.** Les documents générés sont stockés et rattachés à une délégation, un mandat et éventuellement une activité.
+- **Documents administratifs standards inclus** (PV, lettres, etc.), en plus des visuels.
+- **Signature et cachet : une image suffit**, mais elle est protégée : importée par le président, stockée en privé, jamais envoyée aux navigateurs des autres membres, apposée **par le serveur au moment de la validation**. Le PDF signé est figé ; toute modification crée une nouvelle version.
+- **Le président valide.** La fonction de valideur est liée au mandat (pas à une personne nommée). La validation est une option par gabarit, obligatoire pour ceux qui portent signature ou cachet. *Proposé :* un intérim (vice-président).
+- **Numérotation des courriers à créer** (rien n'existe). *Proposé :* `AEEMCI-ESATIC/{délégation}/{type}/{année}/{n°}`, attribuée à la finalisation (pas de trou dans la séquence).
+- **Création des gabarits depuis les outils Adobe.** L'équipe communication travaille sur Photoshop et Illustrator. On réutilise le plugin UXP et le contrat de manifest de MCP DesignHub (`../design-tools`) en ajoutant un **profil gabarit** (voir 04), plutôt que de créer un plugin séparé.
+- *Proposé :* **rendu côté serveur** (Chromium sans interface) pour un résultat identique partout, des PDF réels, des polices maîtrisées et un texte arabe correct.
+- *Proposé :* **s'aligner sur la stack de DesignHub** (TypeScript, Express, Prisma, Neon, R2, file de tâches PostgreSQL), le rendu étant une tâche du worker.
+
+- **Profil gabarit implémenté dans le plugin DesignHub 0.2** (manifest 1.1, section `gabarit`) : marquage des calques dans le panneau, fond PNG par plan avec calques marqués masqués, zones avec géométrie et style. Fait suite à la preuve de concept (doc 05). Reste à valider dans Photoshop.
+- **Le manifest décrit des faits, le générateur applique les règles de rendu** (correction de l'approche, émulation du faux gras, première ligne de base).
+- **Moteur de rendu en bibliothèque Node TypeScript** (Playwright/Chromium, SVG), indépendant de la base et du stockage, appelé plus tard par le worker. Une police absente bloque le rendu (pas de substitution).
+- **Règle pour l'équipe : rien au-dessus d'une zone variable** (option a, plutôt qu'une couche « dessus » exportée). Le plugin alerte dès le marquage quand un calque visible, ou un calque de réglage, recouvre une zone. Fiche : doc 07.
+- **Révision (10 h 53) : les calques posés au-dessus des zones sont reproduits** (la tache plume de `panel.psd` est un choix graphique). Le plugin les sort du fond en **couches** PNG transparentes ; le moteur empile zones et couches dans l'ordre de la pile Photoshop, avec leur mode de fusion. La règle « rien au-dessus » ne reste que pour les calques de réglage.
+- **Révision (11 h 04) : les couches sont choisies par le designer** (bouton « Garder en couche »), et non plus calculées automatiquement : le calcul prenait tous les éléments au-dessus. Ce qui n'est pas choisi est aplati dans le fond. Le plugin suggère sans imposer.
+- **Lot 1 = la plateforme actuelle (`aeemci-plateform`) comme socle, avec le moteur de rendu** (décision de Kango). Découpage des lots suivants proposé dans le doc 09 : organisation et accès, documents, administratif et validation, activités et archives, outillage des gabarits.
+- **Plan des lots validé** (doc 09) : 1 socle + moteur, 2 organisation et accès, 3 documents, 4 administratif et validation, 5 activités et archives, 6 outillage des gabarits.
+- **Révision du lot 1 (30/10, 14 h 56) : la V2 est une nouvelle application, pas une reprise de `aeemci-plateform`.** Une seule app Next.js (monolithe modulaire) dont les piliers sont des fonctionnalités : génération, documents, validation, activités, archives, gabarits, organisation. On réutilise le moteur, le profil de gabarit (manifest 1.1), l'atelier, le plugin, la charte et la maquette. La V1 reste en service telle quelle jusqu'à ce que la V2 fasse au moins ce qu'elle fait.
+- **Contrainte d'hébergement : gratuit ou budget étudiant** pour la présentation, avec une marche prévue si l'association investit ensuite. L'app et le moteur (Chromium) partent dans une même image Docker, pour rester portables d'un hébergeur à l'autre. Hébergeur à confirmer.
+- **Stack de la V2 (30/10, 15 h)** : Next.js 16 (App Router) en TypeScript, Postgres Neon avec Drizzle, Better Auth hébergé dans l'application (plus la version gérée en bêta de la V1), Tailwind avec les jetons de la charte. Monorepo npm : `apps/web`, `packages/moteur`, `outils/atelier`.
+- **Hébergement : Google Cloud Run** (offre gratuite, conteneur éteint au repos) + **Neon gratuit** ; R2 pour les fichiers (lot 1b). Vercel Hobby écarté (usage personnel non commercial seulement, Chromium mal adapté), Render gratuit gardé comme secours de démonstration. Kango ouvre le compte Google Cloud.
+- **Pas d'inscription libre** : les comptes sont créés par le bureau (lot 2) ; le premier administrateur par le script `admin:creer`.
+- **`cacheComponents` de Next.js désactivé** : rendu dynamique classique, plus simple à maintenir pour une app interne derrière une connexion.
+- **Lot 1b (30/10, 16 h)** : les gabarits entrent dans la plateforme par un **import du dossier publié par l'atelier** (écran administrateur), pas par un bouton dans l'atelier : l'atelier reste un outil local sans identifiants, et l'écran prépare le lot 6. Même nom = nouvelle révision ; chaque document garde la révision avec laquelle il a été fait et peut être refait (haute définition).
+- **Fichier enregistré = format réseaux** (PNG 1080 px) ; **haute définition à la demande**, plafonnée à 3600 px (impression A4/A3), gardée après le premier téléchargement.
+- **Mémoire** : Chromium a besoin de plus d'1 Go pour décoder un fond de 5400 px. Fonds réduits préparés à l'import pour l'aperçu et les réseaux ; Cloud Run passe à **2 Go** (pic mesuré 1,4 Go).
+- **Contrôles des gabarits déplacés dans le moteur** (partagés par l'atelier et l'application) ; **polices installées avec le moteur** (Montserrat, Outfit). Amiri reportée : un fichier par police dans le moteur, et Fontsource sépare arabe et latin.
+- **Droits de lecture au lot 1** : un document est visible par son auteur et les administrateurs ; le lot 2 ouvrira la lecture par délégation.

@@ -1,0 +1,460 @@
+{
+ "fichier": "/sessions/rcw-01jympnef5wrth2nkrsvyqo1/mnt/aeemci/ago/membre-retenu.psd",
+ "w": 1080,
+ "h": 1350,
+ "ms": 883,
+ "plans": [],
+ "textes": [
+  {
+   "calque": "AEEMCI Association des Élèves et Étudiants Musulmans de Côte d’",
+   "plan": null,
+   "chemin": "LOGO",
+   "masque": false,
+   "texte": "AEEMCI\nAssociation des Élèves et Étudiants Musulmans de Côte d’Ivoire\n",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    609,
+    114.10139
+   ],
+   "bornes": [
+    249,
+    41,
+    829,
+    144
+   ],
+   "police": [
+    "Montserrat-Regular"
+   ],
+   "taille": 18.3,
+   "interlignage": 27,
+   "couleur": "#1F1F1F",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": " A.G.O",
+   "plan": null,
+   "chemin": "AGO / Groupe 6",
+   "masque": false,
+   "texte": " A.G.O",
+   "forme": "point",
+   "bornes": [
+    305,
+    197,
+    775,
+    311
+   ],
+   "police": [
+    "Montserrat-Black"
+   ],
+   "taille": 155.1,
+   "interlignage": 0,
+   "approche": 0,
+   "alignement": "center",
+   "plages": 2,
+   "effets": [
+    "dropShadow",
+    "innerShadow",
+    "outerGlow",
+    "innerGlow",
+    "bevel",
+    "solidFill",
+    "gradientOverlay",
+    "satin",
+    "stroke"
+   ]
+  },
+  {
+   "calque": "Assemblée Générale Ordinaire",
+   "plan": null,
+   "chemin": "AGO / Groupe 6",
+   "masque": false,
+   "texte": "Assemblée Générale Ordinaire",
+   "forme": "point",
+   "bornes": [
+    320,
+    330,
+    765,
+    354
+   ],
+   "police": [
+    "Montserrat-Black"
+   ],
+   "taille": 27,
+   "interlignage": 124.1,
+   "approche": 0,
+   "alignement": "center",
+   "plages": 6
+  },
+  {
+   "calque": "2025",
+   "plan": null,
+   "chemin": "AGO",
+   "masque": false,
+   "texte": "2025",
+   "forme": "point",
+   "bornes": [
+    508,
+    371,
+    572,
+    391
+   ],
+   "police": [
+    "Montserrat-Medium"
+   ],
+   "taille": 27,
+   "interlignage": 67.5,
+   "approche": 0,
+   "couleur": "#FFFFFF",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "15 H",
+   "plan": null,
+   "chemin": "date & lieu / date / Groupe 11",
+   "masque": false,
+   "texte": "15 H",
+   "forme": "point",
+   "bornes": [
+    376,
+    1006,
+    468,
+    1040
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 45.8,
+   "interlignage": 54.5,
+   "approche": 0,
+   "couleur": "#FFFFFF",
+   "alignement": "left",
+   "plages": 0
+  },
+  {
+   "calque": "Amphithéatre ESATIC",
+   "plan": null,
+   "chemin": "date & lieu / Groupe 8",
+   "masque": false,
+   "texte": "Amphithéatre\nESATIC",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    277.80026,
+    59.96737
+   ],
+   "bornes": [
+    651,
+    996,
+    830,
+    1046
+   ],
+   "police": [
+    "Montserrat-Medium",
+    "Montserrat-Bold"
+   ],
+   "taille": 25,
+   "interlignage": 45,
+   "approche": 0,
+   "couleur": "#232323",
+   "alignement": "left",
+   "plages": 2
+  },
+  {
+   "calque": "Aujourd’hui",
+   "plan": null,
+   "chemin": "date & lieu",
+   "masque": false,
+   "texte": "Aujourd’hui",
+   "forme": "point",
+   "bornes": [
+    157,
+    779,
+    920,
+    903
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 125,
+   "interlignage": 55,
+   "approche": 0,
+   "couleur": "#1A6012",
+   "alignement": "left",
+   "plages": 0
+  },
+  {
+   "calque": "Ensemble, faisons le bilan et ouvrons la voie à la relève.",
+   "plan": null,
+   "chemin": "pied",
+   "masque": false,
+   "texte": "Ensemble, faisons le bilan et ouvrons la voie à la relève.",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    1011,
+    57.533
+   ],
+   "bornes": [
+    119,
+    1211,
+    986,
+    1238
+   ],
+   "police": [
+    "Outfit-Regular"
+   ],
+   "taille": 29.2,
+   "interlignage": 30,
+   "approche": 100,
+   "couleur": "#2D2D2D",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "Nom et prénom",
+   "plan": null,
+   "chemin": "pied",
+   "masque": false,
+   "texte": "Nom et prénom",
+   "forme": "point",
+   "bornes": [
+    290,
+    1081,
+    789,
+    1141
+   ],
+   "police": [
+    "Outfit-Regular"
+   ],
+   "taille": 62.5,
+   "interlignage": 75,
+   "approche": 100,
+   "couleur": "#2D2D2D",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "AEEMCI, pour une identité islamique !",
+   "plan": null,
+   "chemin": "pied",
+   "masque": false,
+   "texte": "AEEMCI, pour une identité islamique !",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    575.84235,
+    31.3117
+   ],
+   "bornes": [
+    32,
+    1298,
+    508,
+    1319
+   ],
+   "police": [
+    "Montserrat-Bold",
+    "Montserrat-Medium"
+   ],
+   "taille": 20.8,
+   "interlignage": 30,
+   "approche": 100,
+   "alignement": "center",
+   "plages": 2
+  },
+  {
+   "calque": "AEEMCI-ESATIC",
+   "plan": null,
+   "chemin": "pied",
+   "masque": false,
+   "texte": "AEEMCI-ESATIC",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    575.84235,
+    31.3117
+   ],
+   "bornes": [
+    733,
+    1299,
+    930,
+    1315
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 20.8,
+   "interlignage": 30,
+   "approche": 100,
+   "couleur": "#FFFFFF",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "Membre retenu",
+   "plan": null,
+   "chemin": "",
+   "masque": false,
+   "texte": "Membre retenu",
+   "forme": "point",
+   "bornes": [
+    193,
+    440,
+    888,
+    509
+   ],
+   "police": [
+    "Outfit-Black"
+   ],
+   "taille": 83.3,
+   "interlignage": 35,
+   "approche": 100,
+   "couleur": "#1A6012",
+   "alignement": "center",
+   "plages": 0
+  }
+ ],
+ "objets": [
+  {
+   "calque": "5999",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    -79,
+    -64,
+    1241,
+    1879
+   ]
+  },
+  {
+   "calque": "Calque 5",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    663,
+    330,
+    1230,
+    1152
+   ]
+  },
+  {
+   "calque": "Calque 3",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    -110,
+    329,
+    438,
+    1073
+   ]
+  },
+  {
+   "calque": "Calque 4",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    55,
+    246,
+    691,
+    1566
+   ]
+  },
+  {
+   "calque": "Logo_AEEMCI",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    83,
+    46,
+    187,
+    150
+   ]
+  },
+  {
+   "calque": "nano-banana-2025-10-30T23-19-20-removebg-preview",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    877,
+    58,
+    1012,
+    139
+   ]
+  },
+  {
+   "calque": "05ea87d29abefb6eb9b248c258b7862b-removebg-preview",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    312,
+    998,
+    360,
+    1046
+   ]
+  },
+  {
+   "calque": "4e2b90ccfa402a7e5b32e53fbfd33d14-removebg-preview",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    584,
+    985,
+    630,
+    1057
+   ]
+  },
+  {
+   "calque": "Objet dynamique vectoriel",
+   "plan": null,
+   "type": "vector",
+   "bornes": [
+    1000,
+    1284,
+    1045,
+    1329
+   ]
+  },
+  {
+   "calque": "Objet dynamique vectoriel",
+   "plan": null,
+   "type": "vector",
+   "bornes": [
+    944,
+    1285,
+    987,
+    1329
+   ]
+  },
+  {
+   "calque": "WhatsApp Image 2025-11-10 at 20.48.09_1cbad86a",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    302,
+    456,
+    765,
+    1074
+   ]
+  },
+  {
+   "calque": "qr-code",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    327,
+    596,
+    755,
+    1024
+   ]
+  }
+ ],
+ "nbCalques": 68,
+ "effetsTexte": 1
+}

@@ -1,0 +1,32 @@
+{
+  "name": "@aeemci-studio/moteur",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Moteur de rendu des gabarits (manifest DesignHub 1.1) : valeurs saisies → PNG / PDF",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "main": "src/index.ts",
+  "bin": {
+    "aeemci-rendre": "src/cli.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "rendre": "node src/cli.ts"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "playwright": "1.63.0"
+  },
+  "devDependencies": {
+    "@fontsource/montserrat": "^5.2.5",
+    "@fontsource/outfit": "^5.2.5",
+    "@types/node": "^22.10.0",
+    "@types/pngjs": "^6.0.5",
+    "pngjs": "^7.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,176 @@
+{
+ "fichier": "/sessions/rcw-01jympnef5wrth2nkrsvyqo1/mnt/aeemci/marhaba/psd/annonce.psd",
+ "w": 5400,
+ "h": 7200,
+ "ms": 1283,
+ "plans": [
+  {
+   "nom": "Plan de travail 1",
+   "rect": {
+    "top": 0,
+    "left": 0,
+    "bottom": 7200,
+    "right": 5400
+   }
+  }
+ ],
+ "textes": [
+  {
+   "calque": "AEEMCI Association des Élèves et Étudiants Musulmans de Côte d’",
+   "plan": "Plan de travail 1",
+   "chemin": "Plan de travail 1 / logo / Groupe 1",
+   "masque": false,
+   "texte": "AEEMCI\nAssociation des Élèves et Étudiants Musulmans de Côte d’Ivoire\n",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    2944.30981,
+    606.53992
+   ],
+   "bornes": [
+    1516,
+    412,
+    3909,
+    880
+   ],
+   "police": [
+    "Montserrat-Bold",
+    "Montserrat-Regular"
+   ],
+   "taille": 75.8,
+   "interlignage": 103.4,
+   "couleur": "#1F1F1F",
+   "alignement": "center",
+   "plages": 3
+  },
+  {
+   "calque": "AEEMCI,  POUR UNE IDENTITÉ ISLAMIQUE",
+   "plan": "Plan de travail 1",
+   "chemin": "Plan de travail 1",
+   "masque": false,
+   "texte": "AEEMCI,  POUR UNE IDENTITÉ ISLAMIQUE",
+   "forme": "point",
+   "bornes": [
+    901,
+    6692,
+    4500,
+    6866
+   ],
+   "police": [
+    "Montserrat-Bold",
+    "Montserrat-Medium"
+   ],
+   "taille": 166.7,
+   "interlignage": 0,
+   "approche": 0,
+   "alignement": "right",
+   "plages": 3
+  },
+  {
+   "calque": "Quelque chose...",
+   "plan": "Plan de travail 1",
+   "chemin": "Plan de travail 1",
+   "masque": false,
+   "texte": "Quelque chose...",
+   "forme": "point",
+   "bornes": [
+    408,
+    2408,
+    4708,
+    2925
+   ],
+   "police": [
+    "Glitz-Regular"
+   ],
+   "taille": 583.3,
+   "interlignage": 0,
+   "approche": 0,
+   "couleur": "#246C04",
+   "alignement": "right",
+   "plages": 0
+  },
+  {
+   "calque": "se prépare,",
+   "plan": "Plan de travail 1",
+   "chemin": "Plan de travail 1",
+   "masque": false,
+   "texte": "se prépare,",
+   "forme": "point",
+   "bornes": [
+    409,
+    3098,
+    2478,
+    3448
+   ],
+   "police": [
+    "Montserrat-Medium"
+   ],
+   "taille": 375,
+   "interlignage": 0,
+   "approche": 0,
+   "couleur": "#565656",
+   "alignement": "right",
+   "plages": 0
+  }
+ ],
+ "objets": [
+  {
+   "calque": "ChatGPT Image Sep 20, 2026, 12_45_33 AM",
+   "plan": "Plan de travail 1",
+   "type": "raster",
+   "bornes": [
+    -1360,
+    99,
+    6112,
+    7768
+   ]
+  },
+  {
+   "calque": "Logo 50 ans JPEG copie",
+   "plan": "Plan de travail 1",
+   "type": "raster",
+   "bornes": [
+    895,
+    466,
+    1578,
+    856
+   ]
+  },
+  {
+   "calque": "nano-banana-2025-10-30T23-19-20-removebg-preview",
+   "plan": "Plan de travail 1",
+   "type": "raster",
+   "bornes": [
+    4220,
+    418,
+    5033,
+    903
+   ]
+  },
+  {
+   "calque": "Logo_AEEMCI",
+   "plan": "Plan de travail 1",
+   "type": "raster",
+   "bornes": [
+    368,
+    375,
+    939,
+    946
+   ]
+  },
+  {
+   "calque": "158210699_10604502",
+   "plan": "Plan de travail 1",
+   "type": "raster",
+   "bornes": [
+    -172,
+    3619,
+    3603,
+    7582
+   ]
+  }
+ ],
+ "nbCalques": 16,
+ "effetsTexte": 0
+}

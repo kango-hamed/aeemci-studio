@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+/*
+ * Jetons du design system « AEEMCI ESATIC » (charte/tokens.json).
+ * Thème clair par défaut, thème sombre selon le système, ou forcé par data-theme sur <html>.
+ */
+:root {
+  --surface: #fbfaf4;
+  --surface-relevee: #ffffff;
+  --creme: #fff2d5;
+  --encre: #1f241f;
+  --encre-douce: #5a635b;
+  --trait: #daddd2;
+  --trait-champ: #7e877e;
+  --vert-esatic: #185431;
+  --sur-vert: #ffffff;
+  --vert-affiche: #1a6012;
+  --vert-profond: #0e3320;
+  --sur-vert-profond: #ffffff;
+  --orange-croissant: #ea9129;
+  --sur-orange: #1f241f;
+  --orange-texte: #9c5a00;
+  --or: #c9a227;
+  --fond-succes: #e6f1e8;
+  --danger: #b42318;
+  --fond-danger: #fdecea;
+  --ombre-carte: 0 1px 2px rgba(14, 51, 32, 0.08), 0 4px 12px rgba(14, 51, 32, 0.06);
+  --ombre-flottante: 0 8px 24px rgba(14, 51, 32, 0.16);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface: #0f1712;
+    --surface-relevee: #18231c;
+    --creme: #2a2417;
+    --encre: #edf1e9;
+    --encre-douce: #a3afa4;
+    --trait: #2e3b32;
+    --trait-champ: #738077;
+    --vert-esatic: #7cc596;
+    --sur-vert: #0f1712;
+    --vert-affiche: #8fd07a;
+    --vert-profond: #0b1a11;
+    --sur-vert-profond: #edf1e9;
+    --orange-texte: #f2b35e;
+    --or: #d9b64a;
+    --fond-succes: #16301f;
+    --danger: #f97066;
+    --fond-danger: #3a1a17;
+    --ombre-carte: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --ombre-flottante: 0 8px 24px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-relevee: var(--surface-relevee);
+  --color-creme: var(--creme);
+  --color-encre: var(--encre);
+  --color-encre-douce: var(--encre-douce);
+  --color-trait: var(--trait);
+  --color-trait-champ: var(--trait-champ);
+  --color-vert-esatic: var(--vert-esatic);
+  --color-sur-vert: var(--sur-vert);
+  --color-vert-affiche: var(--vert-affiche);
+  --color-vert-profond: var(--vert-profond);
+  --color-sur-vert-profond: var(--sur-vert-profond);
+  --color-orange-croissant: var(--orange-croissant);
+  --color-sur-orange: var(--sur-orange);
+  --color-orange-texte: var(--orange-texte);
+  --color-or: var(--or);
+  --color-succes: var(--vert-esatic);
+  --color-fond-succes: var(--fond-succes);
+  --color-attention: var(--orange-texte);
+  --color-fond-attention: var(--creme);
+  --color-danger: var(--danger);
+  --color-fond-danger: var(--fond-danger);
+
+  --font-titre: "Montserrat", "Segoe UI", system-ui, sans-serif;
+  --font-texte: "Outfit", "Segoe UI", system-ui, sans-serif;
+  --font-arabe: "Amiri", "Traditional Arabic", "Times New Roman", serif;
+
+  --radius-s: 6px;
+  --radius-m: 12px;
+  --radius-l: 20px;
+
+  --shadow-carte: var(--ombre-carte);
+  --shadow-flottante: var(--ombre-flottante);
+}
+
+/* Échelle typographique de la charte. */
+@utility texte-affiche {
+  font-family: var(--font-titre);
+  font-size: 48px;
+  line-height: 52px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+@utility titre-1 {
+  font-family: var(--font-titre);
+  font-size: 32px;
+  line-height: 38px;
+  font-weight: 700;
+}
+@utility titre-2 {
+  font-family: var(--font-titre);
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 700;
+}
+@utility titre-3 {
+  font-family: var(--font-titre);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+}
+@utility etiquette {
+  font-family: var(--font-titre);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@layer base {
+  body {
+    background: var(--surface);
+    color: var(--encre);
+    font-family: var(--font-texte);
+    font-size: 16px;
+    line-height: 24px;
+  }
+  a {
+    color: var(--vert-esatic);
+  }
+  :focus-visible {
+    outline: 2px solid var(--vert-esatic);
+    outline-offset: 2px;
+  }
+}

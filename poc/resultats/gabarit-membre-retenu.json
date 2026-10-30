@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.1",
+  "generateur": { "nom": "aeemci-studio-poc", "version": "0.0.1", "logiciel": "ag-psd" },
+  "document": { "nom_fichier": "membre-retenu.psd", "largeur_px": 1080, "hauteur_px": 1350 },
+  "gabarit": {
+    "version": "1.0",
+    "champs": [
+      { "nom": "nom", "type": "texte", "libelle": "Nom et prénom du membre", "obligatoire": true, "max_caracteres": 40 }
+    ],
+    "plans": [
+      {
+        "plan": "Document",
+        "largeur_px": 1080,
+        "hauteur_px": 1350,
+        "fond": "fond-membre-retenu.png",
+        "zones": [
+          {
+            "champ": "nom",
+            "calque": "Nom et prénom",
+            "forme": "point",
+            "ancre": { "x": 535.75, "ligne_de_base": 1127.91 },
+            "largeur_max": 940,
+            "texte": { "nom_postscript": "Outfit-Regular", "famille": "Outfit", "graisse": 400, "taille_px": 62.52, "approche_em": 0.1, "faux_gras": false, "couleur": "#2D2D2D", "alignement": "centre" },
+            "debordement": { "mode": "reduire", "taille_min_px": 34 },
+            "exemple": "Nom et prénom",
+            "provenance": "plugin"
+          }
+        ]
+      }
+    ]
+  }
+}

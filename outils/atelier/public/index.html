@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atelier · AEEMCI Studio</title>
+<style>
+  :root {
+    --vert: #1a6012; --vert-clair: #e8f1e6; --or: #c9a227; --encre: #1f2420; --gris: #6b726c;
+    --trait: #dfe3de; --fond: #f6f7f4; --carte: #ffffff; --rouge: #b42318; --rouge-clair: #fdecea; --ambre: #9a6700; --ambre-clair: #fff4d6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--encre); background: var(--fond); }
+  header { display: flex; align-items: center; gap: 16px; padding: 12px 20px; background: var(--vert); color: #fff; position: sticky; top: 0; z-index: 5; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 650; letter-spacing: .2px; }
+  header .doc { opacity: .8; font-size: 13px; }
+  header .esp { flex: 1; }
+  header .rev { font-size: 12px; opacity: .85; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--trait); background: #fff; color: var(--encre); padding: 6px 12px; }
+  button:hover { border-color: #b9c1b8; }
+  button.principal { background: var(--or); border-color: var(--or); color: #1b1606; font-weight: 650; }
+  button.principal:disabled { background: #e8dcb0; border-color: #e8dcb0; color: #7d7356; cursor: not-allowed; }
+  button.mini { padding: 2px 8px; font-size: 12px; }
+  main { display: grid; grid-template-columns: minmax(360px, 520px) 1fr; gap: 20px; padding: 20px; align-items: start; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section.carte, .champ { background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; padding: 14px 16px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--gris); margin: 0 0 10px; font-weight: 650; }
+  label { display: block; font-size: 12px; color: var(--gris); margin: 8px 0 3px; }
+  input[type=text], input[type=number], input[type=date], textarea, select { width: 100%; font: inherit; padding: 6px 8px; border: 1px solid var(--trait); border-radius: 8px; background: #fff; color: var(--encre); }
+  textarea { resize: vertical; min-height: 34px; }
+  input:focus, textarea:focus, select:focus { outline: 2px solid #9cc596; border-color: #9cc596; }
+  .ligne { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .colonne { display: flex; flex-direction: column; gap: 12px; }
+  .champ .tete { display: flex; align-items: center; gap: 8px; }
+  .champ .tete code { font-size: 12px; color: var(--gris); }
+  .champ .tete .esp { flex: 1; }
+  .badge { font-size: 11px; font-weight: 650; padding: 2px 8px; border-radius: 99px; background: var(--vert-clair); color: var(--vert); }
+  .case { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; color: var(--encre); }
+  .zone { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: var(--fond); border: 1px dashed var(--trait); }
+  .zone .titre { font-size: 12px; color: var(--gris); }
+  .alertes p { margin: 4px 0; padding: 6px 10px; border-radius: 8px; font-size: 13px; }
+  .bloquant { background: var(--rouge-clair); color: var(--rouge); }
+  .remarque { background: var(--ambre-clair); color: var(--ambre); }
+  .info { background: var(--vert-clair); color: var(--vert); }
+  .apercu { position: sticky; top: 72px; }
+  .modes { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .modes button[aria-pressed=true] { background: var(--vert); border-color: var(--vert); color: #fff; }
+  .image { position: relative; background: repeating-conic-gradient(#eef0ec 0 25%, #fff 0 50%) 0 0 / 16px 16px; border-radius: 10px; border: 1px solid var(--trait); display: flex; justify-content: center; min-height: 300px; }
+  .image img { max-width: 100%; max-height: calc(100vh - 220px); display: block; }
+  .image .attente { position: absolute; top: 10px; right: 12px; font-size: 12px; color: var(--gris); background: #fff; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--trait); }
+  #rapport p { margin: 4px 0; font-size: 13px; }
+  #formulaire .champ-perso { margin-bottom: 8px; }
+  .aide { font-size: 12px; color: var(--gris); margin-top: 2px; }
+  .cache { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Atelier · AEEMCI Studio</h1>
+  <span class="doc" id="doc"></span>
+  <span class="esp"></span>
+  <span class="rev" id="rev"></span>
+  <button class="principal" id="publier" disabled>Publier le gabarit</button>
+</header>
+<main>
+  <div class="colonne">
+    <section class="carte">
+      <h2>Gabarit</h2>
+      <label for="nom">Nom</label>
+      <input type="text" id="nom">
+      <label for="description">Description (visible par les membres)</label>
+      <textarea id="description" rows="2" placeholder="Ex. Affiche de présentation d'un panéliste, format post Instagram"></textarea>
+    </section>
+    <section class="carte alertes" id="controles"></section>
+    <section class="carte alertes" id="plugin"></section>
+    <div class="colonne" id="champs"></div>
+  </div>
+  <div class="apercu colonne">
+    <section class="carte">
+      <h2>Aperçu</h2>
+      <div class="modes" id="modes">
+        <button data-mode="exemple" aria-pressed="true">Texte d'exemple</button>
+        <button data-mode="long" aria-pressed="false">Texte le plus long</button>
+        <button data-mode="perso" aria-pressed="false">Mes valeurs</button>
+        <select id="plan" class="cache" style="width:auto"></select>
+      </div>
+      <div id="formulaire" class="cache"></div>
+      <div class="image"><img id="image" alt="Aperçu du document généré"><span class="attente cache" id="attente">Rendu…</span></div>
+      <div id="rapport"></div>
+    </section>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (tag, attrs = {}, ...enfants) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "on") for (const [ev, f] of Object.entries(v)) e.addEventListener(ev, f);
+    else if (k === "class") e.className = v;
+    else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const x of enfants.flat()) if (x !== null && x !== undefined) e.append(x instanceof Node ? x : document.createTextNode(String(x)));
+  return e;
+};
+const TYPES = { texte: "Texte", date: "Date", nombre: "Nombre", image: "Image", jauge: "Jauge" };
+const etat = { gabarit: null, mode: "exemple", plan: null, perso: {}, bloquants: [] };
+let minuteur = null, numero = 0, urlImage = null;
+
+async function api(chemin, corps) {
+  const r = await fetch(chemin, corps === undefined ? {} : { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(corps) });
+  return r;
+}
+const plus = (fn) => function (...a) { fn.apply(this, a); planifier(); };
+
+function rendreChamps() {
+  const g = etat.gabarit;
+  const zone = $("champs");
+  zone.replaceChildren();
+  g.champs.forEach((c, i) => {
+    const deplacer = (d) => plus(() => { const j = i + d; if (j < 0 || j >= g.champs.length) return; [g.champs[i], g.champs[j]] = [g.champs[j], g.champs[i]]; rendreChamps(); rendreFormulaire(); });
+    const carte = el("div", { class: "champ" },
+      el("div", { class: "tete" }, el("span", { class: "badge" }, TYPES[c.type] || c.type), el("code", {}, c.nom), el("span", { class: "esp" }),
+        el("button", { class: "mini", title: "Monter", on: { click: deplacer(-1) } }, "↑"), el("button", { class: "mini", title: "Descendre", on: { click: deplacer(1) } }, "↓")),
+      el("label", {}, "Libellé (la question posée dans le formulaire)"),
+      el("input", { type: "text", value: c.libelle || "", on: { input: plus(function () { c.libelle = this.value; rendreFormulaire(); }) } }),
+      el("label", {}, "Aide (facultatif)"),
+      el("input", { type: "text", value: c.aide || "", placeholder: "Ex. Tel qu'il doit apparaître sur l'affiche", on: { input: plus(function () { c.aide = this.value || undefined; rendreFormulaire(); }) } }),
+      el("label", { class: "case" }, el("input", { type: "checkbox", checked: c.obligatoire !== false, on: { change: plus(function () { c.obligatoire = this.checked; }) } }), "Obligatoire"),
+    );
+    if (c.type === "texte" || c.type === "nombre") {
+      carte.append(el("label", {}, "Nombre maximum de caractères"),
+        el("input", { type: "number", min: 1, value: c.max_caracteres ?? "", on: { input: plus(function () { c.max_caracteres = this.value ? Math.max(1, parseInt(this.value, 10)) : undefined; }) } }));
+    }
+    if (c.type === "jauge") {
+      carte.append(el("div", { class: "ligne" },
+        el("div", {}, el("label", {}, "Minimum"), el("input", { type: "number", value: c.min ?? 0, on: { input: plus(function () { c.min = Number(this.value); }) } })),
+        el("div", {}, el("label", {}, "Maximum (objectif)"), el("input", { type: "number", value: c.max ?? 100, on: { input: plus(function () { c.max = Number(this.value); }) } }))));
+    }
+    for (const p of g.plans) for (const z of p.zones.filter((z) => z.champ === c.nom)) carte.append(rendreZone(p, z, c));
+    zone.append(carte);
+  });
+}
+
+function rendreZone(p, z, c) {
+  const bloc = el("div", { class: "zone" }, el("div", { class: "titre" }, `Calque « ${z.calque || z.champ} »`, etat.gabarit.plans.length > 1 ? ` · ${p.plan}` : "", z.conteneur ? ` · dans « ${z.conteneur} »` : ""));
+  if (z.texte) {
+    z.debordement = z.debordement || { mode: "reduire" };
+    const pct = Math.round(((z.debordement.taille_min_px ?? z.texte.taille_px * 0.55) / z.texte.taille_px) * 100);
+    bloc.append(el("div", { class: "ligne" },
+      el("div", {}, el("label", {}, "Si le texte est trop long"),
+        el("select", { on: { change: plus(function () { z.debordement.mode = this.value; }) } },
+          ...[["reduire", "Réduire la taille"], ["couper", "Couper avec « … »"], ["refuser", "Refuser la saisie"]].map(([v, t]) => el("option", { value: v, selected: z.debordement.mode === v }, t)))),
+      el("div", {}, el("label", {}, "Taille minimale (% de l'original)"),
+        el("input", { type: "number", min: 20, max: 100, value: pct, on: { input: plus(function () { z.debordement.taille_min_px = Math.round(z.texte.taille_px * Math.min(100, Math.max(20, Number(this.value) || 55))) / 100; }) } }))));
+    if (z.forme !== "box") {
+      bloc.append(el("label", {}, "Largeur disponible (px du document)"),
+        el("input", { type: "number", min: 1, value: z.largeur_max ?? "", on: { input: plus(function () { z.largeur_max = Number(this.value) || undefined; }) } }));
+    }
+    if (c.type === "date") {
+      bloc.append(el("label", {}, "Format de la date (EEEE dimanche, EEE dim, d 15, MMMM novembre, yyyy 2026)"),
+        el("input", { type: "text", value: z.format || "EEEE d MMMM yyyy", on: { input: plus(function () { z.format = this.value || undefined; }) } }));
+    } else {
+      bloc.append(el("label", {}, "Modèle (texte fixe autour de la valeur, avec {valeur})"),
+        el("input", { type: "text", value: z.modele || "", placeholder: "Ex. Collecté : {valeur} f CFA", on: { input: plus(function () { z.modele = this.value.includes("{valeur}") ? this.value : undefined; }) } }));
+    }
+  }
+  return bloc;
+}
+
+function rendreFormulaire() {
+  const f = $("formulaire");
+  f.replaceChildren(el("h2", {}, "Formulaire vu par les membres"));
+  for (const c of etat.gabarit.champs) {
+    const id = `perso-${c.nom}`;
+    let saisie;
+    if (c.type === "image") {
+      saisie = el("input", { type: "file", id, accept: "image/*", on: { change: function () {
+        const fichier = this.files[0];
+        if (!fichier) return;
+        const lecteur = new FileReader();
+        lecteur.onload = () => { etat.perso[c.nom] = lecteur.result; planifier(); };
+        lecteur.readAsDataURL(fichier);
+      } } });
+    } else {
+      saisie = el("input", { type: c.type === "date" ? "date" : "text", id, value: etat.perso[c.nom] ?? "", maxlength: c.max_caracteres, inputmode: c.type === "nombre" || c.type === "jauge" ? "decimal" : undefined,
+        on: { input: function () { etat.perso[c.nom] = this.value; planifier(); } } });
+    }
+    f.append(el("div", { class: "champ-perso" }, el("label", { for: id }, c.libelle || c.nom, c.obligatoire !== false ? " *" : ""), saisie, c.aide ? el("div", { class: "aide" }, c.aide) : null));
+  }
+}
+
+function afficherAlertes(cible, titre, bloquants, remarques, infos = []) {
+  const s = $(cible);
+  s.replaceChildren(el("h2", {}, titre), ...bloquants.map((t) => el("p", { class: "bloquant" }, t)), ...remarques.map((t) => el("p", { class: "remarque" }, t)), ...infos.map((t) => el("p", { class: "info" }, t)));
+  s.classList.toggle("cache", !bloquants.length && !remarques.length && !infos.length);
+}
+
+function planifier() {
+  clearTimeout(minuteur);
+  minuteur = setTimeout(rafraichir, 350);
+}
+
+async function rafraichir() {
+  const n = ++numero;
+  const g = etat.gabarit;
+  const ctl = await (await api("/api/controler", { gabarit: g })).json();
+  etat.bloquants = ctl.bloquants;
+  afficherAlertes("controles", "Avant de publier", ctl.bloquants, ctl.remarques, ctl.bloquants.length || ctl.remarques.length ? [] : ["Tout est prêt pour la publication."]);
+  $("publier").disabled = ctl.bloquants.length > 0;
+  let valeurs;
+  if (etat.mode === "perso") valeurs = etat.perso;
+  else valeurs = await (await api("/api/essai", { gabarit: g, mode: etat.mode })).json();
+  $("attente").classList.remove("cache");
+  const r = await api("/api/apercu", { gabarit: g, valeurs, plan: etat.plan, largeur: 900 });
+  if (n !== numero) return; // une saisie plus récente a pris le relais
+  $("attente").classList.add("cache");
+  const rapport = $("rapport");
+  rapport.replaceChildren();
+  if (!r.ok) {
+    const e = await r.json();
+    const messages = e.erreurs && e.erreurs.length ? e.erreurs.map((x) => x.message) : [e.message];
+    rapport.append(...messages.map((m) => el("p", { class: etat.mode === "perso" ? "remarque" : "bloquant" }, m)));
+    return;
+  }
+  const blob = await r.blob();
+  if (urlImage) URL.revokeObjectURL(urlImage);
+  urlImage = URL.createObjectURL(blob);
+  $("image").src = urlImage;
+  const libelle = (champ) => (g.champs.find((c) => c.nom === champ) || {}).libelle || champ;
+  const zones = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(r.headers.get("x-rapport") || "W10="), (c) => c.charCodeAt(0))));
+  for (const z of zones) {
+    if (z.depasse) rapport.append(el("p", { class: "bloquant" }, `${libelle(z.champ)} : le texte déborde encore à la taille minimale.`));
+    else if (z.coupe) rapport.append(el("p", { class: "remarque" }, `${libelle(z.champ)} : texte coupé (« … »).`));
+    else if (z.reduit) rapport.append(el("p", { class: "info" }, `${libelle(z.champ)} : taille réduite à ${z.taille} px pour tenir.`));
+  }
+}
+
+async function publier() {
+  $("publier").disabled = true;
+  const r = await api("/api/publier", { gabarit: etat.gabarit, nom: $("nom").value, description: $("description").value });
+  const res = await r.json();
+  if (!r.ok) {
+    afficherAlertes("controles", "Avant de publier", res.controles ? res.controles.bloquants : [res.message], []);
+    return;
+  }
+  $("rev").textContent = `Révision ${res.revision} publiée`;
+  afficherAlertes("controles", "Publication", [], res.remarques || [], [`Révision ${res.revision} publiée dans ${res.fichier}.`]);
+  $("publier").disabled = false;
+}
+
+async function demarrer() {
+  const e = await (await api("/api/etat")).json();
+  etat.gabarit = e.gabarit;
+  etat.plan = e.gabarit.plans[0] && e.gabarit.plans[0].plan;
+  $("doc").textContent = `${e.document && e.document.nom_fichier ? e.document.nom_fichier + " · " : ""}${e.gabarit.champs.length} champ(s), ${e.gabarit.plans.length} déclinaison(s)`;
+  $("rev").textContent = e.revision ? `Révision ${e.revision} publiée` : "Jamais publié";
+  $("nom").value = e.nom;
+  $("description").value = e.description || "";
+  afficherAlertes("plugin", "Signalé par le plugin Photoshop", [], e.avertissements);
+  if (e.gabarit.plans.length > 1) {
+    const sel = $("plan");
+    sel.classList.remove("cache");
+    for (const p of e.gabarit.plans) sel.append(el("option", { value: p.plan }, p.plan));
+    sel.addEventListener("change", () => { etat.plan = sel.value; planifier(); });
+  }
+  for (const b of $("modes").querySelectorAll("button")) {
+    b.addEventListener("click", () => {
+      etat.mode = b.dataset.mode;
+      for (const x of $("modes").querySelectorAll("button")) x.setAttribute("aria-pressed", String(x === b));
+      $("formulaire").classList.toggle("cache", etat.mode !== "perso");
+      planifier();
+    });
+  }
+  $("publier").addEventListener("click", publier);
+  rendreChamps();
+  rendreFormulaire();
+  rafraichir();
+}
+demarrer();
+</script>
+</body>
+</html>

@@ -1,0 +1,788 @@
+{
+ "fichier": "/sessions/rcw-01jympnef5wrth2nkrsvyqo1/mnt/aeemci/ramadan/progression.psd",
+ "w": 6400,
+ "h": 7200,
+ "ms": 3744,
+ "plans": [],
+ "textes": [
+  {
+   "calque": "AEEMCI Association des Élèves et Étudiants Musulmans de Côte d’",
+   "plan": null,
+   "chemin": "logo",
+   "masque": false,
+   "texte": "AEEMCI\nAssociation des Élèves et Étudiants Musulmans de Côte d’Ivoire\n",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    2944.30981,
+    727
+   ],
+   "bornes": [
+    1844,
+    394,
+    4741,
+    961
+   ],
+   "police": [
+    "Montserrat-Bold",
+    "Montserrat-Regular"
+   ],
+   "taille": 91.7,
+   "interlignage": 125,
+   "couleur": "#1F1F1F",
+   "alignement": "center",
+   "plages": 3
+  },
+  {
+   "calque": "Ramadan",
+   "plan": null,
+   "chemin": "titre / ramadan",
+   "masque": false,
+   "texte": "Ramadan",
+   "forme": "point",
+   "bornes": [
+    2048,
+    1287,
+    4356,
+    1907
+   ],
+   "police": [
+    "MasterOfBreak"
+   ],
+   "taille": 440.3,
+   "interlignage": 110.1,
+   "approche": 0,
+   "couleur": "#FF9C1B",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "mubarak",
+   "plan": null,
+   "chemin": "titre / ramadan",
+   "masque": false,
+   "texte": "mubarak",
+   "forme": "point",
+   "bornes": [
+    2960,
+    1737,
+    4199,
+    1949
+   ],
+   "police": [
+    "MasterOfBreak"
+   ],
+   "taille": 252.2,
+   "interlignage": 94.6,
+   "approche": 0,
+   "couleur": "#195900",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "6",
+   "plan": null,
+   "chemin": "titre",
+   "masque": false,
+   "texte": "6",
+   "forme": "point",
+   "bornes": [
+    2688,
+    1132,
+    3712,
+    1378
+   ],
+   "police": [
+    "AGAIslamicPhrases"
+   ],
+   "taille": 307.8,
+   "interlignage": 102.6,
+   "approche": 0,
+   "couleur": "#292929",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "t",
+   "plan": null,
+   "chemin": "hadith / Groupe 4",
+   "masque": false,
+   "texte": "t",
+   "forme": "point",
+   "bornes": [
+    1980,
+    3579,
+    2161,
+    3759
+   ],
+   "police": [
+    "AGAIslamicPhrases"
+   ],
+   "taille": 182.2,
+   "interlignage": 218.6,
+   "approche": -40,
+   "couleur": "#086500",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "t copie",
+   "plan": null,
+   "chemin": "hadith / Groupe 4",
+   "masque": false,
+   "texte": "t",
+   "forme": "point",
+   "bornes": [
+    4393,
+    3579,
+    4574,
+    3759
+   ],
+   "police": [
+    "AGAIslamicPhrases"
+   ],
+   "taille": 182.2,
+   "interlignage": 218.6,
+   "approche": -40,
+   "couleur": "#086500",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "Le meilleur des mois est le Ramadan et  le meilleur des jours e",
+   "plan": null,
+   "chemin": "hadith",
+   "masque": false,
+   "texte": "Le meilleur des mois est le Ramadan et\n le meilleur des jours est le v",
+   "forme": "point",
+   "bornes": [
+    2245,
+    3547,
+    4307,
+    3791
+   ],
+   "police": [
+    "Montserrat-Medium"
+   ],
+   "taille": 112.5,
+   "interlignage": 135,
+   "approche": -40,
+   "couleur": "#000000",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "D’après Abou Oubeida, Abdullah Ibn Mas’oud (ra) a dit :  ",
+   "plan": null,
+   "chemin": "hadith",
+   "masque": false,
+   "texte": "D’après Abou Oubeida, Abdullah Ibn Mas’oud (ra) a dit : \n",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    3141.33765,
+    120.42827
+   ],
+   "bornes": [
+    1889,
+    3390,
+    4514,
+    3489
+   ],
+   "police": [
+    "Montserrat-Regular"
+   ],
+   "taille": 104.2,
+   "interlignage": 135,
+   "approche": -40,
+   "couleur": "#000000",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "La cotisation est ouverte : ensemble, soutenons le bon  fonctio",
+   "plan": null,
+   "chemin": "cotisation",
+   "masque": false,
+   "texte": "La cotisation est ouverte : ensemble, soutenons le bon \nfonctionnement",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    3113.33765,
+    420.2738
+   ],
+   "bornes": [
+    1913,
+    4056,
+    4488,
+    4260
+   ],
+   "police": [
+    "Montserrat-Regular"
+   ],
+   "taille": 104.2,
+   "interlignage": 125,
+   "approche": -40,
+   "couleur": "#414141",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "6 000 f CFA",
+   "plan": null,
+   "chemin": "cotisation",
+   "masque": false,
+   "texte": "6 000 f CFA",
+   "forme": "point",
+   "bornes": [
+    2456,
+    4434,
+    3938,
+    4727
+   ],
+   "police": [
+    "MasterOfBreak",
+    "Montserrat-Regular"
+   ],
+   "interlignage": 168.2,
+   "alignement": "center",
+   "plages": 3
+  },
+  {
+   "calque": "0574533340",
+   "plan": null,
+   "chemin": "cotisation / numero / Groupe 5",
+   "masque": false,
+   "texte": "0574533340",
+   "forme": "point",
+   "bornes": [
+    4075,
+    4935,
+    4737,
+    5020
+   ],
+   "police": [
+    "Montserrat-Medium"
+   ],
+   "taille": 118.4,
+   "interlignage": 341,
+   "approche": -40,
+   "couleur": "#3C3C3C",
+   "alignement": "left",
+   "plages": 0
+  },
+  {
+   "calque": "0799138035 0799758168",
+   "plan": null,
+   "chemin": "cotisation / numero / Groupe 6",
+   "masque": false,
+   "texte": "0799138035 0799758168",
+   "forme": "point",
+   "bornes": [
+    2132,
+    4935,
+    3454,
+    5020
+   ],
+   "police": [
+    "Montserrat-Medium"
+   ],
+   "taille": 118.4,
+   "interlignage": 341,
+   "approche": -40,
+   "couleur": "#3C3C3C",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "AEEMCI, pour une identité islamique !",
+   "plan": null,
+   "chemin": "",
+   "masque": false,
+   "texte": "AEEMCI, pour une identité islamique !",
+   "forme": "point",
+   "bornes": [
+    1734,
+    6603,
+    4665,
+    6822
+   ],
+   "police": [
+    "Montserrat-Bold",
+    "Montserrat-Regular",
+    "RegularBrushPersonalUseOnly-R"
+   ],
+   "interlignage": 125,
+   "approche": 50,
+   "alignement": "center",
+   "plages": 3
+  },
+  {
+   "calque": "Collecté : 166 000f CFA",
+   "plan": null,
+   "chemin": "progression-box / Groupe 11",
+   "masque": false,
+   "texte": "Collecté : 166 000f CFA",
+   "forme": "point",
+   "bornes": [
+    945,
+    4386,
+    2827,
+    4498
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 145.8,
+   "interlignage": 225,
+   "approche": 50,
+   "alignement": "center",
+   "plages": 2
+  },
+  {
+   "calque": "Objectif : 3 047 900 f CFA",
+   "plan": null,
+   "chemin": "progression-box / Groupe 11",
+   "masque": false,
+   "texte": "Objectif : 3 047 900 f CFA",
+   "forme": "point",
+   "bornes": [
+    1160,
+    3601,
+    3259,
+    3746
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 145.8,
+   "interlignage": 225,
+   "approche": 50,
+   "alignement": "left",
+   "plages": 2
+  },
+  {
+   "calque": "5,45 %",
+   "plan": null,
+   "chemin": "progression-box / Groupe 11",
+   "masque": false,
+   "texte": "5,45 %",
+   "forme": "point",
+   "bornes": [
+    4905,
+    3622,
+    5419,
+    3749
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 145.8,
+   "interlignage": 225,
+   "approche": 50,
+   "couleur": "#D26304",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "Restant : 2 881 900 f CFA",
+   "plan": null,
+   "chemin": "progression-box / Groupe 11",
+   "masque": false,
+   "texte": "Restant : 2 881 900 f CFA",
+   "forme": "point",
+   "bornes": [
+    3424,
+    4384,
+    5456,
+    4496
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 145.8,
+   "interlignage": 225,
+   "approche": 50,
+   "alignement": "right",
+   "plages": 2
+  },
+  {
+   "calque": "0574533340 0799138035 0799758168",
+   "plan": null,
+   "chemin": "numeros",
+   "masque": false,
+   "texte": "0574533340 0799138035 0799758168",
+   "forme": "point",
+   "bornes": [
+    2548,
+    5416,
+    5393,
+    5528
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 154.2,
+   "interlignage": 360,
+   "alignement": "center",
+   "plages": 2
+  },
+  {
+   "calque": "Infos & contributions",
+   "plan": null,
+   "chemin": "",
+   "masque": false,
+   "texte": "Infos & contributions",
+   "forme": "point",
+   "bornes": [
+    2257,
+    5008,
+    4144,
+    5159
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 187.5,
+   "interlignage": 172.5,
+   "approche": -40,
+   "couleur": "#065502",
+   "alignement": "justify-center",
+   "plages": 0
+  },
+  {
+   "calque": "Pour le mois béni de Ramadan chaque don est une source de bénéd",
+   "plan": null,
+   "chemin": "",
+   "masque": false,
+   "texte": "Pour le mois béni de Ramadan\nchaque don est une source de bénédiction",
+   "forme": "point",
+   "bornes": [
+    1035,
+    2242,
+    5358,
+    2759
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 208.3,
+   "interlignage": 200,
+   "approche": -40,
+   "couleur": "#086500",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "Grâce à votre générosité, offrons aux étudiants musulmans de l’",
+   "plan": null,
+   "chemin": "",
+   "masque": false,
+   "texte": "Grâce à votre générosité, offrons aux étudiants musulmans de l’ESATIC ",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    4872,
+    389.78128
+   ],
+   "bornes": [
+    770,
+    2868,
+    5632,
+    3138
+   ],
+   "police": [
+    "Montserrat-Medium"
+   ],
+   "taille": 125,
+   "interlignage": 155,
+   "approche": -40,
+   "couleur": "#272727",
+   "alignement": "justify-center",
+   "plages": 0
+  }
+ ],
+ "objets": [
+  {
+   "calque": "une-belle-lampe-du-ramadan-allumee copie",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    -5253,
+    -1843,
+    11704,
+    9333
+   ]
+  },
+  {
+   "calque": "une-belle-lampe-du-ramadan-allumee copie 2",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    -5253,
+    -1843,
+    11704,
+    9333
+   ]
+  },
+  {
+   "calque": "Rectangle 5 copie 2",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    439,
+    2052,
+    5960,
+    5916
+   ]
+  },
+  {
+   "calque": "Rectangle 5 copie 3",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    269,
+    1850,
+    6131,
+    6100
+   ]
+  },
+  {
+   "calque": "nano-banana-2025-10-30T23-19-20-removebg-preview",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    5075,
+    390,
+    5972,
+    926
+   ]
+  },
+  {
+   "calque": "Logo_AEEMCI",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    425,
+    122,
+    1321,
+    1017
+   ]
+  },
+  {
+   "calque": "Mtn-logo-svg.svg",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    3834,
+    4927,
+    4009,
+    5028
+   ]
+  },
+  {
+   "calque": "Orange_logo.svg",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    1664,
+    4866,
+    1834,
+    5036
+   ]
+  },
+  {
+   "calque": "wave",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    1903,
+    4895,
+    2067,
+    5059
+   ]
+  },
+  {
+   "calque": "Ellipse 1",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    2564,
+    3913,
+    6149,
+    5639
+   ]
+  },
+  {
+   "calque": "ChatGPT Image 3 janv. 2026, 13_33_19",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    2603,
+    -614,
+    6731,
+    5576
+   ]
+  },
+  {
+   "calque": "Ellipse 1 copie",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    213,
+    5584,
+    3191,
+    7275
+   ]
+  },
+  {
+   "calque": "une-belle-lampe-du-ramadan-allumee",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    89,
+    4849,
+    1300,
+    6621
+   ]
+  },
+  {
+   "calque": "88076adef8996f82eb9861682d9cf8a7",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    3200,
+    3111,
+    5505,
+    5213
+   ]
+  },
+  {
+   "calque": "d3a6fcf2e84a1fabd03abf05f48bcecc",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    4779,
+    3102,
+    6026,
+    5271
+   ]
+  },
+  {
+   "calque": "1",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    2843,
+    3763,
+    4696,
+    5616
+   ]
+  },
+  {
+   "calque": "ChatGPT Image 11 janv. 2026, 18_05_55",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    3621,
+    3824,
+    6509,
+    6712
+   ]
+  },
+  {
+   "calque": "2",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    3992,
+    4268,
+    5144,
+    5420
+   ]
+  },
+  {
+   "calque": "1-28",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    5037,
+    4104,
+    6166,
+    5233
+   ]
+  },
+  {
+   "calque": "dattes-sucrees-dans-une-assiette-d-argile-sur-carreaux-de-pierre-et-fond-en-bois",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    -61,
+    5329,
+    2012,
+    6712
+   ]
+  },
+  {
+   "calque": "a4241520464cd46878e7f38ed1517aeb",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    1094,
+    6138,
+    1849,
+    6802
+   ]
+  },
+  {
+   "calque": "icon-target",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    928,
+    3568,
+    1111,
+    3752
+   ]
+  },
+  {
+   "calque": "Mtn-logo-svg.svg",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    1036,
+    5355,
+    1430,
+    5583
+   ]
+  },
+  {
+   "calque": "Orange_logo.svg",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    1629,
+    5345,
+    1884,
+    5600
+   ]
+  },
+  {
+   "calque": "wave",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    2079,
+    5338,
+    2349,
+    5608
+   ]
+  }
+ ],
+ "nbCalques": 108,
+ "effetsTexte": 0
+}

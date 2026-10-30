@@ -1,0 +1,110 @@
+[
+  {
+    "nom_postscript": "Montserrat-Thin",
+    "famille": "Montserrat",
+    "graisse": 100,
+    "fichier": "montserrat-latin-100-normal.woff2"
+  },
+  {
+    "nom_postscript": "Montserrat-ExtraLight",
+    "famille": "Montserrat",
+    "graisse": 200,
+    "fichier": "montserrat-latin-200-normal.woff2"
+  },
+  {
+    "nom_postscript": "Montserrat-Light",
+    "famille": "Montserrat",
+    "graisse": 300,
+    "fichier": "montserrat-latin-300-normal.woff2"
+  },
+  {
+    "nom_postscript": "Montserrat-Regular",
+    "famille": "Montserrat",
+    "graisse": 400,
+    "fichier": "montserrat-latin-400-normal.woff2"
+  },
+  {
+    "nom_postscript": "Montserrat-Medium",
+    "famille": "Montserrat",
+    "graisse": 500,
+    "fichier": "montserrat-latin-500-normal.woff2"
+  },
+  {
+    "nom_postscript": "Montserrat-SemiBold",
+    "famille": "Montserrat",
+    "graisse": 600,
+    "fichier": "montserrat-latin-600-normal.woff2"
+  },
+  {
+    "nom_postscript": "Montserrat-Bold",
+    "famille": "Montserrat",
+    "graisse": 700,
+    "fichier": "montserrat-latin-700-normal.woff2"
+  },
+  {
+    "nom_postscript": "Montserrat-ExtraBold",
+    "famille": "Montserrat",
+    "graisse": 800,
+    "fichier": "montserrat-latin-800-normal.woff2"
+  },
+  {
+    "nom_postscript": "Montserrat-Black",
+    "famille": "Montserrat",
+    "graisse": 900,
+    "fichier": "montserrat-latin-900-normal.woff2"
+  },
+  {
+    "nom_postscript": "Outfit-Thin",
+    "famille": "Outfit",
+    "graisse": 100,
+    "fichier": "outfit-latin-100-normal.woff2"
+  },
+  {
+    "nom_postscript": "Outfit-ExtraLight",
+    "famille": "Outfit",
+    "graisse": 200,
+    "fichier": "outfit-latin-200-normal.woff2"
+  },
+  {
+    "nom_postscript": "Outfit-Light",
+    "famille": "Outfit",
+    "graisse": 300,
+    "fichier": "outfit-latin-300-normal.woff2"
+  },
+  {
+    "nom_postscript": "Outfit-Regular",
+    "famille": "Outfit",
+    "graisse": 400,
+    "fichier": "outfit-latin-400-normal.woff2"
+  },
+  {
+    "nom_postscript": "Outfit-Medium",
+    "famille": "Outfit",
+    "graisse": 500,
+    "fichier": "outfit-latin-500-normal.woff2"
+  },
+  {
+    "nom_postscript": "Outfit-SemiBold",
+    "famille": "Outfit",
+    "graisse": 600,
+    "fichier": "outfit-latin-600-normal.woff2"
+  },
+  {
+    "nom_postscript": "Outfit-Bold",
+    "famille": "Outfit",
+    "graisse": 700,
+    "fichier": "outfit-latin-700-normal.woff2"
+  },
+  {
+    "nom_postscript": "Outfit-ExtraBold",
+    "famille": "Outfit",
+    "graisse": 800,
+    "fichier": "outfit-latin-800-normal.woff2"
+  },
+  {
+    "nom_postscript": "Outfit-Black",
+    "famille": "Outfit",
+    "graisse": 900,
+    "fichier": "outfit-latin-900-normal.woff2"
+  }
+]

@@ -1,0 +1,6 @@
+[
+  { "nom_postscript": "Outfit-Regular", "famille": "Outfit", "graisse": 400, "fichier": "outfit-latin-400-normal.woff2" },
+  { "nom_postscript": "Outfit-Black", "famille": "Outfit", "graisse": 900, "fichier": "outfit-latin-900-normal.woff2" },
+  { "nom_postscript": "Montserrat-Medium", "famille": "Montserrat", "graisse": 500, "fichier": "montserrat-latin-500-normal.woff2" },
+  { "nom_postscript": "Montserrat-Bold", "famille": "Montserrat", "graisse": 700, "fichier": "montserrat-latin-700-normal.woff2" }
+]

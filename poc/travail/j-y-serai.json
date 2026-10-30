@@ -1,0 +1,490 @@
+{
+ "fichier": "/sessions/rcw-01jympnef5wrth2nkrsvyqo1/mnt/aeemci/ago/j-y-serai.psd",
+ "w": 1080,
+ "h": 1350,
+ "ms": 937,
+ "plans": [],
+ "textes": [
+  {
+   "calque": "J’y serai",
+   "plan": null,
+   "chemin": "",
+   "masque": false,
+   "texte": "J’y serai",
+   "forme": "point",
+   "bornes": [
+    237,
+    978,
+    842,
+    1120
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 138.6,
+   "interlignage": 0,
+   "approche": 0,
+   "couleur": "#1A6012",
+   "alignement": "left",
+   "plages": 0
+  },
+  {
+   "calque": " A.G.O",
+   "plan": null,
+   "chemin": "AGO / Groupe 6",
+   "masque": false,
+   "texte": " A.G.O",
+   "forme": "point",
+   "bornes": [
+    390,
+    534,
+    1047,
+    693
+   ],
+   "police": [
+    "Montserrat-Black"
+   ],
+   "taille": 217,
+   "interlignage": 0,
+   "approche": 0,
+   "alignement": "center",
+   "plages": 2,
+   "effets": [
+    "dropShadow",
+    "innerShadow",
+    "outerGlow",
+    "innerGlow",
+    "bevel",
+    "solidFill",
+    "gradientOverlay",
+    "satin",
+    "stroke"
+   ]
+  },
+  {
+   "calque": "Assemblée Générale Ordinaire",
+   "plan": null,
+   "chemin": "AGO / Groupe 6",
+   "masque": false,
+   "texte": "Assemblée Générale Ordinaire",
+   "forme": "point",
+   "bornes": [
+    411,
+    720,
+    1033,
+    753
+   ],
+   "police": [
+    "Montserrat-Black"
+   ],
+   "taille": 37.7,
+   "interlignage": 173.6,
+   "approche": 0,
+   "alignement": "center",
+   "plages": 6
+  },
+  {
+   "calque": "2025",
+   "plan": null,
+   "chemin": "AGO",
+   "masque": false,
+   "texte": "2025",
+   "forme": "point",
+   "bornes": [
+    674,
+    778,
+    763,
+    806
+   ],
+   "police": [
+    "Montserrat-Medium"
+   ],
+   "taille": 37.7,
+   "interlignage": 94.4,
+   "approche": 0,
+   "couleur": "#FFFFFF",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "AEEMCI Association des Élèves et Étudiants Musulmans de Côte d’",
+   "plan": null,
+   "chemin": "LOGO",
+   "masque": false,
+   "texte": "AEEMCI\nAssociation des Élèves et Étudiants Musulmans de Côte d’Ivoire\n",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    609,
+    114.10139
+   ],
+   "bornes": [
+    249,
+    41,
+    829,
+    144
+   ],
+   "police": [
+    "Montserrat-Regular"
+   ],
+   "taille": 18.3,
+   "interlignage": 27,
+   "couleur": "#1F1F1F",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "Novembre Heure",
+   "plan": null,
+   "chemin": "date & lieu / date",
+   "masque": false,
+   "texte": "Novembre\nHeure",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    92.19944,
+    44.22343
+   ],
+   "bornes": [
+    330,
+    1057,
+    445,
+    1099
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 21.4,
+   "interlignage": 0,
+   "approche": 0,
+   "couleur": "#FFFFFF",
+   "alignement": "left",
+   "plages": 0
+  },
+  {
+   "calque": "15",
+   "plan": null,
+   "chemin": "date & lieu / date",
+   "masque": false,
+   "texte": "15",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    40.55539,
+    32.36649
+   ],
+   "bornes": [
+    273,
+    1059,
+    320,
+    1094
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 48.2,
+   "interlignage": 0,
+   "approche": 0,
+   "couleur": "#FFFFFF",
+   "alignement": "left",
+   "plages": 0
+  },
+  {
+   "calque": "Sam",
+   "plan": null,
+   "chemin": "date & lieu / date",
+   "masque": false,
+   "texte": "Sam",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    91,
+    32.36649
+   ],
+   "bornes": [
+    156,
+    1058,
+    260,
+    1094
+   ],
+   "police": [
+    "Montserrat-Medium"
+   ],
+   "taille": 48.2,
+   "interlignage": 0,
+   "approche": 0,
+   "couleur": "#FFFFFF",
+   "alignement": "left",
+   "plages": 0
+  },
+  {
+   "calque": "Amphithéatre ESATIC",
+   "plan": null,
+   "chemin": "date & lieu / Groupe 8",
+   "masque": false,
+   "texte": "Amphithéatre\nESATIC",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    277.80026,
+    59.96737
+   ],
+   "bornes": [
+    671,
+    1053,
+    850,
+    1103
+   ],
+   "police": [
+    "Montserrat-Medium",
+    "Montserrat-Bold"
+   ],
+   "taille": 25,
+   "interlignage": 45,
+   "approche": 0,
+   "couleur": "#232323",
+   "alignement": "left",
+   "plages": 2
+  },
+  {
+   "calque": "Ensemble, faisons le bilan et ouvrons la voie à la relève.",
+   "plan": null,
+   "chemin": "pied",
+   "masque": false,
+   "texte": "Ensemble, faisons le bilan et ouvrons la voie à la relève.",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    1011,
+    57.533
+   ],
+   "bornes": [
+    169,
+    1134,
+    912,
+    1157
+   ],
+   "police": [
+    "Outfit-Regular"
+   ],
+   "taille": 25,
+   "interlignage": 30,
+   "approche": 100,
+   "couleur": "#494949",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "AEEMCI, pour une identité islamique !",
+   "plan": null,
+   "chemin": "pied",
+   "masque": false,
+   "texte": "AEEMCI, pour une identité islamique !",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    575.84235,
+    31.3117
+   ],
+   "bornes": [
+    32,
+    1298,
+    508,
+    1319
+   ],
+   "police": [
+    "Montserrat-Bold",
+    "Montserrat-Medium"
+   ],
+   "taille": 20.8,
+   "interlignage": 30,
+   "approche": 100,
+   "alignement": "center",
+   "plages": 2
+  },
+  {
+   "calque": "AEEMCI-ESATIC",
+   "plan": null,
+   "chemin": "pied",
+   "masque": false,
+   "texte": "AEEMCI-ESATIC",
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    575.84235,
+    31.3117
+   ],
+   "bornes": [
+    733,
+    1299,
+    930,
+    1315
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 20.8,
+   "interlignage": 30,
+   "approche": 100,
+   "couleur": "#FFFFFF",
+   "alignement": "center",
+   "plages": 0
+  },
+  {
+   "calque": "Rakistaba Adama",
+   "plan": null,
+   "chemin": "",
+   "masque": false,
+   "texte": "Rakistaba Adama",
+   "forme": "point",
+   "bornes": [
+    100,
+    849,
+    495,
+    883
+   ],
+   "police": [
+    "Montserrat-Bold"
+   ],
+   "taille": 41.7,
+   "interlignage": 150,
+   "approche": 0,
+   "couleur": "#FFFFFF",
+   "alignement": "left",
+   "plages": 0
+  }
+ ],
+ "objets": [
+  {
+   "calque": "5999",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    -79,
+    -64,
+    1241,
+    1879
+   ]
+  },
+  {
+   "calque": "Calque 5",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    581,
+    334,
+    1070,
+    1042
+   ]
+  },
+  {
+   "calque": "Calque 3",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    -8,
+    303,
+    540,
+    1047
+   ]
+  },
+  {
+   "calque": "Calque 8",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    436,
+    224,
+    1077,
+    977
+   ]
+  },
+  {
+   "calque": "Calque 11",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    -157,
+    226,
+    653,
+    1452
+   ]
+  },
+  {
+   "calque": "Logo_AEEMCI",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    83,
+    46,
+    187,
+    150
+   ]
+  },
+  {
+   "calque": "nano-banana-2025-10-30T23-19-20-removebg-preview",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    877,
+    58,
+    1012,
+    139
+   ]
+  },
+  {
+   "calque": "05ea87d29abefb6eb9b248c258b7862b-removebg-preview",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    460,
+    1054,
+    508,
+    1102
+   ]
+  },
+  {
+   "calque": "4e2b90ccfa402a7e5b32e53fbfd33d14-removebg-preview",
+   "plan": null,
+   "type": "raster",
+   "bornes": [
+    604,
+    1042,
+    650,
+    1114
+   ]
+  },
+  {
+   "calque": "Objet dynamique vectoriel",
+   "plan": null,
+   "type": "vector",
+   "bornes": [
+    1000,
+    1284,
+    1045,
+    1329
+   ]
+  },
+  {
+   "calque": "Objet dynamique vectoriel",
+   "plan": null,
+   "type": "vector",
+   "bornes": [
+    944,
+    1285,
+    987,
+    1329
+   ]
+  }
+ ],
+ "nbCalques": 67,
+ "effetsTexte": 1
+}

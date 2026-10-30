@@ -1,0 +1,1297 @@
+{
+ "largeur": 1080,
+ "hauteur": 1350,
+ "textes": [
+  {
+   "calque": "J’y serai",
+   "texte": "J’y serai",
+   "transform": [
+    1.108916108829333,
+    0,
+    0,
+    1.1089161088293327,
+    241.77635559512748,
+    1090.0491666624375
+   ],
+   "forme": "point",
+   "bornes": [
+    237,
+    978,
+    842,
+    1120
+   ],
+   "style": {
+    "font": {
+     "name": "Montserrat-Bold",
+     "script": 0,
+     "type": 1,
+     "synthetic": 2
+    },
+    "fontSize": 125,
+    "fauxBold": true,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 0.01,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 0,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": true,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "fillColor": "#1A6012",
+    "strokeColor": {
+     "r": 255,
+     "g": 254.99745000000001,
+     "b": 255
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1
+   },
+   "runs": [],
+   "paragraphe": {
+    "justification": "left",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": null
+  },
+  {
+   "calque": " A.G.O",
+   "texte": " A.G.O",
+   "transform": [
+    0.6509201009838654,
+    0,
+    0,
+    0.6509201009838657,
+    691.0960252941352,
+    689.5059737558563
+   ],
+   "forme": "point",
+   "bornes": [
+    390,
+    534,
+    1047,
+    693
+   ],
+   "style": {
+    "font": {
+     "name": "Montserrat-Black",
+     "script": 0,
+     "type": 1,
+     "synthetic": 0
+    },
+    "fontSize": 333.33325,
+    "fauxBold": false,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 0.01,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 0,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": false,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "strokeColor": {
+     "r": 255,
+     "g": 254.99745000000001,
+     "b": 255
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1,
+    "diacriticPos": 2,
+    "fillColor": null
+   },
+   "runs": [
+    {
+     "length": 1,
+     "color": "#2F2F2F"
+    },
+    {
+     "length": 5,
+     "color": "#FF9500"
+    }
+   ],
+   "paragraphe": {
+    "justification": "center",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": [
+    "scale",
+    "dropShadow",
+    "innerShadow",
+    "outerGlow",
+    "innerGlow",
+    "bevel",
+    "solidFill",
+    "gradientOverlay",
+    "satin",
+    "stroke"
+   ]
+  },
+  {
+   "calque": "Assemblée Générale Ordinaire",
+   "texte": "Assemblée Générale Ordinaire",
+   "transform": [
+    0.482262802460094,
+    0,
+    0,
+    0.4822628024600948,
+    722.7753735137373,
+    751.4849961221673
+   ],
+   "forme": "point",
+   "bornes": [
+    411,
+    720,
+    1033,
+    753
+   ],
+   "style": {
+    "font": {
+     "name": "Montserrat-Black",
+     "script": 0,
+     "type": 1,
+     "synthetic": 0
+    },
+    "fontSize": 78.21324,
+    "fauxBold": false,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 359.99994,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 0,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": false,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "strokeColor": {
+     "r": 0,
+     "g": 0,
+     "b": 0
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1,
+    "diacriticPos": 2,
+    "fillColor": null
+   },
+   "runs": [
+    {
+     "length": 1,
+     "color": "#FF9600"
+    },
+    {
+     "length": 9,
+     "color": "#215D03"
+    },
+    {
+     "length": 1,
+     "color": "#FE9B0E"
+    },
+    {
+     "length": 8,
+     "color": "#215D03"
+    },
+    {
+     "length": 1,
+     "color": "#FF8809"
+    },
+    {
+     "length": 8,
+     "color": "#215D03"
+    }
+   ],
+   "paragraphe": {
+    "justification": "center",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": null
+  },
+  {
+   "calque": "2025",
+   "texte": "2025",
+   "transform": [
+    1.0058490168382006,
+    0,
+    0,
+    1.0058490168382006,
+    718.6040071978989,
+    804.7629710012944
+   ],
+   "forme": "point",
+   "bornes": [
+    674,
+    778,
+    763,
+    806
+   ],
+   "style": {
+    "font": {
+     "name": "Montserrat-Medium",
+     "script": 0,
+     "type": 1,
+     "synthetic": 0
+    },
+    "fontSize": 37.5,
+    "fauxBold": false,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 93.8559,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 0,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": false,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "fillColor": "#FFFFFF",
+    "strokeColor": {
+     "r": 255,
+     "g": 254.99745000000001,
+     "b": 255
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1
+   },
+   "runs": [],
+   "paragraphe": {
+    "justification": "center",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": null
+  },
+  {
+   "calque": "AEEMCI Association des Élèves et Étudiants Musulmans de Côte d’",
+   "texte": "AEEMCI\nAssociation des Élèves et Étudiants Musulmans de Côte d’Ivoire\nSecrétariat Régional Abidjan Sud\nSous Comité Treichville\nSection ESATIC  ",
+   "transform": [
+    1,
+    0,
+    0,
+    1,
+    235,
+    41
+   ],
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    609,
+    114.10139
+   ],
+   "bornes": [
+    249,
+    41,
+    829,
+    144
+   ],
+   "style": {
+    "font": {
+     "name": "Montserrat-Regular",
+     "script": 0,
+     "type": 1,
+     "synthetic": 0
+    },
+    "fontSize": 18.33333,
+    "leading": 27,
+    "horizontalScale": 1,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "baselineDirection": 1,
+    "language": 2,
+    "fillColor": "#1F1F1F",
+    "fillFlag": true
+   },
+   "runs": [],
+   "paragraphe": {
+    "justification": "center",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0
+   },
+   "effets": null
+  },
+  {
+   "calque": "Novembre Heure",
+   "texte": "Novembre\nHeure",
+   "transform": [
+    1.2845487971173697,
+    0,
+    0,
+    1.2845487971173708,
+    328.80434469901314,
+    1057.1602047820345
+   ],
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    92.19944,
+    44.22343
+   ],
+   "bornes": [
+    330,
+    1057,
+    445,
+    1099
+   ],
+   "style": {
+    "font": {
+     "name": "Montserrat-Bold",
+     "script": 0,
+     "type": 1,
+     "synthetic": 0
+    },
+    "fontSize": 16.66667,
+    "fauxBold": false,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 0.01,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 0,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": false,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "fillColor": "#FFFFFF",
+    "strokeColor": {
+     "r": 255,
+     "g": 254.99745000000001,
+     "b": 255
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1
+   },
+   "runs": [],
+   "paragraphe": {
+    "justification": "left",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": null
+  },
+  {
+   "calque": "15",
+   "texte": "15",
+   "transform": [
+    1.2845487971173697,
+    0,
+    0,
+    1.2845487971173708,
+    273.5687464229662,
+    1057.1602047820345
+   ],
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    40.55539,
+    32.36649
+   ],
+   "bornes": [
+    273,
+    1059,
+    320,
+    1094
+   ],
+   "style": {
+    "font": {
+     "name": "Montserrat-Bold",
+     "script": 0,
+     "type": 1,
+     "synthetic": 0
+    },
+    "fontSize": 37.5,
+    "fauxBold": false,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 0.01,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 0,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": false,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "fillColor": "#FFFFFF",
+    "strokeColor": {
+     "r": 255,
+     "g": 254.99745000000001,
+     "b": 255
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1
+   },
+   "runs": [],
+   "paragraphe": {
+    "justification": "left",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": null
+  },
+  {
+   "calque": "Sam",
+   "texte": "Sam",
+   "transform": [
+    1.2845487971173697,
+    0,
+    0,
+    1.2845487971173708,
+    154.10570829105086,
+    1057.1602047820345
+   ],
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    91,
+    32.36649
+   ],
+   "bornes": [
+    156,
+    1058,
+    260,
+    1094
+   ],
+   "style": {
+    "font": {
+     "name": "Montserrat-Medium",
+     "script": 0,
+     "type": 1,
+     "synthetic": 0
+    },
+    "fontSize": 37.5,
+    "fauxBold": false,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 0.01,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 0,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": false,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "fillColor": "#FFFFFF",
+    "strokeColor": {
+     "r": 255,
+     "g": 254.99745000000001,
+     "b": 255
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1
+   },
+   "runs": [],
+   "paragraphe": {
+    "justification": "left",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": null
+  },
+  {
+   "calque": "Amphithéatre ESATIC",
+   "texte": "Amphithéatre\nESATIC",
+   "transform": [
+    1,
+    0,
+    0,
+    1,
+    671.9737548828125,
+    1054
+   ],
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    277.80026,
+    59.96737
+   ],
+   "bornes": [
+    671,
+    1053,
+    850,
+    1103
+   ],
+   "style": {
+    "fontSize": 25,
+    "fauxBold": false,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 45,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 0,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": false,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "fillColor": "#232323",
+    "strokeColor": {
+     "r": 255,
+     "g": 254.99745000000001,
+     "b": 255
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1
+   },
+   "runs": [
+    {
+     "length": 13,
+     "font": "Montserrat-Medium",
+     "color": null
+    },
+    {
+     "length": 6,
+     "font": "Montserrat-Bold",
+     "color": null
+    }
+   ],
+   "paragraphe": {
+    "justification": "left",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": null
+  },
+  {
+   "calque": "Ensemble, faisons le bilan et ouvrons la voie à la relève.",
+   "texte": "Ensemble, faisons le bilan et ouvrons la voie à la relève.",
+   "transform": [
+    1,
+    0,
+    0,
+    1,
+    35,
+    1135.3787220402107
+   ],
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    1011,
+    57.533
+   ],
+   "bornes": [
+    169,
+    1134,
+    912,
+    1157
+   ],
+   "style": {
+    "font": {
+     "name": "Outfit-Regular",
+     "script": 0,
+     "type": 1,
+     "synthetic": 0
+    },
+    "fontSize": 25,
+    "fauxBold": false,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 30,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 100,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": false,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "fillColor": "#494949",
+    "strokeColor": {
+     "r": 255,
+     "g": 254.99745000000001,
+     "b": 255
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1
+   },
+   "runs": [],
+   "paragraphe": {
+    "justification": "center",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": null
+  },
+  {
+   "calque": "AEEMCI, pour une identité islamique !",
+   "texte": "AEEMCI, pour une identité islamique !",
+   "transform": [
+    1,
+    0,
+    0,
+    1,
+    -16.868598936938028,
+    1299
+   ],
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    575.84235,
+    31.3117
+   ],
+   "bornes": [
+    32,
+    1298,
+    508,
+    1319
+   ],
+   "style": {
+    "fontSize": 20.83333,
+    "fauxBold": false,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 30,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 100,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": false,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "strokeColor": {
+     "r": 255,
+     "g": 254.99745000000001,
+     "b": 255
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1,
+    "fillColor": null
+   },
+   "runs": [
+    {
+     "length": 6,
+     "font": "Montserrat-Bold",
+     "color": "#FF9500"
+    },
+    {
+     "length": 31,
+     "font": "Montserrat-Medium",
+     "color": "#FFFFFF"
+    }
+   ],
+   "paragraphe": {
+    "justification": "center",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": null
+  },
+  {
+   "calque": "AEEMCI-ESATIC",
+   "texte": "AEEMCI-ESATIC",
+   "transform": [
+    1,
+    0,
+    0,
+    1,
+    544.131401063062,
+    1299
+   ],
+   "forme": "box",
+   "boite": [
+    0,
+    0,
+    575.84235,
+    31.3117
+   ],
+   "bornes": [
+    733,
+    1299,
+    930,
+    1315
+   ],
+   "style": {
+    "font": {
+     "name": "Montserrat-Bold",
+     "script": 0,
+     "type": 1,
+     "synthetic": 0
+    },
+    "fontSize": 20.83333,
+    "fauxBold": false,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 30,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 100,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": false,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "fillColor": "#FFFFFF",
+    "strokeColor": {
+     "r": 255,
+     "g": 254.99745000000001,
+     "b": 255
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1
+   },
+   "runs": [],
+   "paragraphe": {
+    "justification": "center",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": null
+  },
+  {
+   "calque": "Rakistaba Adama",
+   "texte": "Rakistaba Adama",
+   "transform": [
+    1,
+    0,
+    0,
+    1,
+    96.87499999999983,
+    881.7499999999998
+   ],
+   "forme": "point",
+   "bornes": [
+    100,
+    849,
+    495,
+    883
+   ],
+   "style": {
+    "font": {
+     "name": "Montserrat-Bold",
+     "script": 0,
+     "type": 1,
+     "synthetic": 2
+    },
+    "fontSize": 41.66667,
+    "fauxBold": true,
+    "fauxItalic": false,
+    "autoLeading": true,
+    "leading": 150,
+    "horizontalScale": 1,
+    "verticalScale": 1,
+    "tracking": 0,
+    "autoKerning": true,
+    "kerning": 0,
+    "baselineShift": 0,
+    "fontCaps": 0,
+    "fontBaseline": 0,
+    "underline": false,
+    "strikethrough": false,
+    "ligatures": true,
+    "dLigatures": false,
+    "baselineDirection": 1,
+    "tsume": 0,
+    "styleRunAlignment": 2,
+    "language": 2,
+    "noBreak": false,
+    "fillColor": "#FFFFFF",
+    "strokeColor": {
+     "r": 255,
+     "g": 254.99745000000001,
+     "b": 255
+    },
+    "yUnderline": 1,
+    "hindiNumbers": false,
+    "kashida": 1
+   },
+   "runs": [],
+   "paragraphe": {
+    "justification": "left",
+    "firstLineIndent": 0,
+    "startIndent": 0,
+    "endIndent": 0,
+    "spaceBefore": 0,
+    "spaceAfter": 0,
+    "autoHyphenate": true,
+    "hyphenatedWordSize": 6,
+    "preHyphen": 2,
+    "postHyphen": 2,
+    "consecutiveHyphens": 8,
+    "zone": 36,
+    "wordSpacing": [
+     0.8,
+     1,
+     1.33
+    ],
+    "letterSpacing": [
+     0,
+     0,
+     0
+    ],
+    "glyphSpacing": [
+     1,
+     1,
+     1
+    ],
+    "autoLeading": 1.2,
+    "leadingType": 0,
+    "hanging": false,
+    "burasagari": false,
+    "kinsokuOrder": 0,
+    "everyLineComposer": false
+   },
+   "effets": null
+  }
+ ]
+}
