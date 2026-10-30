@@ -3,7 +3,7 @@ import path from "node:path";
 import { PNG } from "pngjs";
 import { chromium, type Browser } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { CataloguePolices, consignesDuPlan, ErreurRendu, rendrePlan, type Gabarit } from "../src/index.ts";
+import { CataloguePolices, consignesDuPlan, ErreurRendu, LANCEMENT_CHROMIUM, rendrePlan, type Gabarit } from "../src/index.ts";
 
 const EX = path.resolve(import.meta.dirname, "../exemples");
 const charger = (nom: string) => JSON.parse(fs.readFileSync(path.join(EX, nom, "manifest.json"), "utf8")).gabarit as Gabarit;
@@ -13,7 +13,7 @@ const collecte = charger("collecte");
 
 let navigateur: Browser;
 beforeAll(async () => {
-  navigateur = await chromium.launch();
+  navigateur = await chromium.launch(LANCEMENT_CHROMIUM);
 });
 afterAll(async () => {
   await navigateur?.close();

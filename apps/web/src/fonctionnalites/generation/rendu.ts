@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { CataloguePolices, chromium, rendrePlan, type Browser, type Gabarit, type ResultatRendu, type Valeurs } from "@aeemci-studio/moteur";
+import { CataloguePolices, chromium, LANCEMENT_CHROMIUM, rendrePlan, type Browser, type Gabarit, type ResultatRendu, type Valeurs } from "@aeemci-studio/moteur";
 import { stockage } from "@/serveur/stockage";
 
 /**
@@ -43,7 +43,7 @@ async function navigateur(): Promise<Browser> {
     const b = await etat.navigateurRendu.catch(() => null);
     if (b?.isConnected()) return b;
   }
-  etat.navigateurRendu = chromium.launch({ args: ["--disable-dev-shm-usage"] });
+  etat.navigateurRendu = chromium.launch({ ...LANCEMENT_CHROMIUM, args: [...LANCEMENT_CHROMIUM.args, "--disable-dev-shm-usage"] });
   const b = await etat.navigateurRendu;
   b.on("disconnected", () => {
     etat.navigateurRendu = undefined;

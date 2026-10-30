@@ -11,7 +11,7 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { CataloguePolices, chromium, ErreurRendu, rendrePlan, type Browser, type Gabarit, type Valeurs } from "../../../packages/moteur/src/index.ts";
+import { CataloguePolices, chromium, ErreurRendu, LANCEMENT_CHROMIUM, rendrePlan, type Browser, type Gabarit, type Valeurs } from "../../../packages/moteur/src/index.ts";
 import { controlerGabarit, valeursEssai } from "./controles.ts";
 
 export const FICHIER_PUBLIE = "gabarit.publie.json";
@@ -83,7 +83,7 @@ function json(res: http.ServerResponse, statut: number, corps: unknown) {
 export async function demarrerAtelier(o: OptionsAtelier): Promise<{ serveur: http.Server; url: string; fermer: () => Promise<void> }> {
   const dossier = path.resolve(o.dossier);
   chargerDossier(dossier); // échoue tôt si le dossier n'est pas un gabarit
-  const navigateur = o.navigateur ?? (await chromium.launch());
+  const navigateur = o.navigateur ?? (await chromium.launch(LANCEMENT_CHROMIUM));
   const page = fs.readFileSync(path.join(import.meta.dirname, "../public/index.html"));
 
   const serveur = http.createServer(async (req, res) => {

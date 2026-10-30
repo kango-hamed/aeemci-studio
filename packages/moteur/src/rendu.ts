@@ -12,6 +12,13 @@ import { lireNombre, texteDeZone, validerValeurs, type ErreurChamp } from "./val
 import type { Couche, Gabarit, Plan, Valeurs, Zone } from "./types.ts";
 
 const ORIGINE = "https://rendu.aeemci.local";
+
+/**
+ * Options de lancement de Chromium pour tout rendu. Sous Linux, Chromium aligne par défaut les
+ * glyphes sur la grille de pixels (hinting), ce qui arrondit les chasses et décale le texte par
+ * rapport au PSD ; sans hinting, le rendu est le même sous Linux, Windows et macOS.
+ */
+export const LANCEMENT_CHROMIUM = { args: ["--font-render-hinting=none"] };
 const TYPES_MIME: Record<string, string> = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".woff2": "font/woff2", ".woff": "font/woff", ".ttf": "font/ttf", ".otf": "font/otf" };
 
 export class ErreurRendu extends Error {
@@ -154,7 +161,7 @@ html,body{margin:0;padding:0;background:#fff}#precharge{position:absolute;left:-
 ${fond ? `<image href="${fond}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="none"/>` : `<rect width="${W}" height="${H}" fill="#fff"/>`}
 <g id="zones"></g></svg></body></html>`;
 
-  const navigateur = o.navigateur ?? (await chromium.launch());
+  const navigateur = o.navigateur ?? (await chromium.launch(LANCEMENT_CHROMIUM));
   const page = await navigateur.newPage({ viewport: { width: largeur, height: hauteur } });
   try {
     await page.route(`${ORIGINE}/**`, async (route) => {
@@ -179,7 +186,7 @@ ${fond ? `<image href="${fond}" x="0" y="0" width="${W}" height="${H}" preserveA
 
 /** Rend toutes les déclinaisons (plans) d'un gabarit avec les mêmes valeurs. */
 export async function rendreTout(o: Omit<OptionsRendu, "plan">): Promise<ResultatRendu[]> {
-  const navigateur = o.navigateur ?? (await chromium.launch());
+  const navigateur = o.navigateur ?? (await chromium.launch(LANCEMENT_CHROMIUM));
   try {
     const res: ResultatRendu[] = [];
     for (const p of o.gabarit.plans) res.push(await rendrePlan({ ...o, plan: p.plan, navigateur }));
