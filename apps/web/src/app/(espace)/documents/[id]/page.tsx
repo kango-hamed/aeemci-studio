@@ -19,7 +19,7 @@ export default async function PageDocument({ params }: { params: Promise<{ id: s
   return (
     <>
       <nav aria-label="Fil d'Ariane" className="flex items-center gap-2 text-sm text-encre-douce">
-        <Link href="/documents">Mes documents</Link>
+        <Link href="/documents">Documents</Link>
         <span aria-hidden>›</span>
         <span aria-current="page">{l.d.titre}</span>
       </nav>
@@ -37,7 +37,8 @@ export default async function PageDocument({ params }: { params: Promise<{ id: s
             <span className="etiquette text-encre-douce">{l.gabarit}</span>
             <h1 className="titre-2 m-0">{l.d.titre}</h1>
             <p className="m-0 text-sm leading-5 text-encre-douce">
-              Créé le {dateFr(l.d.createdAt)} · gabarit révision {l.numero}
+              {l.d.auteurId !== u.id ? `Créé par ${l.auteur} le ` : "Créé le "}
+              {dateFr(l.d.createdAt)} · gabarit révision {l.numero}
             </p>
           </div>
           <ActionsDocument

@@ -14,7 +14,10 @@ export function CarteDocument({ d }: { d: ResumeDocument }) {
       <img src={`/api/documents/${d.id}/miniature`} alt="" loading="lazy" width={360} height={Math.round((360 * d.hauteur) / d.largeur)} className="block aspect-[4/5] h-auto w-full bg-creme object-cover object-top" />
       <span className="flex flex-col gap-0.5 p-4">
         <span className="font-semibold group-hover:text-vert-esatic">{d.titre}</span>
-        <span className="text-sm leading-5 text-encre-douce">{dateFr(d.createdAt)}</span>
+        <span className="text-sm leading-5 text-encre-douce">
+          {d.auteur ? `${d.auteur} · ` : ""}
+          {dateFr(d.createdAt)}
+        </span>
       </span>
     </Link>
   );

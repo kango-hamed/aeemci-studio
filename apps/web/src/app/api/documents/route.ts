@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { erreur, membreOuRefus } from "@/serveur/reponses";
+import { erreur, createurOuRefus } from "@/serveur/reponses";
 import { creerDocument, ErreurSaisie } from "@/fonctionnalites/documents/creer";
 
 const Demande = z.object({
@@ -12,12 +12,12 @@ const Demande = z.object({
 
 /** Crée le document : rendu final, enregistrement du fichier et des valeurs. Réponse : `{ id }`. */
 export async function POST(request: Request) {
-  const u = await membreOuRefus();
+  const u = await createurOuRefus();
   if (u instanceof Response) return u;
   const d = Demande.safeParse(await request.json().catch(() => null));
   if (!d.success) return erreur(400, "Demande invalide.");
   try {
-    return Response.json(await creerDocument(d.data, u.id), { status: 201 });
+    return Response.json(await creerDocument(d.data, u.id, { mandatId: u.affectation?.mandatId ?? null, delegationId: u.affectation?.delegationId ?? null }), { status: 201 });
   } catch (e) {
     if (e instanceof ErreurSaisie) return erreur(422, e.message, { erreurs: e.erreurs });
     throw e;

@@ -138,7 +138,7 @@ describe.skipIf(!url)("génération (Postgres + Chromium)", () => {
   });
 
   it("refait le document en haute définition, à la taille du plan, et le garde", async () => {
-    const l = (await m.docs.documentLisible(documentId, { id: membre, nom: "", email: "", estAdministrateur: false, affectation: null }))!;
+    const l = (await m.docs.documentLisible(documentId, { id: membre, estAdministrateur: false, affectation: null }))!;
     const hd = await m.creer.fichierHauteDefinition(l.d, { id: l.revision.id, prefixe: l.revision.prefixe, contenu: l.revision.contenu });
     expect(hd.subarray(0, 2)).toEqual(Buffer.from([0xff, 0xd8]));
     expect(await m.stockage.stockage().lire(`documents/${documentId}/${l.d.plan}-hd.jpg`)).toEqual(hd);

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/serveur/auth";
+import { utiliserLien } from "@/fonctionnalites/organisation/invitations";
 import { destinationSure } from "./destination";
 
 export interface EtatConnexion {
@@ -37,4 +38,30 @@ export async function seConnecter(_etat: EtatConnexion, formulaire: FormData): P
 export async function seDeconnecter(): Promise<void> {
   await auth.api.signOut({ headers: await headers() });
   redirect("/connexion");
+}
+
+export interface EtatActivation {
+  erreur?: string;
+}
+
+const Activation = z
+  .object({
+    jeton: z.string().min(1),
+    motDePasse: z.string().min(10, "Le mot de passe doit faire 10 caractères au moins.").max(128, "Mot de passe trop long."),
+    confirmation: z.string(),
+  })
+  .refine((v) => v.motDePasse === v.confirmation, "Les deux mots de passe ne sont pas identiques.");
+
+/** Premier mot de passe (ou nouveau) à partir du lien remis par le bureau, puis connexion. */
+export async function activerCompte(_etat: EtatActivation, formulaire: FormData): Promise<EtatActivation> {
+  const saisie = Activation.safeParse({
+    jeton: formulaire.get("jeton"),
+    motDePasse: formulaire.get("motDePasse"),
+    confirmation: formulaire.get("confirmation"),
+  });
+  if (!saisie.success) return { erreur: saisie.error.issues[0]?.message };
+  const email = await utiliserLien(saisie.data.jeton, saisie.data.motDePasse);
+  if (!email) return { erreur: "Ce lien n'est plus valable. Demande-en un nouveau au bureau." };
+  await auth.api.signInEmail({ body: { email, password: saisie.data.motDePasse }, headers: await headers() });
+  redirect("/");
 }

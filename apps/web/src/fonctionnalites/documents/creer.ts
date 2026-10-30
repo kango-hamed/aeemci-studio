@@ -29,7 +29,13 @@ export interface DemandeDocument {
   titre?: string;
 }
 
-export async function creerDocument(d: DemandeDocument, userId: string): Promise<{ id: string }> {
+/** Rattachement du document : mandat et délégation de l'auteur au moment de la création. */
+export interface Rattachement {
+  mandatId: string | null;
+  delegationId: string | null;
+}
+
+export async function creerDocument(d: DemandeDocument, userId: string, rattachement: Rattachement = { mandatId: null, delegationId: null }): Promise<{ id: string }> {
   const g = await gabaritACompleter(d.gabaritId);
   if (!g) throw new ErreurSaisie("Ce gabarit n'est plus disponible.");
   if (g.revision.id !== d.revisionId)
@@ -61,6 +67,8 @@ export async function creerDocument(d: DemandeDocument, userId: string): Promise
       largeur: principal.largeur,
       hauteur: principal.hauteur,
       miniature: `documents/${id}/miniature.jpg`,
+      mandatId: rattachement.mandatId,
+      delegationId: rattachement.delegationId,
     });
   } catch (e) {
     if (e instanceof ErreurRendu) throw new ErreurSaisie(e.message, e.erreurs);

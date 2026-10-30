@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ErreurRendu } from "@aeemci-studio/moteur";
-import { erreur, membreOuRefus } from "@/serveur/reponses";
+import { erreur, createurOuRefus } from "@/serveur/reponses";
 import { rendre } from "@/fonctionnalites/generation/rendu";
 import { preparerValeurs } from "@/fonctionnalites/generation/valeurs";
 import { gabaritACompleter } from "@/fonctionnalites/gabarits/requetes";
@@ -13,7 +13,7 @@ const Demande = z.object({
 
 /** Aperçu en cours de saisie : petite taille, rien n'est enregistré, champs vides remplis par l'exemple. */
 export async function POST(request: Request) {
-  const u = await membreOuRefus();
+  const u = await createurOuRefus();
   if (u instanceof Response) return u;
   const d = Demande.safeParse(await request.json().catch(() => null));
   if (!d.success) return erreur(400, "Demande d'aperçu invalide.");

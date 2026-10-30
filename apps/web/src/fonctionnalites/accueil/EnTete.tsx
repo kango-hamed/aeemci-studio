@@ -3,6 +3,7 @@ import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { seDeconnecter } from "@/fonctionnalites/authentification/actions";
 import type { Utilisateur } from "@/fonctionnalites/authentification/session";
+import { peutGererOrganisation } from "@/fonctionnalites/organisation/droits";
 import { LIBELLES_ROLES } from "@/fonctionnalites/organisation/roles";
 import { NAVIGATION } from "@/fonctionnalites/navigation";
 import { LienNavigation } from "./LienNavigation";
@@ -25,7 +26,9 @@ export function descriptionRole(u: Utilisateur): string {
 }
 
 export function EnTete({ utilisateur }: { utilisateur: Utilisateur }) {
-  const entrees = NAVIGATION.filter((e) => !e.administrateur || utilisateur.estAdministrateur);
+  const entrees = NAVIGATION.filter(
+    (e) => !e.reserve || (e.reserve === "administrateur" ? utilisateur.estAdministrateur : peutGererOrganisation(utilisateur)),
+  );
   return (
     <header className="bg-vert-profond text-sur-vert-profond">
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:px-6">

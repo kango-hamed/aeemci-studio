@@ -58,6 +58,6 @@ describe.skipIf(!url)("authentification (Postgres)", () => {
   });
 
   it("donne le rôle du membre dans le mandat en cours", async () => {
-    expect(await affectationCourante(userId)).toEqual({ role: "president", mandat: "2025-2026", delegation: null, section: "ESATIC" });
+    expect(await affectationCourante(userId)).toMatchObject({ role: "president", mandat: "2025-2026", delegation: null, delegationId: null, section: "ESATIC" });
   });
 });

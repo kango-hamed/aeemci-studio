@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { db, schema } from "@/serveur/db";
-import { erreur, membreOuRefus } from "@/serveur/reponses";
+import { erreur, createurOuRefus } from "@/serveur/reponses";
 import { stockage } from "@/serveur/stockage";
 
 const TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
@@ -8,7 +8,7 @@ const TAILLE_MAX = 10 * 1024 * 1024;
 
 /** Photo choisie dans le formulaire (réduite par le navigateur avant l'envoi). Réponse : `{ id }`. */
 export async function POST(request: Request) {
-  const u = await membreOuRefus();
+  const u = await createurOuRefus();
   if (u instanceof Response) return u;
   const form = await request.formData().catch(() => null);
   const photo = form?.get("photo");

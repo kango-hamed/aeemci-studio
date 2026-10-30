@@ -15,6 +15,13 @@
       "when": 1793374580935,
       "tag": "0001_generation",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793403120432,
+      "tag": "0002_organisation",
+      "breakpoints": true
     }
   ]
 }

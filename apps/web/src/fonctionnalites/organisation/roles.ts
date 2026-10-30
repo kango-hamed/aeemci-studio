@@ -8,3 +8,12 @@ export const LIBELLES_ROLES = {
 } as const;
 
 export type Role = keyof typeof LIBELLES_ROLES;
+
+export const ROLES = Object.keys(LIBELLES_ROLES) as Role[];
+
+/** Rôles du bureau exécutif : ils gèrent l'organisation et voient tous les documents. Sans délégation. */
+export const ROLES_BUREAU: readonly Role[] = ["president", "vice_president", "secretaire_general"];
+
+export function estRoleBureau(role: Role): boolean {
+  return ROLES_BUREAU.includes(role);
+}

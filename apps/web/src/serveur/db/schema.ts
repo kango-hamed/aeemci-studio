@@ -3,8 +3,8 @@
  *
  * - Tables d'authentification : `user`, `session`, `account`, `verification`, au format attendu par
  *   Better Auth (noms anglais imposés par la bibliothèque).
- * - Organisation de l'association : section → délégations → mandats → affectations (un rôle par mandat).
- *   Le détail (délégations, droits fins) arrive au lot 2 ; le lot 1 pose la structure.
+ * - Organisation de l'association : section → délégations → mandats → affectations (un rôle par mandat),
+ *   invitations (lien d'activation ou de réinitialisation remis par le bureau).
  *
  * - Génération : gabarits et leurs révisions publiées, photos téléversées, documents générés.
  *
@@ -91,8 +91,10 @@ export const delegation = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     sectionId: uuid("section_id").notNull().references(() => section.id),
-    /** « Bureau exécutif », « Cellule communication », « Délégation culturelle »… */
+    /** « Cellule communication », « Délégation culturelle »… Le bureau exécutif n'en est pas une : ses rôles sont sans délégation. */
     nom: text("nom").notNull(),
+    /** Archivée : plus proposée pour les affectations, ses documents restent lisibles. */
+    archivee: boolean("archivee").notNull().default(false),
     ...horodatage,
   },
   (t) => [uniqueIndex("delegation_section_nom_idx").on(t.sectionId, t.nom)],
@@ -129,6 +131,24 @@ export const affectation = pgTable(
     ...horodatage,
   },
   (t) => [index("affectation_user_idx").on(t.userId), uniqueIndex("affectation_mandat_user_idx").on(t.mandatId, t.userId)],
+);
+
+/**
+ * Lien d'activation (premier mot de passe) ou de réinitialisation, remis par le bureau au membre.
+ * Seule l'empreinte SHA-256 du jeton est gardée ; un lien sert une fois et expire.
+ */
+export const invitation = pgTable(
+  "invitation",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    empreinte: text("empreinte").notNull().unique(),
+    expireLe: timestamp("expire_le", { withTimezone: true }).notNull(),
+    utiliseeLe: timestamp("utilisee_le", { withTimezone: true }),
+    creeParId: text("cree_par_id").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("invitation_user_idx").on(t.userId)],
 );
 
 // ── Génération ─────────────────────────────────────────────────────────────────
@@ -194,7 +214,10 @@ export const document = pgTable(
     largeur: integer("largeur").notNull(),
     hauteur: integer("hauteur").notNull(),
     miniature: text("miniature").notNull(),
+    /** Rattachement à la création : mandat et délégation de l'auteur (délégation vide : bureau exécutif ou administrateur). */
+    mandatId: uuid("mandat_id").references(() => mandat.id),
+    delegationId: uuid("delegation_id").references(() => delegation.id),
     ...horodatage,
   },
-  (t) => [index("document_auteur_idx").on(t.auteurId, t.createdAt)],
+  (t) => [index("document_auteur_idx").on(t.auteurId, t.createdAt), index("document_delegation_idx").on(t.delegationId, t.createdAt)],
 );

@@ -67,6 +67,8 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 
 ## Lot 2 · Organisation, mandats et accès
 
+**Livré le 30/10/2026** (sauf gabarits par délégation et tableau de bord, reportés). Écran « Organisation » réservé au bureau : membres et rôles du mandat en cours, liens d'activation et de réinitialisation à partager (WhatsApp), délégations ; page `/activer/<lien>` ; documents rattachés à la délégation de l'auteur et lisibles par elle ; page « Documents » avec ceux de la délégation (ou de toute la section pour le bureau). Décisions : doc 02.
+
 - Modèle : section → délégations → mandats → membres avec **un rôle par mandat** (président, secrétaire général, responsable de délégation, membre).
 - Comptes créés par le bureau (invitation par e-mail) ; l'inscription libre est déjà fermée (lot 1a). Un membre qui n'a plus de rôle au nouveau mandat perd l'écriture automatiquement.
 - Droits par délégation et par rôle, vérifiés côté serveur dans la couche d'accès aux données (`fonctionnalites/*/requetes.ts`) ; gabarits utilisables par délégation.
@@ -110,6 +112,6 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 | Lot | Décision |
 |---|---|
 | 1 | ~~Hébergement~~ (Cloud Run 2 Go + Neon + R2, gratuit) ; date de bascule depuis la V1 (1c) ; largeur d'impression souhaitée (3600 px par défaut) |
-| 2 | Liste exacte des délégations et des rôles ; qui crée les comptes |
+| 2 | ~~Délégations~~ (gérées dans l'application) ; ~~qui crée les comptes~~ (bureau exécutif, lien à partager) ; gabarits réservés à certaines délégations ou non |
 | 4 | Signature et cachet par type de document ; signataires des PV ; remise à zéro de la numérotation |
 | 5 | Durée de conservation des documents ; données des membres conservées après leur départ |
