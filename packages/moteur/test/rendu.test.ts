@@ -50,7 +50,7 @@ describe("consignes (sans navigateur)", () => {
     expect(c[4]).toMatchObject({ genre: "jauge", ratio: 0.5, couleur: "#F29400" });
     const m = consignesDuPlan(membre, membre.plans[0], { nom: "Awa", photo: "photo-test.jpg" }, fichiers, "/donnees");
     expect(m[0]).toMatchObject({ genre: "image", x: 337, y: 606, largeur: 407, hauteur: 396, ajustement: "couvrir" });
-    expect([...fichiers.values()]).toContain("/donnees/photo-test.jpg");
+    expect([...fichiers.values()]).toContain(path.resolve("/donnees", "photo-test.jpg"));
   });
 });
 
