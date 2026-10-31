@@ -20,6 +20,7 @@ Date : 30/10/2026. **Plan validé par Kango le 30/10/2026**, puis **révisé le 
 | **4** | Documents administratifs : PDF A4, numérotation, validation, signature | Lettres, PV, convocations, attestations numérotés et signés par le président | L | 3 |
 | **5** | Activités, archives, passation | Bilans, historique des mandats, dossier de passation automatique | M | 3 (4 pour les PDF signés) |
 | **6** | Outillage des gabarits dans la plateforme | L'équipe communication publie ses gabarits sans outil local | S | 1 (s'enrichit avec 2) |
+| **7** | Lettres en nombre (invitations, demandes de dons) | Une lettre personnalisée, numérotée et signée par destinataire, validée une seule fois | S | 4, 5 |
 
 Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le lot 1 est livré. Tailles relatives (S < M < L), sans durée : l'équipe et sa disponibilité ne sont pas encore connues.
 
@@ -111,6 +112,15 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 - L'atelier devient l'écran **Gabarits** de la plateforme (administration) : import direct du dossier produit par le plugin, réglages, aperçu, publication, révisions.
 - Contrôles à l'import : polices non installées, libellés d'exemple, couches.
 - Ensuite : Illustrator par export SVG, puis le plugin Illustrator de DesignHub (P2).
+
+## Lot 7 · Lettres en nombre
+
+**Livré le 31/10/2026.** Ajouté après le lot 6 : une activité appelle souvent des lettres d'invitation ou de demande de dons, une par destinataire. Décisions : doc 02.
+
+- Lettre type avec variables, liste de destinataires importée d'un fichier CSV (modèle téléchargeable), aperçu de toutes les lettres.
+- Validation unique, un numéro pour l'envoi et un suffixe par lettre, signature et cachet sur chaque lettre.
+- PDF de toutes les lettres à imprimer, zip d'un PDF par destinataire ; depuis la fiche d'activité, texte de départ et rattachement.
+- Ensuite (V3, avec les PCO des activités) : droits des PCO, suivi des réponses et des dons, envoi des e-mails par la plateforme.
 
 ---
 

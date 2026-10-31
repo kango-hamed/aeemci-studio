@@ -141,7 +141,9 @@ export function controlerContenu(t: DefinitionType, contenu: Record<string, stri
   return erreurs;
 }
 
-export function titreParDefaut(t: DefinitionType, contenu: Record<string, string>): string {
-  const v = contenu[t.champTitre]?.trim().replace(/\s+/g, " ");
-  return (v ? `${t.libelle} · ${v}` : t.libelle).slice(0, 200);
+/** « Lettre · objet » ; « Lettres en nombre · objet » pour un envoi (variables retirées). */
+export function titreParDefaut(t: DefinitionType, contenu: Record<string, string>, envoi = false): string {
+  const v = contenu[t.champTitre]?.replace(/\{[a-z0-9_]+\}/g, "").trim().replace(/\s+/g, " ");
+  const libelle = envoi ? "Lettres en nombre" : t.libelle;
+  return (v ? `${libelle} · ${v}` : libelle).slice(0, 200);
 }

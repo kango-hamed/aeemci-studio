@@ -31,7 +31,7 @@ export default async function PageRedaction({ params, searchParams }: { params: 
         <span aria-current="page">Rédaction</span>
       </nav>
       <div className="flex flex-col gap-2">
-        <span className="etiquette text-orange-texte">{t.libelle}</span>
+        <span className="etiquette text-orange-texte">{l.d.destinataires ? `Lettres en nombre · ${l.d.destinataires.length} destinataire${l.d.destinataires.length > 1 ? "s" : ""}` : t.libelle}</span>
         <h1 className="titre-1 m-0">{l.d.titre}</h1>
       </div>
       {correction && (
@@ -48,10 +48,11 @@ export default async function PageRedaction({ params, searchParams }: { params: 
           type={t.code}
           id={l.d.id}
           contenu={l.d.contenu ?? {}}
-          titre={l.d.titre === titreParDefaut(t, l.d.contenu ?? {}) ? "" : l.d.titre}
+          titre={l.d.titre === titreParDefaut(t, l.d.contenu ?? {}, l.d.destinataires !== null) ? "" : l.d.titre}
           visibilite={l.d.visibilite}
           aUneDelegation={Boolean(l.d.delegationId)}
           refus={refus}
+          envoi={l.d.destinataires ? { destinataires: l.d.destinataires } : undefined}
         />
         <div className="flex flex-col gap-3 lg:sticky lg:top-6">
           <h2 className="titre-3 m-0">Aperçu du projet</h2>

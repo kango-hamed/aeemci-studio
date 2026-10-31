@@ -1,15 +1,18 @@
 import "server-only";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { and, asc, eq, sql } from "drizzle-orm";
+import { PDFArray, PDFDict, PDFDocument, PDFRawStream, PDFRef, type PDFObject } from "pdf-lib";
 import { db, schema } from "@/serveur/db";
 import { stockage } from "@/serveur/stockage";
-import { catalogue, cheminDeTeleversement, rendrePageA4 } from "@/fonctionnalites/generation/rendu";
+import { catalogue, cheminDeTeleversement, rendrePageA4, rendrePdfA4 } from "@/fonctionnalites/generation/rendu";
+import { activitePourDepot } from "@/fonctionnalites/activites/gestion";
 import { ErreurSaisie, visibiliteEffective } from "@/fonctionnalites/documents/creer";
 import { peutCreerDocuments, peutModifierDocument, peutValider, type Acteur, type Visibilite } from "@/fonctionnalites/organisation/droits";
 import { mandatCourant, type MandatCourant } from "@/fonctionnalites/organisation/requetes";
-import { htmlDocument, piedDocument, RESSOURCE_CACHET, type BlocSignature } from "./mise-en-page";
+import { controlerEnvoi, lettrePour, suffixeLettre, type Destinataire } from "./envois";
+import { htmlDocument, htmlLettres, piedDocument, RESSOURCE_CACHET, type BlocSignature, type DonneesMiseEnPage } from "./mise-en-page";
 import { controlerContenu, definitionType, LONGUEUR_MAX_CHAMP, titreParDefaut, type DefinitionType, type TypeAdministratif } from "./types";
 
 /**
@@ -23,6 +26,8 @@ import { controlerContenu, definitionType, LONGUEUR_MAX_CHAMP, titreParDefaut, t
  * - Le numéro est pris dans le compteur pendant la transaction de validation : si le rendu échoue,
  *   le compteur revient en arrière et la séquence reste sans trou.
  * - Un document validé ne change plus : le corriger crée une nouvelle version, qui refait le circuit.
+ * - Lettres en nombre (`destinataires` renseigné) : une lettre type validée une fois, un numéro pour
+ *   l'envoi et un suffixe par lettre (…/014-01, …/014-02) ; un PDF par lettre et un PDF qui les réunit.
  */
 
 const LARGEUR_MINIATURE = 360;
@@ -111,12 +116,71 @@ interface Rendu {
 }
 
 /** Projet (filigrane, sans numéro ni signature), pour la rédaction et la relecture. */
-async function rendreProjet(t: DefinitionType, contenu: Record<string, string>, auteurId: string, section: string): Promise<Rendu> {
+async function rendreProjet(t: DefinitionType, contenu: Record<string, string>, auteurId: string, section: string, destinataires: Destinataire[] | null): Promise<Rendu> {
   const signatures: BlocSignature[] = [{ titre: TITRES.president, nom: "" }];
   if (t.code === "PV") signatures.unshift({ titre: TITRES.secretaire_seance, nom: await nomDe(auteurId) });
-  const donnees = { type: t, contenu, numero: null, date: new Date(), section, signatures, projet: true };
-  return rendrePageA4({ html: htmlDocument(donnees), ressources: ressourcesFixes(), pied: piedDocument(donnees) }, LARGEUR_MINIATURE);
+  const page = (c: Record<string, string>): DonneesMiseEnPage => ({ type: t, contenu: c, numero: null, date: new Date(), section, signatures, projet: true });
+  // Envoi : toutes les lettres à la suite ; tant que la liste manque, la lettre type avec ses variables.
+  const lettres = destinataires?.length ? destinataires.map((d) => page(lettrePour(contenu, d))) : [page(contenu)];
+  return rendrePageA4({ html: htmlLettres(lettres), ressources: ressourcesFixes(), pied: piedDocument(lettres[0]!) }, LARGEUR_MINIATURE);
 }
+
+/** Champs manquants ou invalides ; pour un envoi, la liste et les variables, puis la première lettre. */
+function erreursDe(t: DefinitionType, contenu: Record<string, string>, destinataires: Destinataire[] | null) {
+  if (!destinataires) return controlerContenu(t, contenu);
+  const e = controlerEnvoi(contenu, destinataires);
+  return e.length ? e : controlerContenu(t, lettrePour(contenu, destinataires[0]!));
+}
+
+/**
+ * Lettres réunies en un PDF. Chaque lettre embarque les mêmes images (sceau, logo, signature, cachet),
+ * profils de couleur et souvent polices : les flux identiques sont ramenés à un seul, sinon cent lettres
+ * pèseraient cent fois les images.
+ */
+export async function fusionnerPdf(pdfs: Buffer[]): Promise<Buffer> {
+  const tout = await PDFDocument.create();
+  for (const p of pdfs) {
+    const source = await PDFDocument.load(p);
+    for (const page of await tout.copyPages(source, source.getPageIndices())) tout.addPage(page);
+  }
+  dedoublonnerFlux(tout);
+  return Buffer.from(await tout.save());
+}
+
+function dedoublonnerFlux(doc: PDFDocument) {
+  const ctx = doc.context;
+  const remplacer = (o: PDFObject, vers: Map<PDFRef, PDFRef>) => {
+    const dict = o instanceof PDFRawStream ? o.dict : o;
+    if (dict instanceof PDFDict)
+      for (const [k, v] of dict.entries()) {
+        if (v instanceof PDFRef && vers.has(v)) dict.set(k, vers.get(v)!);
+        else remplacer(v, vers);
+      }
+    else if (dict instanceof PDFArray)
+      for (let i = 0; i < dict.size(); i++) {
+        const v = dict.get(i);
+        if (v instanceof PDFRef && vers.has(v)) dict.set(i, vers.get(v)!);
+        else remplacer(v, vers);
+      }
+  };
+  // Un flux qui renvoie à d'autres (image → masque, profil) ne devient identique qu'une fois ceux-ci fusionnés.
+  for (let passe = 0; passe < 4; passe++) {
+    const premiers = new Map<string, PDFRef>();
+    const doublons = new Map<PDFRef, PDFRef>();
+    for (const [ref, o] of ctx.enumerateIndirectObjects()) {
+      if (!(o instanceof PDFRawStream)) continue;
+      const cle = createHash("sha256").update(o.dict.toString()).update(o.contents).digest("hex");
+      const premier = premiers.get(cle);
+      if (premier) doublons.set(ref, premier);
+      else premiers.set(cle, ref);
+    }
+    if (!doublons.size) break;
+    for (const [, o] of ctx.enumerateIndirectObjects()) remplacer(o, doublons);
+    for (const ref of doublons.keys()) ctx.delete(ref);
+  }
+}
+
+export const cleLettre = (documentId: string, suffixe: string) => `documents/${documentId}/lettres/${suffixe}.pdf`;
 
 /** Contenu limité aux champs du type, textes nettoyés et bornés. */
 function nettoyer(t: DefinitionType, saisi: Record<string, unknown>): Record<string, string> {
@@ -149,6 +213,12 @@ export interface Redaction {
   contenu: Record<string, unknown>;
   titre?: string;
   visibilite?: Visibilite;
+  /** Nouveau document : lettres en nombre. */
+  envoi?: boolean;
+  /** Liste importée ; absente : la liste enregistrée est gardée. */
+  destinataires?: Destinataire[];
+  /** Nouveau document : activité à laquelle il se rattache (il faut pouvoir la modifier). */
+  activiteId?: string;
 }
 
 /** Enregistre la rédaction (même incomplète) et refait le projet PDF. */
@@ -164,12 +234,17 @@ export async function enregistrerRedaction(u: Acteur, r: Redaction, rattachement
   }
   const t = definitionType(existant?.typeAdministratif ?? r.type);
   if (!t) throw new ErreurSaisie("Type de document inconnu.");
+  const envoi = existant ? existant.destinataires !== null : Boolean(r.envoi);
+  if (envoi && t.code !== "LET") throw new ErreurSaisie("Seules les lettres s'envoient en nombre.");
+  const destinataires = envoi ? (r.destinataires ?? existant?.destinataires ?? []) : null;
+  // Vérifie le droit de rattacher à l'activité avant tout rendu.
+  if (!existant && r.activiteId) await activitePourDepot(u, r.activiteId);
   const contenu = nettoyer(t, r.contenu);
-  const titre = (r.titre?.trim() || titreParDefaut(t, contenu)).slice(0, 200);
+  const titre = (r.titre?.trim() || titreParDefaut(t, contenu, envoi)).slice(0, 200);
   const id = existant?.id ?? randomUUID();
-  const rendu = await rendreProjet(t, contenu, existant?.auteurId ?? u.id, m.section);
+  const rendu = await rendreProjet(t, contenu, existant?.auteurId ?? u.id, m.section, destinataires);
   const cles = await ecrireRendu(id, "projet", rendu);
-  const commun = { titre, contenu, fichier: cles.fichier, miniature: cles.miniature, taille: rendu.pdf.length, nomFichier: nomPdf(titre) };
+  const commun = { titre, contenu, destinataires, fichier: cles.fichier, miniature: cles.miniature, taille: rendu.pdf.length, nomFichier: nomPdf(titre) };
 
   if (existant) {
     await db
@@ -189,6 +264,7 @@ export async function enregistrerRedaction(u: Acteur, r: Redaction, rattachement
       type: "application/pdf",
       mandatId: rattachement.mandatId,
       delegationId: rattachement.delegationId,
+      activiteId: r.activiteId ?? null,
     });
   }
   return { id };
@@ -213,7 +289,7 @@ export async function soumettre(u: Acteur, id: string): Promise<void> {
   if (!peutModifierDocument(u, d)) throw new ErreurSaisie("Document introuvable.");
   if (d.etatValidation !== "redaction" && d.etatValidation !== "a_corriger") throw new ErreurSaisie("Ce document n'est pas en rédaction.");
   const t = definitionType(d.typeAdministratif)!;
-  const erreurs = controlerContenu(t, d.contenu ?? {});
+  const erreurs = erreursDe(t, d.contenu ?? {}, d.destinataires);
   if (erreurs.length) throw new ErreurSaisie("Le document est incomplet.", erreurs);
   if (t.code === "PV" && !(await signatureDe(d.auteurId)))
     throw new ErreurSaisie(
@@ -279,7 +355,7 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
   if (d.fige) throw new ErreurSaisie(MESSAGE_FIGE);
   if (d.etatValidation !== "soumis") throw new ErreurSaisie("Ce document n'attend pas de validation.");
   const t = definitionType(d.typeAdministratif)!;
-  const erreurs = controlerContenu(t, d.contenu ?? {});
+  const erreurs = erreursDe(t, d.contenu ?? {}, d.destinataires);
   if (erreurs.length) throw new ErreurSaisie("Le document est incomplet.", erreurs);
 
   const signatureValideur = await signatureDe(u.id);
@@ -316,8 +392,26 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
       })
       .returning({ dernier: schema.compteur.dernier });
     const numero = formaterNumero(m.section, code, t.code, annee, c!.dernier);
-    const donnees = { type: t, contenu: d.contenu ?? {}, numero, date: maintenant, section: m.section, signatures: blocs, projet: false };
-    const rendu = await rendrePageA4({ html: htmlDocument(donnees), ressources, pied: piedDocument(donnees) }, LARGEUR_MINIATURE);
+    const donnees: DonneesMiseEnPage = { type: t, contenu: d.contenu ?? {}, numero, date: maintenant, section: m.section, signatures: blocs, projet: false };
+    let rendu: Rendu;
+    if (d.destinataires) {
+      // Une lettre par destinataire, numérotée et rendue seule (pied et pages propres), puis réunies.
+      const pdfs: Buffer[] = [];
+      let miniature: Buffer | undefined;
+      for (const [i, dest] of d.destinataires.entries()) {
+        const suffixe = suffixeLettre(i + 1, d.destinataires.length);
+        const lettre = { ...donnees, contenu: lettrePour(donnees.contenu, dest), numero: `${numero}-${suffixe}` };
+        const o = { html: htmlDocument(lettre), ressources, pied: piedDocument(lettre) };
+        let pdf: Buffer;
+        if (i === 0) ({ pdf, miniature } = await rendrePageA4(o, LARGEUR_MINIATURE));
+        else pdf = await rendrePdfA4(o);
+        await stockage().ecrire(cleLettre(id, suffixe), pdf, "application/pdf");
+        pdfs.push(pdf);
+      }
+      rendu = { pdf: await fusionnerPdf(pdfs), miniature: miniature! };
+    } else {
+      rendu = await rendrePageA4({ html: htmlDocument(donnees), ressources, pied: piedDocument(donnees) }, LARGEUR_MINIATURE);
+    }
     const cles = await ecrireRendu(id, "valide", rendu);
     await tx
       .update(schema.document)
@@ -347,10 +441,10 @@ export async function nouvelleVersion(u: Acteur, id: string, rattachement: { man
   if (d.etatValidation !== "valide") throw new ErreurSaisie("Seul un document validé se corrige par une nouvelle version.");
   const nouveau = await enregistrerRedaction(
     u,
-    { type: d.typeAdministratif, contenu: d.contenu ?? {}, titre: d.titre, visibilite: d.visibilite },
+    { type: d.typeAdministratif, contenu: d.contenu ?? {}, titre: d.titre, visibilite: d.visibilite, envoi: d.destinataires !== null, destinataires: d.destinataires ?? undefined },
     { mandatId: rattachement.mandatId, delegationId: d.delegationId },
   );
-  await db.update(schema.document).set({ versionDeId: d.id }).where(eq(schema.document.id, nouveau.id));
+  await db.update(schema.document).set({ versionDeId: d.id, activiteId: d.activiteId }).where(eq(schema.document.id, nouveau.id));
   await evenement(db, d.id, u.id, "nouvelle_version");
   return nouveau;
 }

@@ -11,7 +11,7 @@ import { CarteDocument } from "@/fonctionnalites/documents/CarteDocument";
 import { ChoixFichiers } from "@/fonctionnalites/documents/ChoixFichiers";
 import { libelleVisibilite } from "@/fonctionnalites/documents/partage";
 import { rechercherDocuments } from "@/fonctionnalites/documents/requetes";
-import { estBureau, peutModifierActivite } from "@/fonctionnalites/organisation/droits";
+import { estBureau, peutCreerDocuments, peutModifierActivite } from "@/fonctionnalites/organisation/droits";
 import { delegationsDe, mandatCourant } from "@/fonctionnalites/organisation/requetes";
 
 export const metadata: Metadata = { title: "Activité" };
@@ -103,6 +103,19 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
               </h2>
               <ChoixFichiers id="photos-activite" libelle="Ajouter des photos ou des fichiers" accept="image/*,application/pdf" champs={{ activiteId: a.id }} />
               <RattacherDocument activiteId={a.id} candidats={candidats.filter((d) => bureau || d.estAMoi).map((d) => ({ id: d.id, titre: d.titre }))} />
+              {peutCreerDocuments(u) && (
+                <div className="flex flex-col gap-2">
+                  <p className="m-0 text-sm font-semibold">Lettres personnalisées, une par destinataire</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Link href={`/rediger?envoi=invitation&activite=${a.id}`} className="flex min-h-11 items-center rounded-m border border-vert-esatic px-4 font-semibold text-vert-esatic no-underline">
+                      Lettres d&apos;invitation
+                    </Link>
+                    <Link href={`/rediger?envoi=dons&activite=${a.id}`} className="flex min-h-11 items-center rounded-m border border-vert-esatic px-4 font-semibold text-vert-esatic no-underline">
+                      Demandes de dons
+                    </Link>
+                  </div>
+                </div>
+              )}
               <p className="m-0 text-sm text-encre-douce">
                 Une affiche ou un document officiel se crée depuis <Link href="/gabarits">Créer</Link> ou <Link href="/rediger">Rédiger</Link>, puis se rattache ici.
               </p>

@@ -188,4 +188,38 @@ describe.skipIf(!url)("documents administratifs (Postgres + Chromium)", () => {
     expect(await m.circuit.versionSuivante(valide!.id)).toBe(id);
     expect((await lire(valide!.id))!.etatValidation).toBe("valide");
   });
+
+  it("lettres en nombre : une lettre type, un numéro et un suffixe par destinataire, un PDF par lettre et un PDF réuni", async () => {
+    const { PDFDocument } = await import("pdf-lib");
+    const contenu = { objet: "Invitation", appel: "{civilite} {fonction},", corps: "Nous avons l'honneur de vous inviter, {nom}." };
+    const liste: Record<string, string>[] = [
+      { civilite: "Monsieur", nom: "Koné Ibrahim", fonction: "Directeur Général", organisme: "ESATIC" },
+      { civilite: "Madame", nom: "Traoré Awa", organisme: "Mairie" },
+    ];
+    const { id } = await m.circuit.enregistrerRedaction(com1, { type: "LET", contenu, envoi: true }, await rattachement(com1));
+    expect((await lire(id, com1))!).toMatchObject({ destinataires: [], titre: "Lettres en nombre · Invitation" });
+    await expect(m.circuit.soumettre(com1, id)).rejects.toMatchObject({ erreurs: [expect.objectContaining({ champ: "destinataires" })] });
+    await m.circuit.enregistrerRedaction(com1, { id, type: "LET", contenu, destinataires: liste }, await rattachement(com1));
+    await expect(m.circuit.soumettre(com1, id)).rejects.toMatchObject({ erreurs: [expect.objectContaining({ message: expect.stringMatching(/\{fonction\} est vide/) })] });
+    liste[1]!.fonction = "Maire";
+    await m.circuit.enregistrerRedaction(com1, { id, type: "LET", contenu, destinataires: liste }, await rattachement(com1));
+    // Sans nouvelle liste, la liste enregistrée reste.
+    await m.circuit.enregistrerRedaction(com1, { id, type: "LET", contenu }, await rattachement(com1));
+    expect((await lire(id, com1))!.destinataires).toHaveLength(2);
+    expect((await PDFDocument.load((await m.stockage.stockage().lire((await lire(id, com1))!.fichier))!)).getPageCount()).toBe(2);
+    await m.circuit.soumettre(com1, id);
+
+    const { numero } = await m.circuit.valider(president, id);
+    expect(numero).toMatch(new RegExp(`^AEEMCI-ESATIC/COM/LET/${annee}/\\d{3}$`));
+    for (const s of ["01", "02"]) expect((await m.stockage.stockage().lire(m.circuit.cleLettre(id, s)))?.subarray(0, 5).toString()).toBe("%PDF-");
+    const reuni = (await m.stockage.stockage().lire((await lire(id))!.fichier))!;
+    expect((await PDFDocument.load(reuni)).getPageCount()).toBe(2);
+    // Les images communes (sceau, logo, signature, cachet) ne sont gardées qu'une fois.
+    expect(reuni.length).toBeLessThan((await m.stockage.stockage().lire(m.circuit.cleLettre(id, "01")))!.length * 1.5);
+    // Le compteur n'avance que d'un pour tout l'envoi.
+    const suivant = await rediger(com1, "LET", LETTRE);
+    await m.circuit.soumettre(com1, suivant);
+    expect((await m.circuit.valider(president, suivant)).numero).toBe(numero.replace(/\d{3}$/, (n) => String(Number(n) + 1).padStart(3, "0")));
+    await expect(m.circuit.enregistrerRedaction(com1, { type: "PV", contenu: PV, envoi: true }, await rattachement(com1))).rejects.toThrow(/Seules les lettres/);
+  });
 });

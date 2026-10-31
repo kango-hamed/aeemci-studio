@@ -1,11 +1,12 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { AlertTriangle, Loader2, Save, Send } from "lucide-react";
+import { AlertTriangle, Download, Loader2, Save, Send } from "lucide-react";
 import type { Visibilite } from "@/fonctionnalites/organisation/droits";
 import { visibilitesPour } from "@/fonctionnalites/documents/partage";
 import { enregistrerRedaction, type EtatCircuit } from "./actions";
 import { definitionType, LONGUEUR_MAX_CHAMP, type TypeAdministratif } from "./types";
+import { colonnesDe, COLONNES_ADRESSE, MAX_DESTINATAIRES, MODELE_CSV, type Destinataire } from "./envois";
 
 const champ = "w-full rounded-s border border-trait-champ bg-surface-relevee px-3 text-base text-encre aria-invalid:border-danger";
 
@@ -22,6 +23,10 @@ export function FormulaireRedaction(p: {
   aUneDelegation: boolean;
   /** Message d'un refus de soumission survenu juste après la création. */
   refus?: string;
+  /** Lettres en nombre : la liste enregistrée (vide au départ). */
+  envoi?: { destinataires: Destinataire[] };
+  /** Nouveau document créé depuis une activité. */
+  activiteId?: string;
 }) {
   const t = definitionType(p.type)!;
   const [etat, envoyer, enCours] = useActionState<EtatCircuit, FormData>(enregistrerRedaction, p.refus ? { erreur: p.refus } : {});
@@ -29,12 +34,17 @@ export function FormulaireRedaction(p: {
   const [titre, setTitre] = useState(p.titre ?? "");
   const [visibilite, setVisibilite] = useState<Visibilite>(p.visibilite ?? (p.aUneDelegation ? "delegation" : "bureau"));
   const erreurDe = (nom: string) => etat.erreurs?.find((x) => x.champ === nom)?.message;
+  // Envoi : le bloc destinataire vient du fichier, chaque lettre a le sien.
+  const champs = p.envoi ? t.champs.filter((c) => c.nom !== "destinataire") : t.champs;
 
   return (
     <form action={envoyer} className="flex flex-col gap-5" noValidate>
       {p.id && <input type="hidden" name="id" value={p.id} />}
       <input type="hidden" name="type" value={p.type} />
-      {t.champs.map((c) => {
+      {!p.id && p.envoi && <input type="hidden" name="envoi" value="1" />}
+      {!p.id && p.activiteId && <input type="hidden" name="activiteId" value={p.activiteId} />}
+      {p.envoi && <Destinataires liste={p.envoi.destinataires} erreur={erreurDe("destinataires")} />}
+      {champs.map((c) => {
         const id = `champ-${c.nom}`;
         const erreur = erreurDe(c.nom);
         const commun = {
@@ -52,9 +62,9 @@ export function FormulaireRedaction(p: {
               {c.libelle}
               {!c.requis && <span className="font-normal text-encre-douce"> (facultatif)</span>}
             </label>
-            {c.aide && (
+            {(c.aide || (p.envoi && c.nom !== "pieces")) && (
               <p id={`${id}-aide`} className="m-0 text-sm text-encre-douce">
-                {c.aide}
+                {[c.aide, p.envoi && c.nom !== "pieces" ? "Variables permises : {nom}, {fonction}…, remplacées pour chaque destinataire." : ""].filter(Boolean).join(" ")}
               </p>
             )}
             {c.genre === "texte" ? (
@@ -132,5 +142,58 @@ export function FormulaireRedaction(p: {
         </button>
       </div>
     </form>
+  );
+}
+
+/** Liste des destinataires d'un envoi : ce qui est importé, le fichier à déposer, les variables. */
+function Destinataires({ liste, erreur }: { liste: Destinataire[]; erreur?: string }) {
+  const colonnes = liste.length ? colonnesDe(liste) : [...COLONNES_ADRESSE];
+  const nomDe = (d: Destinataire) => [d.civilite, d.nom].filter(Boolean).join(" ") || d.organisme;
+  return (
+    <fieldset className="m-0 flex flex-col gap-3 rounded-m border border-trait p-4" aria-describedby="destinataires-aide">
+      <legend className="px-1 font-semibold">Destinataires</legend>
+      {liste.length ? (
+        <p className="m-0">
+          <b>{liste.length} destinataire{liste.length > 1 ? "s" : ""}</b> : {liste.slice(0, 4).map(nomDe).join(", ")}
+          {liste.length > 4 ? "…" : ""}
+        </p>
+      ) : (
+        <p className="m-0 text-encre-douce">Aucune liste importée pour l&apos;instant.</p>
+      )}
+      <p id="destinataires-aide" className="m-0 text-sm text-encre-douce">
+        Fichier CSV (Excel : Enregistrer sous › CSV), une ligne par destinataire, {MAX_DESTINATAIRES} au plus. Colonnes reconnues : civilite, nom, fonction, organisme,
+        adresse ; toute autre colonne devient une variable. Un nouveau fichier remplace la liste.
+      </p>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="champ-destinataires" className="text-sm font-semibold">
+          {liste.length ? "Remplacer la liste" : "Importer la liste"}
+        </label>
+        <input
+          id="champ-destinataires"
+          name="destinataires"
+          type="file"
+          accept=".csv,text/csv"
+          aria-invalid={erreur ? true : undefined}
+          aria-describedby={erreur ? "champ-destinataires-erreur" : undefined}
+          className="text-base file:mr-3 file:min-h-11 file:rounded-m file:border file:border-vert-esatic file:bg-transparent file:px-4 file:font-semibold file:text-vert-esatic"
+        />
+        {erreur && (
+          <p id="champ-destinataires-erreur" className="m-0 text-sm text-danger">
+            {erreur}
+          </p>
+        )}
+      </div>
+      <a
+        href={`data:text/csv;charset=utf-8,${encodeURIComponent("\uFEFF" + MODELE_CSV)}`}
+        download="destinataires-modele.csv"
+        className="flex min-h-11 items-center gap-2 self-start text-sm font-semibold"
+      >
+        <Download size={16} aria-hidden />
+        Télécharger un fichier modèle
+      </a>
+      <p className="m-0 text-sm">
+        Variables : {colonnes.map((c) => <code key={c} className="mr-1.5 rounded-s bg-creme px-1.5 py-0.5">{`{${c}}`}</code>)}
+      </p>
+    </fieldset>
   );
 }

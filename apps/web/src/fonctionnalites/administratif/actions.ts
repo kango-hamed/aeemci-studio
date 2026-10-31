@@ -6,6 +6,7 @@ import { z } from "zod";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { ErreurSaisie } from "@/fonctionnalites/documents/creer";
 import * as circuit from "./circuit";
+import { ErreurEnvoi, lireCsv, type Destinataire } from "./envois";
 import { changerInterim as changerInterimMandat } from "./signatures";
 
 export interface EtatCircuit {
@@ -23,6 +24,7 @@ async function executer(op: () => Promise<void>): Promise<EtatCircuit | null> {
     return null;
   } catch (e) {
     if (e instanceof ErreurSaisie) return { erreur: e.message, erreurs: e.erreurs };
+    if (e instanceof ErreurEnvoi) return { erreur: e.message, erreurs: [{ champ: "destinataires", message: e.message }] };
     if (e instanceof z.ZodError) return { erreur: "Saisie invalide." };
     throw e;
   }
@@ -31,6 +33,7 @@ async function executer(op: () => Promise<void>): Promise<EtatCircuit | null> {
 /**
  * Rédaction : enregistre (`intention=enregistrer`) ou enregistre puis soumet (`intention=soumettre`).
  * Les champs du document arrivent préfixés : `c.objet`, `c.corps`…
+ * Lettres en nombre : `envoi=1` et `activiteId` à la création ; `destinataires`, le fichier CSV (facultatif ensuite).
  */
 export async function enregistrerRedaction(_e: EtatCircuit, f: FormData): Promise<EtatCircuit> {
   const u = await exigerUtilisateur();
@@ -38,17 +41,23 @@ export async function enregistrerRedaction(_e: EtatCircuit, f: FormData): Promis
   for (const [k, v] of f.entries()) if (k.startsWith("c.") && typeof v === "string") contenu[k.slice(2)] = v;
   const visibilite = z.enum(["bureau", "delegation", "section"]).optional().catch(undefined).parse(lire(f, "visibilite") || undefined);
   let id = lire(f, "id") || undefined;
+  const fichier = f.get("destinataires");
+  const activiteId = lire(f, "activiteId") || undefined;
   const echec = await executer(async () => {
     if (id) Id.parse(id);
+    if (activiteId) Id.parse(activiteId);
+    let destinataires: Destinataire[] | undefined;
+    if (fichier instanceof File && fichier.size > 0) destinataires = lireCsv(new Uint8Array(await fichier.arrayBuffer()));
     const r = await circuit.enregistrerRedaction(
       u,
-      { id, type: lire(f, "type"), contenu, titre: lire(f, "titre"), visibilite },
+      { id, type: lire(f, "type"), contenu, titre: lire(f, "titre"), visibilite, envoi: lire(f, "envoi") === "1", destinataires, activiteId },
       { mandatId: u.affectation?.mandatId ?? null, delegationId: u.affectation?.delegationId ?? null },
     );
     id = r.id;
   });
   if (echec) return echec;
   revalidatePath(`/documents/${id}`);
+  if (activiteId) revalidatePath(`/activites/${activiteId}`);
   if (lire(f, "intention") === "soumettre") {
     const refus = await executer(() => circuit.soumettre(u, id!));
     // Enregistré mais pas soumis (incomplet…) : on reste sur la rédaction, avec le document créé.

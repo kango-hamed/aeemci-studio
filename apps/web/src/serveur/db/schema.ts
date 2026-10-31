@@ -297,6 +297,8 @@ export const document = pgTable(
     valideLe: timestamp("valide_le", { withTimezone: true }),
     valideParId: text("valide_par_id").references(() => user.id),
     signataires: jsonb("signataires").$type<Signataire[]>(),
+    /** Lettres en nombre : une ligne par destinataire (colonnes du fichier importé). Vide pour un document seul. */
+    destinataires: jsonb("destinataires").$type<Record<string, string>[]>(),
     /** Version précédente : un document validé est figé, sa correction crée une nouvelle version. */
     versionDeId: uuid("version_de_id"),
     /** Rattachement à la création : mandat et délégation de l'auteur (délégation vide : bureau exécutif ou administrateur). */

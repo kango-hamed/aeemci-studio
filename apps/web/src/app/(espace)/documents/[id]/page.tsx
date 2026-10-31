@@ -13,6 +13,8 @@ import { mandatCourant } from "@/fonctionnalites/organisation/requetes";
 import { cachetDeSection, historique, signatureDe, versionSuivante } from "@/fonctionnalites/administratif/circuit";
 import { PanneauCircuit } from "@/fonctionnalites/administratif/PanneauCircuit";
 import { definitionType } from "@/fonctionnalites/administratif/types";
+import { blocDestinataire } from "@/fonctionnalites/administratif/envois";
+import { FileArchive } from "lucide-react";
 import type { Utilisateur } from "@/fonctionnalites/authentification/session";
 
 export const metadata: Metadata = { title: "Document" };
@@ -122,7 +124,7 @@ export default async function PageDocument({ params, searchParams }: { params: P
         </div>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <span className="etiquette text-encre-douce">{genere ? l.gabarit : officiel ? `Document officiel · ${officiel.libelle}` : "Fichier déposé"}</span>
+            <span className="etiquette text-encre-douce">{genere ? l.gabarit : officiel ? `Document officiel · ${l.d.destinataires ? "Lettres en nombre" : officiel.libelle}` : "Fichier déposé"}</span>
             <h1 className="titre-2 m-0">{l.d.titre}</h1>
             <p className="m-0 text-sm leading-5 text-encre-douce">
               {l.d.auteurId !== u.id ? `Par ${l.auteur} le ` : "Créé le "}
@@ -144,6 +146,29 @@ export default async function PageDocument({ params, searchParams }: { params: P
             )}
           </div>
           {officiel && (await circuitDe(l, u, modifiable))}
+          {l.d.destinataires && (
+            <section aria-labelledby="titre-destinataires" className="flex flex-col gap-3">
+              <h2 id="titre-destinataires" className="titre-3 m-0">
+                {l.d.destinataires.length} destinataire{l.d.destinataires.length > 1 ? "s" : ""}
+              </h2>
+              {l.d.etatValidation === "valide" && (
+                <a href={`/api/documents/${l.d.id}/lettres`} className="flex min-h-11 items-center gap-2 self-start font-semibold">
+                  <FileArchive size={18} aria-hidden />
+                  Lettres séparées (zip, un PDF par destinataire)
+                </a>
+              )}
+              <details>
+                <summary className="cursor-pointer text-sm font-semibold">Voir la liste</summary>
+                <ol className="mt-2 mb-0 flex max-h-80 flex-col gap-2 overflow-y-auto pl-6 text-sm">
+                  {l.d.destinataires.map((d, i) => (
+                    <li key={i} className="whitespace-pre-line">
+                      {blocDestinataire(d)}
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            </section>
+          )}
           <ActionsDocument
             id={l.d.id}
             titre={l.d.titre}

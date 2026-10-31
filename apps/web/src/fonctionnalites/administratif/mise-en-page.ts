@@ -233,16 +233,10 @@ export function enteteOfficiel(section: string): string {
 <div class="filet"></div>`;
 }
 
-export function htmlDocument(d: DonneesMiseEnPage): string {
+/** Corps d'un document : en-tête, références, contenu propre au type, signatures. */
+function pageDocument(d: DonneesMiseEnPage): string {
   const piecesJointes = d.type.code === "LET" ? rubrique("Pièces jointes", liste(d.contenu.pieces)) : "";
-  return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><title>${e(d.type.libelle)}</title>
-<style>
-${STYLE_PAGE}
-</style></head>
-<body>
-${d.projet ? '<div class="filigrane" aria-hidden="true">PROJET</div>' : ""}
-${enteteOfficiel(d.section)}
+  return `${enteteOfficiel(d.section)}
 <div class="references">
   <span class="numero${d.numero ? "" : " projet"}">N° ${d.numero ? e(d.numero) : "attribué à la validation"}</span>
   <span>${VILLE}, le ${e(dateLongue(d.date))}</span>
@@ -250,8 +244,30 @@ ${enteteOfficiel(d.section)}
 ${corps(d)}
 ${signatures(d)}
 ${piecesJointes}
-<p class="devise">${e(DEVISE)}</p>
+<p class="devise">${e(DEVISE)}</p>`;
+}
+
+function enveloppe(titre: string, projet: boolean, contenu: string): string {
+  return `<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>${e(titre)}</title>
+<style>
+${STYLE_PAGE}
+.lettre{break-after:page}
+.lettre:last-child{break-after:auto}
+</style></head>
+<body>
+${projet ? '<div class="filigrane" aria-hidden="true">PROJET</div>' : ""}
+${contenu}
 </body></html>`;
+}
+
+export function htmlDocument(d: DonneesMiseEnPage): string {
+  return enveloppe(d.type.libelle, d.projet, pageDocument(d));
+}
+
+/** Plusieurs lettres dans un même PDF, chacune sur ses pages (projet d'un envoi). */
+export function htmlLettres(lettres: DonneesMiseEnPage[]): string {
+  return enveloppe("Lettres", lettres.some((l) => l.projet), lettres.map((l) => `<section class="lettre">${pageDocument(l)}</section>`).join("\n"));
 }
 
 /** Texte du pied de page, répété sur chaque page. */
