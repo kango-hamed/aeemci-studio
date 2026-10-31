@@ -104,7 +104,7 @@ export function AtelierGabarit({ gabaritId, initial, controlesInitiaux }: { gaba
   const problemes = (apercu.rapport ?? []).filter((z) => z.depasse || z.coupe || z.reduit);
 
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,440px)]">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,440px)]">
       <div className="flex flex-col gap-4">
         <Alertes controles={controles} />
         <ol className="m-0 flex list-none flex-col gap-4 p-0">

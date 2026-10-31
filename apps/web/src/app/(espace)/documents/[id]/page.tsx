@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { ActionsDocument } from "@/fonctionnalites/documents/ActionsDocument";
+import { ApercuPdfMobile } from "@/fonctionnalites/documents/ApercuPdfMobile";
 import { dateFr } from "@/fonctionnalites/documents/CarteDocument";
 import { libelleVisibilite } from "@/fonctionnalites/documents/partage";
 import { ReglagesDocument } from "@/fonctionnalites/documents/ReglagesDocument";
@@ -86,7 +87,7 @@ export default async function PageDocument({ params, searchParams }: { params: P
         <span aria-hidden>›</span>
         <span aria-current="page">{l.d.titre}</span>
       </nav>
-      <div className="grid items-start gap-8 md:grid-cols-[minmax(0,1fr)_minmax(260px,360px)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 md:grid-cols-[minmax(0,1fr)_minmax(260px,360px)]">
         <div className="flex flex-col gap-4">
           {formats.length > 1 && (
             <nav aria-label="Formats" className="flex flex-wrap gap-1 self-start rounded-m bg-creme p-1">
@@ -107,9 +108,7 @@ export default async function PageDocument({ params, searchParams }: { params: P
           {l.d.type === "application/pdf" ? (
             <div className="flex flex-col gap-3">
               <iframe src={src} title={`PDF « ${l.d.titre} »`} className="hidden h-[80vh] w-full rounded-l border border-trait bg-surface-relevee md:block" />
-              <p className="m-0 rounded-l bg-creme p-6 md:hidden">
-                Ce document est un PDF : <a href={src}>ouvre-le</a> ou télécharge-le.
-              </p>
+              <ApercuPdfMobile pdf={src} miniature={l.d.miniature ? `/api/documents/${l.d.id}/miniature?v=${l.d.updatedAt.getTime()}` : null} titre={l.d.titre} className="md:hidden" />
             </div>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element -- fichier privé servi par l'API après contrôle de session

@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "À valider" };
 function Grille({ documents, vide }: { documents: ResumeDocument[]; vide: string }) {
   if (!documents.length) return <p className="m-0 rounded-l bg-creme p-6">{vide}</p>;
   return (
-    <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-6 p-0">
+    <ul className="m-0 grid list-none grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] sm:gap-6 p-0">
       {documents.map((d) => (
         <li key={d.id} className="flex">
           <CarteDocument d={d} />

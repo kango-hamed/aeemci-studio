@@ -136,7 +136,7 @@ export default async function PageDocuments({ searchParams }: { searchParams: Pr
           : `${documents.length} document${documents.length > 1 ? "s" : ""}`}
       </p>
       {documents.length ? (
-        <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-6 p-0">
+        <ul className="m-0 grid list-none grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] sm:gap-6 p-0">
           {documents.map((d) => (
             <li key={d.id} className="flex">
               <CarteDocument d={d} />

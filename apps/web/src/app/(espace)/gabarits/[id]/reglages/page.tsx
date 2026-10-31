@@ -76,7 +76,7 @@ export default async function PageReglagesGabarit({ params }: { params: Promise<
         )}
       </section>
 
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-2">
         <section aria-labelledby="titre-fiche" className="flex flex-col gap-4 rounded-l border border-trait bg-surface-relevee p-5 shadow-carte">
           <h2 id="titre-fiche" className="titre-2 m-0">
             Fiche

@@ -65,7 +65,7 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
         )}
       </div>
 
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-6">
           {a.description && <p className="m-0 max-w-[680px] whitespace-pre-line">{a.description}</p>}
           <section aria-labelledby="titre-bilan" className="flex flex-col gap-2 rounded-l bg-creme p-5">
@@ -81,7 +81,7 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
               Documents et photos ({documents.length})
             </h2>
             {documents.length ? (
-              <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 p-0">
+              <ul className="m-0 grid list-none grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] sm:gap-4 p-0">
                 {documents.map((d) => (
                   <li key={d.id} className="flex flex-col gap-2">
                     <CarteDocument d={d} />

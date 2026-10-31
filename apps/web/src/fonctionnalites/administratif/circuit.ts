@@ -30,7 +30,8 @@ import { controlerContenu, definitionType, LONGUEUR_MAX_CHAMP, titreParDefaut, t
  *   l'envoi et un suffixe par lettre (…/014-01, …/014-02) ; un PDF par lettre et un PDF qui les réunit.
  */
 
-const LARGEUR_MINIATURE = 360;
+/** Assez large pour lire la première page sur un téléphone (elle y remplace l'aperçu PDF). */
+const LARGEUR_MINIATURE = 720;
 /** Code du bureau exécutif dans les numéros ; une délégation a le sien (Organisation). */
 export const CODE_BUREAU = "BE";
 

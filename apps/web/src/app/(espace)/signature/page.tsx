@@ -25,7 +25,7 @@ export default async function PageSignature() {
         </p>
       </div>
       {peutCreerDocuments(u) ? (
-        <div className="grid items-start gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 md:grid-cols-2">
           <ImageSignature
             quoi="signature"
             titre="Ma signature"

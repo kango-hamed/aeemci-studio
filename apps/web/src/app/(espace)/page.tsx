@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { CarteDocument } from "@/fonctionnalites/documents/CarteDocument";
 import { documentsDe } from "@/fonctionnalites/documents/requetes";
+import { InviterInstallation } from "@/fonctionnalites/accueil/Installation";
 import { CarteGabarit } from "@/fonctionnalites/gabarits/CarteGabarit";
 import { gabaritsDisponibles } from "@/fonctionnalites/gabarits/requetes";
 
@@ -20,6 +21,7 @@ export default async function PageAccueil() {
 
   return (
     <>
+      <InviterInstallation />
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-2">
           <span className="etiquette text-encre-douce">{surtitre}</span>
@@ -38,7 +40,7 @@ export default async function PageAccueil() {
           {gabarits.length > 4 && <Link href="/gabarits">Tous les gabarits</Link>}
         </div>
         {gabarits.length ? (
-          <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-6 p-0">
+          <ul className="m-0 grid list-none grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] sm:gap-6 p-0">
             {gabarits.slice(0, 4).map((g) => (
               <li key={g.id} className="flex">
                 <CarteGabarit g={g} />
@@ -58,7 +60,7 @@ export default async function PageAccueil() {
           {documents.length > 0 && <Link href="/documents">Tous mes documents</Link>}
         </div>
         {documents.length ? (
-          <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-6 p-0">
+          <ul className="m-0 grid list-none grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] sm:gap-6 p-0">
             {documents.map((d) => (
               <li key={d.id} className="flex">
                 <CarteDocument d={d} />

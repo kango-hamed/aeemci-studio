@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, CheckCircle2, Download, ImagePlus, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, Eye, ImagePlus, Loader2, X } from "lucide-react";
 import { ChampsPartage } from "@/fonctionnalites/documents/ChampsPartage";
 
 export interface ChampFormulaire {
@@ -76,7 +76,16 @@ export function FormulaireCreation({
   const [erreurs, setErreurs] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [creation, setCreation] = useState(false);
+  // Téléphone : l'aperçu s'ouvre en plein écran par-dessus le formulaire.
+  const [apercuOuvert, setApercuOuvert] = useState(false);
   const sequence = useRef(0);
+
+  useEffect(() => {
+    if (!apercuOuvert) return;
+    const fermer = (e: KeyboardEvent) => e.key === "Escape" && setApercuOuvert(false);
+    window.addEventListener("keydown", fermer);
+    return () => window.removeEventListener("keydown", fermer);
+  }, [apercuOuvert]);
 
   const changer = (nom: string, v: Valeur) => {
     setValeurs((a) => ({ ...a, [nom]: v }));
@@ -173,8 +182,8 @@ export function FormulaireCreation({
   const photoEnCours = Object.values(photos).some((p) => p.envoi);
 
   return (
-    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <form onSubmit={creer} noValidate className="flex flex-col gap-6">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+      <form onSubmit={creer} noValidate className="flex flex-col gap-6 pb-16 lg:pb-0">
         {message && (
           <p role="alert" className="m-0 flex gap-2 rounded-m bg-fond-danger p-3.5 text-sm leading-5 text-danger">
             <AlertTriangle size={18} aria-hidden className="mt-px shrink-0" />
@@ -299,14 +308,48 @@ export function FormulaireCreation({
         <button
           type="submit"
           disabled={creation || photoEnCours}
-          className="flex min-h-12 items-center justify-center gap-2 self-start rounded-m bg-vert-esatic px-5 font-semibold text-sur-vert disabled:opacity-70"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-m bg-vert-esatic px-5 font-semibold text-sur-vert disabled:opacity-70 sm:self-start"
         >
           {creation ? <Loader2 size={20} aria-hidden className="animate-spin" /> : <Download size={20} aria-hidden />}
           {creation ? "Création du document…" : "Créer le document"}
         </button>
       </form>
 
-      <section aria-label="Aperçu" className="order-first flex flex-col gap-3 lg:sticky lg:top-6 lg:order-none">
+      <button
+        type="button"
+        onClick={() => setApercuOuvert(true)}
+        className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 flex items-center gap-2 rounded-full bg-vert-profond py-1.5 pr-4 pl-1.5 font-semibold text-sur-vert-profond shadow-flottante lg:hidden"
+      >
+        {apercu.url ? (
+          // eslint-disable-next-line @next/next/no-img-element -- image produite par le serveur de rendu (blob:)
+          <img src={apercu.url} alt="" className="h-11 w-9 rounded-s object-cover" />
+        ) : (
+          <span className="flex h-11 w-9 items-center justify-center">
+            <Eye size={20} aria-hidden />
+          </span>
+        )}
+        Aperçu
+        {apercu.chargement ? (
+          <Loader2 size={16} aria-hidden className="animate-spin" />
+        ) : (
+          (apercu.erreur || alertes.length > 0) && <AlertTriangle size={16} aria-label="À vérifier" className="text-orange-croissant" />
+        )}
+      </button>
+
+      <section
+        aria-label="Aperçu"
+        className={
+          (apercuOuvert ? "fixed inset-0 z-30 flex overflow-y-auto bg-surface p-4 pt-[calc(1rem+env(safe-area-inset-top))] " : "hidden ") +
+          "flex-col gap-3 lg:sticky lg:inset-auto lg:top-6 lg:z-auto lg:flex lg:overflow-visible lg:bg-transparent lg:p-0"
+        }
+      >
+        <div className="flex items-center justify-between gap-3 lg:hidden">
+          <h2 className="titre-3 m-0">Aperçu</h2>
+          <button type="button" onClick={() => setApercuOuvert(false)} className="flex min-h-11 items-center gap-1.5 rounded-m px-3 font-semibold text-vert-esatic">
+            <X size={20} aria-hidden />
+            Revenir au formulaire
+          </button>
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           {plans.length > 1 ? (
             <div role="tablist" aria-label="Déclinaison" className="flex flex-wrap gap-1 rounded-m bg-creme p-1">

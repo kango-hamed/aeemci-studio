@@ -5,6 +5,7 @@ import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { AvisSignature } from "@/fonctionnalites/administratif/AvisSignature";
 import { historique, signatureDe } from "@/fonctionnalites/administratif/circuit";
 import { FormulaireRedaction } from "@/fonctionnalites/administratif/FormulaireRedaction";
+import { ApercuPdfMobile } from "@/fonctionnalites/documents/ApercuPdfMobile";
 import { definitionType, titreParDefaut } from "@/fonctionnalites/administratif/types";
 import { documentLisible } from "@/fonctionnalites/documents/requetes";
 import { peutModifierDocument } from "@/fonctionnalites/organisation/droits";
@@ -43,7 +44,7 @@ export default async function PageRedaction({ params, searchParams }: { params: 
       {t.code === "PV" && l.d.auteurId === u.id && !(await signatureDe(u.id)) && (
         <AvisSignature texte="Un procès-verbal porte ta signature de secrétaire de séance : enregistre-la avant de le soumettre." />
       )}
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <FormulaireRedaction
           type={t.code}
           id={l.d.id}
@@ -57,9 +58,8 @@ export default async function PageRedaction({ params, searchParams }: { params: 
         <div className="flex flex-col gap-3 lg:sticky lg:top-6">
           <h2 className="titre-3 m-0">Aperçu du projet</h2>
           <iframe src={pdf} title={`Aperçu de « ${l.d.titre} »`} className="hidden h-[85vh] w-full rounded-l border border-trait bg-surface-relevee lg:block" />
-          <p className="m-0 rounded-l bg-creme p-4 lg:hidden">
-            <a href={pdf}>Ouvre l&apos;aperçu PDF</a> après avoir enregistré.
-          </p>
+          <ApercuPdfMobile pdf={pdf} miniature={`/api/documents/${l.d.id}/miniature?v=${l.d.updatedAt.getTime()}`} titre={l.d.titre} className="lg:hidden" />
+          <p className="m-0 text-sm text-encre-douce lg:hidden">L&apos;aperçu se met à jour à chaque enregistrement du projet.</p>
         </div>
       </div>
     </>

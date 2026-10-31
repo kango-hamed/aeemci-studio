@@ -90,7 +90,7 @@
   --shadow-flottante: var(--ombre-flottante);
 }
 
-/* Échelle typographique de la charte. */
+/* Échelle typographique de la charte (titres un cran plus petits sur téléphone). */
 @utility texte-affiche {
   font-family: var(--font-titre);
   font-size: 48px;
@@ -100,15 +100,23 @@
 }
 @utility titre-1 {
   font-family: var(--font-titre);
-  font-size: 32px;
-  line-height: 38px;
+  font-size: 26px;
+  line-height: 32px;
   font-weight: 700;
+  @media (width >= 40rem) {
+    font-size: 32px;
+    line-height: 38px;
+  }
 }
 @utility titre-2 {
   font-family: var(--font-titre);
-  font-size: 24px;
-  line-height: 30px;
+  font-size: 20px;
+  line-height: 26px;
   font-weight: 700;
+  @media (width >= 40rem) {
+    font-size: 24px;
+    line-height: 30px;
+  }
 }
 @utility titre-3 {
   font-family: var(--font-titre);
@@ -135,6 +143,10 @@
   }
   a {
     color: var(--vert-esatic);
+  }
+  /* Par défaut, un fieldset prend la largeur de son contenu le plus long et déborde sur téléphone. */
+  fieldset {
+    min-width: 0;
   }
   :focus-visible {
     outline: 2px solid var(--vert-esatic);

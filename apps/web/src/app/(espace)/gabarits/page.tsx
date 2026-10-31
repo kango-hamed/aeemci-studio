@@ -28,7 +28,7 @@ export default async function PageGabarits() {
         )}
       </div>
       {gabarits.length ? (
-        <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6 p-0">
+        <ul className="m-0 grid list-none grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] sm:gap-6 p-0">
           {gabarits.map((g) => (
             <li key={g.id} className="flex">
               <CarteGabarit g={g} />

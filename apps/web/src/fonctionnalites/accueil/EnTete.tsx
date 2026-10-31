@@ -6,6 +6,7 @@ import type { Utilisateur } from "@/fonctionnalites/authentification/session";
 import { peutGererOrganisation } from "@/fonctionnalites/organisation/droits";
 import { LIBELLES_ROLES } from "@/fonctionnalites/organisation/roles";
 import { NAVIGATION } from "@/fonctionnalites/navigation";
+import { BarreOnglets } from "./BarreOnglets";
 import { LienNavigation } from "./LienNavigation";
 
 function initiales(nom: string) {
@@ -25,22 +26,25 @@ export function descriptionRole(u: Utilisateur): string {
   return u.estAdministrateur ? "Administrateur de la plateforme" : "Sans rôle dans le mandat en cours";
 }
 
-/** `aValider` : nombre de documents officiels qui attendent la validation, pour le président (ou le vice-président en intérim). */
+/**
+ * `aValider` : nombre de documents officiels qui attendent la validation, pour le président (ou le vice-président en intérim).
+ * À partir de 1024 px, menu et profil dans l'en-tête ; en dessous, en-tête réduit et barre d'onglets en bas (`BarreOnglets`).
+ */
 export function EnTete({ utilisateur, aValider }: { utilisateur: Utilisateur; aValider: number | null }) {
   const entrees = NAVIGATION.filter(
     (e) => !e.reserve || (e.reserve === "administrateur" ? utilisateur.estAdministrateur : peutGererOrganisation(utilisateur)),
   );
   return (
-    <header className="bg-vert-profond text-sur-vert-profond">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
+    <header className="bg-vert-profond pt-[env(safe-area-inset-top)] text-sur-vert-profond">
+      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-2.5 sm:px-6 lg:py-3">
         <Link href="/" className="flex items-center gap-3 text-sur-vert-profond no-underline">
-          <span className="flex rounded-m bg-surface-relevee px-2.5 py-1.5">
-            <Image src="/logo-aeemci-esatic.png" alt="Logo AEEMCI ESATIC" width={54} height={32} priority />
+          <span className="flex rounded-m bg-surface-relevee px-2 py-1 lg:px-2.5 lg:py-1.5">
+            <Image src="/logo-aeemci-esatic.png" alt="Logo AEEMCI ESATIC" width={54} height={32} priority className="h-7 w-auto lg:h-8" />
           </span>
           <span className="font-titre text-lg font-bold">AEEMCI Studio</span>
         </Link>
 
-        <nav aria-label="Navigation principale" className="flex flex-auto flex-wrap gap-1">
+        <nav aria-label="Navigation principale" className="hidden flex-auto flex-wrap gap-1 lg:flex">
           {entrees.map((e) => (
             <LienNavigation key={e.href} href={e.href} aussi={e.aussi}>
               {aValider !== null && e.libelleValideur ? e.libelleValideur : e.libelle}
@@ -54,7 +58,7 @@ export function EnTete({ utilisateur, aValider }: { utilisateur: Utilisateur; aV
           ))}
         </nav>
 
-        <div className="flex items-center gap-2.5">
+        <div className="hidden items-center gap-2.5 lg:flex">
           <span
             aria-hidden
             className="flex size-10 items-center justify-center rounded-full bg-or font-titre font-bold text-sur-orange"
@@ -76,6 +80,7 @@ export function EnTete({ utilisateur, aValider }: { utilisateur: Utilisateur; aV
           </form>
         </div>
       </div>
+      <BarreOnglets entrees={entrees} aValider={aValider} nom={utilisateur.nom} initiales={initiales(utilisateur.nom)} role={descriptionRole(utilisateur)} />
     </header>
   );
 }

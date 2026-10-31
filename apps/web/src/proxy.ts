@@ -15,6 +15,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Tout sauf la connexion, l'activation par lien, l'API (protégée elle-même), les fichiers de Next.js et les fichiers publics.
-  matcher: ["/((?!connexion|activer|api|_next/static|_next/image|favicon\\.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|woff2?)$).*)"],
+  // Tout sauf la connexion, l'activation par lien, l'API (protégée elle-même), les fichiers de Next.js et les fichiers publics,
+  // ni ce qu'il faut pour installer l'application : manifeste, service worker et page hors ligne.
+  matcher: ["/((?!connexion|activer|api|hors-ligne|sw\\.js|manifest\\.webmanifest|_next/static|_next/image|favicon\\.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|woff2?)$).*)"],
 };

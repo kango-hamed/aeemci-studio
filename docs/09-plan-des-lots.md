@@ -122,6 +122,13 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 - PDF de toutes les lettres à imprimer, zip d'un PDF par destinataire ; depuis la fiche d'activité, texte de départ et rattachement.
 - Ensuite (V3, avec les PCO des activités) : droits des PCO, suivi des réponses et des dons, envoi des e-mails par la plateforme.
 
+## Lot 8 · Version mobile
+
+**8a livré le 31/10/2026.** Application web installable (PWA), sans passer par les stores. Décisions : doc 02.
+
+- 8a : barre d'onglets en bas et panneau « Plus », installation (manifeste, icônes, page hors connexion, invitation à installer), écrans repris pour le téléphone (création d'affiche, rédaction, validation, documents, activités, archives).
+- 8b (à venir) : recevoir une photo partagée depuis la galerie, notifications essentielles (document à valider, document validé).
+
 ---
 
 ## Décisions à prendre, par lot

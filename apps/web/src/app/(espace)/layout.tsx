@@ -1,4 +1,5 @@
 import { EnTete } from "@/fonctionnalites/accueil/EnTete";
+import { ServiceWorker } from "@/fonctionnalites/accueil/Installation";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { nombreAValider } from "@/fonctionnalites/documents/requetes";
 import { peutValider } from "@/fonctionnalites/organisation/droits";
@@ -17,8 +18,9 @@ export default async function LayoutEspace({ children }: { children: React.React
       >
         Aller au contenu
       </a>
+      <ServiceWorker />
       <EnTete utilisateur={utilisateur} aValider={aValider} />
-      <main id="contenu" className="mx-auto box-border flex w-full max-w-[1200px] flex-col gap-8 px-4 pt-10 pb-16 sm:px-6">
+      <main id="contenu" className="mx-auto box-border flex w-full max-w-[1200px] flex-col gap-6 px-4 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 lg:gap-8 lg:pt-10 lg:pb-16">
         {children}
       </main>
     </div>
