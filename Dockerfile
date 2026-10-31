@@ -11,7 +11,6 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/
 COPY packages/moteur/package.json packages/moteur/
-COPY outils/atelier/package.json outils/atelier/
 RUN npm ci
 
 # ── Build ──────────────────────────────────────────────────────────────────────

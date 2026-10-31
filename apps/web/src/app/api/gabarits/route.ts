@@ -1,14 +1,16 @@
 import { erreur, membreOuRefus } from "@/serveur/reponses";
 import { ErreurImport, importerGabarit, TAILLE_MAX_IMPORT } from "@/fonctionnalites/gabarits/importer";
+import { peutGererGabarits } from "@/fonctionnalites/organisation/droits";
 
 /**
- * Import d'un gabarit publié par l'atelier (administrateurs).
- * Corps multipart : paires `chemin` (chemin relatif dans le dossier) / `fichier`, dans le même ordre.
+ * Import du dossier d'un gabarit produit par le plugin Photoshop (administrateurs et designers).
+ * Corps multipart : paires `chemin` (chemin relatif dans le dossier) / `fichier`, dans le même ordre ;
+ * `gabaritId` facultatif : le dossier devient la nouvelle version de ce gabarit. Réponse : le brouillon créé.
  */
 export async function POST(request: Request) {
   const u = await membreOuRefus();
   if (u instanceof Response) return u;
-  if (!u.estAdministrateur) return erreur(403, "Réservé aux administrateurs de la plateforme.");
+  if (!peutGererGabarits(u)) return erreur(403, "Réservé aux administrateurs et aux designers.");
   const taille = Number(request.headers.get("content-length") ?? 0);
   if (taille > TAILLE_MAX_IMPORT) return erreur(413, "Dossier trop lourd (30 Mo au plus).");
 
@@ -22,8 +24,9 @@ export async function POST(request: Request) {
     if (typeof f === "string") return erreur(400, "Envoi invalide.");
     fichiers.set(chemins[i]!, Buffer.from(await f.arrayBuffer()));
   }
+  const gabaritId = form.get("gabaritId");
   try {
-    return Response.json(await importerGabarit(fichiers, u.id));
+    return Response.json(await importerGabarit(fichiers, u.id, { gabaritId: typeof gabaritId === "string" && gabaritId ? gabaritId : undefined }));
   } catch (e) {
     if (e instanceof ErreurImport) return erreur(422, e.message, { details: e.details });
     throw e;

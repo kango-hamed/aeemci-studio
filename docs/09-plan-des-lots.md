@@ -31,7 +31,7 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 
 ### 1a. Squelette de l'application (fait le 30/10/2026)
 
-- Monorepo npm : `apps/web` (Next.js 16, App Router), `packages/moteur`, `outils/atelier`.
+- Monorepo npm : `apps/web` (Next.js 16, App Router), `packages/moteur`, `outils/atelier` (retiré au lot 6, remplacé par l'écran Gabarits).
 - Charte en jetons Tailwind (clair et sombre), polices Montserrat, Outfit et Amiri embarquées.
 - Base Postgres (Neon) avec Drizzle : tables d'authentification, section, délégations, mandats, affectations (un rôle par mandat). Migrations versionnées dans `apps/web/drizzle/`.
 - Authentification Better Auth hébergée dans l'application : e-mail et mot de passe, **pas d'inscription libre**, premier administrateur créé par `npm run admin:creer`. Session vérifiée côté serveur dans chaque page et action.
@@ -105,6 +105,8 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 - Écrans : fiche d'activité, archives et passation.
 
 ## Lot 6 · Outillage des gabarits dans la plateforme
+
+**Livré le 31/10/2026** (sauf Illustrator, P2). Écran Gabarits (doc 08) : import du dossier brut du plugin en brouillon, réglages avec aperçu par le moteur, publication, réglages repris d'une version à l'autre, remise en service d'une révision, réservation à des délégations ; rôle « designer » dans Organisation ; atelier local retiré. Décisions : doc 02.
 
 - L'atelier devient l'écran **Gabarits** de la plateforme (administration) : import direct du dossier produit par le plugin, réglages, aperçu, publication, révisions.
 - Contrôles à l'import : polices non installées, libellés d'exemple, couches.

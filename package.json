@@ -4,7 +4,7 @@
   "description": "AEEMCI Studio : plateforme de la section AEEMCI ESATIC (génération, documents, validation, activités, archives)",
   "type": "module",
   "engines": { "node": ">=22.18" },
-  "workspaces": ["apps/*", "packages/*", "outils/*"],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "npm run dev -w @aeemci-studio/web",
     "build": "npm run build -w @aeemci-studio/web",

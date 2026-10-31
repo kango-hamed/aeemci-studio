@@ -1,8 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { KeyRound, Pencil, UserMinus } from "lucide-react";
-import { lienPourMembre, modifierPoste, retirerDuMandat, type EtatAction } from "./actions";
+import { KeyRound, Palette, Pencil, UserMinus } from "lucide-react";
+import { changerDesigner, lienPourMembre, modifierPoste, retirerDuMandat, type EtatAction } from "./actions";
 import { ChampsPoste, MessageErreur, type OptionDelegation } from "./ChampsPoste";
 import { LienActivation } from "./LienActivation";
 import type { EtatCompte, MembreDuMandat } from "./requetes";
@@ -26,7 +26,8 @@ export function LigneMembre({ m, delegations, estMoi }: { m: MembreDuMandat; del
   }, {});
   const [etatRetrait, envoyerRetrait, retraitEnCours] = useActionState<EtatAction, FormData>(retirerDuMandat, {});
   const [etatLien, envoyerLien, lienEnCours] = useActionState<EtatAction, FormData>(lienPourMembre, {});
-  const erreur = etatPoste.erreur ?? etatRetrait.erreur ?? etatLien.erreur;
+  const [etatDesigner, envoyerDesigner, designerEnCours] = useActionState<EtatAction, FormData>(changerDesigner, {});
+  const erreur = etatPoste.erreur ?? etatRetrait.erreur ?? etatLien.erreur ?? etatDesigner.erreur;
   const idErreur = `erreur-${m.affectationId}`;
 
   return (
@@ -41,7 +42,10 @@ export function LigneMembre({ m, delegations, estMoi }: { m: MembreDuMandat; del
         </div>
         <div className="flex min-w-[200px] flex-1 flex-col">
           <span>{LIBELLES_ROLES[m.role]}</span>
-          <span className="text-sm text-encre-douce">{m.delegation ?? "Bureau exécutif"}</span>
+          <span className="text-sm text-encre-douce">
+            {m.delegation ?? "Bureau exécutif"}
+            {m.designer && " · designer"}
+          </span>
         </div>
         <span className={"text-sm " + (m.compte === "actif" ? "text-encre-douce" : "font-semibold text-orange-texte")}>{LIBELLES_COMPTE[m.compte]}</span>
         <div className="flex flex-wrap gap-2">
@@ -51,6 +55,14 @@ export function LigneMembre({ m, delegations, estMoi }: { m: MembreDuMandat; del
               Modifier
             </button>
           )}
+          <form action={envoyerDesigner}>
+            <input type="hidden" name="affectationId" value={m.affectationId} />
+            <input type="hidden" name="designer" value={m.designer ? "0" : "1"} />
+            <button type="submit" disabled={designerEnCours} className={bouton} title="Un designer importe, règle et publie les gabarits.">
+              <Palette size={16} aria-hidden />
+              {m.designer ? "Retirer designer" : "Designer"}
+            </button>
+          </form>
           <form action={envoyerLien}>
             <input type="hidden" name="userId" value={m.userId} />
             <input type="hidden" name="nom" value={m.nom} />

@@ -63,10 +63,11 @@ describe.skipIf(!url)("génération (Postgres + Chromium)", () => {
 
   afterAll(() => fs.rmSync(dossierStockage, { recursive: true, force: true }));
 
-  it("refuse un dossier sans publication de l'atelier", async () => {
+  it("refuse un dossier qui ne vient pas du plugin", async () => {
     const f = dossierPublie();
     f.delete("membre-retenu/gabarit.publie.json");
-    await expect(m.importer.importerGabarit(f, admin)).rejects.toThrow(/gabarit\.publie\.json/);
+    f.delete("membre-retenu/manifest.json");
+    await expect(m.importer.importerGabarit(f, admin)).rejects.toThrow(/manifest\.json/);
   });
 
   it("refuse un gabarit dont le fond manque, avec la raison", async () => {
@@ -79,20 +80,20 @@ describe.skipIf(!url)("génération (Postgres + Chromium)", () => {
   let revisionId: string;
 
   it("importe le gabarit, stocke ses fichiers et sa vignette", async () => {
-    const r = await m.importer.importerGabarit(dossierPublie(), admin);
+    const r = await m.importer.importerGabarit(dossierPublie(), admin, { publier: true });
     expect(r).toMatchObject({ nom: "Membre retenu", numero: 1, nouveau: true });
     ({ gabaritId, revisionId } = r);
-    const liste = await m.gabarits.gabaritsDisponibles();
+    const liste = await m.gabarits.gabaritsDisponibles({ id: admin, estAdministrateur: true, affectation: null });
     expect(liste).toEqual([expect.objectContaining({ id: gabaritId, revisionId, aVignette: true, largeur: 1080, hauteur: 1350 })]);
-    const vignette = await m.stockage.stockage().lire(`gabarits/${gabaritId}/${revisionId}/vignette.jpg`);
+    const vignette = await m.stockage.stockage().lire(`gabarits/${gabaritId}/${revisionId}/vignette-${revisionId}.jpg`);
     expect(vignette?.subarray(0, 2)).toEqual(Buffer.from([0xff, 0xd8]));
   });
 
   it("une nouvelle publication du même nom crée la révision 2", async () => {
-    const r = await m.importer.importerGabarit(dossierPublie(), admin);
+    const r = await m.importer.importerGabarit(dossierPublie(), admin, { publier: true });
     expect(r).toMatchObject({ gabaritId, numero: 2, nouveau: false });
     revisionId = r.revisionId;
-    expect((await m.gabarits.gabaritsDisponibles()).map((g) => g.numero)).toEqual([2]);
+    expect((await m.gabarits.gabaritsDisponibles({ id: admin, estAdministrateur: true, affectation: null })).map((g) => g.numero)).toEqual([2]);
   });
 
   it("refuse un document fait sur une révision dépassée", async () => {
@@ -163,7 +164,7 @@ describe.skipIf(!url)("génération (Postgres + Chromium)", () => {
     };
     const pub = { format: "aeemci-studio/gabarit-publie", revision: 1, nom: "Grande affiche", gabarit };
     const { rendre, LARGEUR_HD, LARGEUR_REDUITE } = await import("@/fonctionnalites/generation/rendu");
-    const r = await m.importer.importerGabarit(new Map([["gabarit.publie.json", Buffer.from(JSON.stringify(pub))], ["gabarit/fond.png", PNG.sync.write(fond)]]), admin);
+    const r = await m.importer.importerGabarit(new Map([["gabarit.publie.json", Buffer.from(JSON.stringify(pub))], ["gabarit/fond.png", PNG.sync.write(fond)]]), admin, { publier: true });
     const reduit = await m.stockage.stockage().lire(`gabarits/${r.gabaritId}/${r.revisionId}/reduit/gabarit/fond.png`);
     expect(PNG.sync.read(reduit!).width).toBe(LARGEUR_REDUITE);
     const revision = { id: r.revisionId, prefixe: `gabarits/${r.gabaritId}/${r.revisionId}`, contenu: gabarit as never };

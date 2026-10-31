@@ -64,6 +64,10 @@ export async function modifierPoste(_e: EtatAction, f: FormData): Promise<EtatAc
   });
 }
 
+export async function changerDesigner(_e: EtatAction, f: FormData): Promise<EtatAction> {
+  return executer((acteur) => gestion.changerDesigner(acteur, Id.parse(texte(f, "affectationId")), texte(f, "designer") === "1"));
+}
+
 export async function retirerDuMandat(_e: EtatAction, f: FormData): Promise<EtatAction> {
   return executer((acteur) => gestion.retirerDuMandat(acteur, Id.parse(texte(f, "affectationId"))));
 }

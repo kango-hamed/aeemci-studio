@@ -122,6 +122,13 @@ export async function modifierPoste(acteur: Acteur, affectationId: string, p: Po
   await db.update(schema.affectation).set({ role: p.role, delegationId }).where(eq(schema.affectation.id, a.id));
 }
 
+/** Marque (ou non) le membre comme designer : il gère alors les gabarits, quel que soit son rôle. */
+export async function changerDesigner(acteur: Acteur, affectationId: string, designer: boolean): Promise<void> {
+  const m = await contexte(acteur);
+  const a = await affectationDuMandat(m, affectationId);
+  await db.update(schema.affectation).set({ designer }).where(eq(schema.affectation.id, a.id));
+}
+
 /** Retire le membre du mandat : il garde son compte et la lecture de ses documents, sans plus rien créer. */
 export async function retirerDuMandat(acteur: Acteur, affectationId: string): Promise<void> {
   const m = await contexte(acteur);

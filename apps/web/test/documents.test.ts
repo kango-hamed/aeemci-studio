@@ -89,7 +89,7 @@ describe.skipIf(!url)("documents (Postgres + Chromium)", () => {
   afterAll(() => fs.rmSync(dossierStockage, { recursive: true, force: true }));
 
   it("un seul formulaire produit toutes les déclinaisons du gabarit", async () => {
-    const g = await m.importer.importerGabarit(dossierPublie(), president.id);
+    const g = await m.importer.importerGabarit(dossierPublie(), president.id, { publier: true });
     // Photo du membre, comme l'envoie le formulaire (route /api/televersements).
     const { db, schema } = await import("@/serveur/db");
     const cle = `televersements/${com1.id}/photo.jpg`;

@@ -37,7 +37,7 @@ export default async function PageOrganisation() {
         <h1 className="titre-1 m-0">Organisation</h1>
         <p className="m-0 max-w-[720px] text-encre-douce">
           Les droits suivent le rôle dans le mandat : un membre lit les documents de sa délégation, le bureau exécutif voit tout. Un membre retiré du
-          mandat garde ses documents mais ne crée plus rien.
+          mandat garde ses documents mais ne crée plus rien. Les designers (cellule communication) gèrent les gabarits.
         </p>
       </div>
 

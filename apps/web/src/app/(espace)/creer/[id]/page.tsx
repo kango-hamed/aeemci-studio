@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Créer un document" };
 
 export default async function PageCreer({ params }: { params: Promise<{ id: string }> }) {
   const u = await exigerUtilisateur();
-  const g = await gabaritACompleter((await params).id);
+  const g = await gabaritACompleter((await params).id, u);
   if (!g) notFound();
   const contenu = g.revision.contenu;
   const zones = contenu.plans.flatMap((p) => p.zones);

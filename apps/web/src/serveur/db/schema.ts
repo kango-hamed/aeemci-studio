@@ -136,6 +136,8 @@ export const affectation = pgTable(
     userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
     delegationId: uuid("delegation_id").references(() => delegation.id),
     role: role("role").notNull(),
+    /** Designer (cellule communication) : importe, règle et publie les gabarits, quel que soit son rôle. */
+    designer: boolean("designer").notNull().default(false),
     ...horodatage,
   },
   (t) => [index("affectation_user_idx").on(t.userId), uniqueIndex("affectation_mandat_user_idx").on(t.mandatId, t.userId)],
@@ -187,7 +189,8 @@ export const revisionGabarit = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     gabaritId: uuid("gabarit_id").notNull().references(() => gabarit.id, { onDelete: "cascade" }),
-    numero: integer("numero").notNull(),
+    /** Attribué à la publication ; un brouillon n'en a pas. */
+    numero: integer("numero"),
     contenu: jsonb("contenu").$type<Gabarit>().notNull(),
     /** Préfixe des fichiers dans le stockage : les chemins `fond` et `couches` du contenu s'y ajoutent. */
     prefixe: text("prefixe").notNull(),
@@ -196,9 +199,22 @@ export const revisionGabarit = pgTable(
     /** Révision indiquée par l'atelier dans `gabarit.publie.json`. */
     revisionAtelier: integer("revision_atelier"),
     importeParId: text("importe_par_id").references(() => user.id, { onDelete: "set null" }),
+    /** Vide : brouillon (réglages en cours, invisible des membres). Un gabarit a au plus un brouillon. */
+    publieeLe: timestamp("publiee_le", { withTimezone: true }),
+    publieeParId: text("publiee_par_id").references(() => user.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("revision_gabarit_numero_idx").on(t.gabaritId, t.numero)],
+);
+
+/** Gabarit réservé à certaines délégations ; sans ligne, il sert à toute la section. */
+export const gabaritDelegation = pgTable(
+  "gabarit_delegation",
+  {
+    gabaritId: uuid("gabarit_id").notNull().references(() => gabarit.id, { onDelete: "cascade" }),
+    delegationId: uuid("delegation_id").notNull().references(() => delegation.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.gabaritId, t.delegationId] })],
 );
 
 /** Photo envoyée depuis le formulaire, réutilisée par les aperçus puis par le document. */

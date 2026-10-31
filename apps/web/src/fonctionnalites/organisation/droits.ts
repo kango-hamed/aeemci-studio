@@ -15,6 +15,9 @@
  * - Documents administratifs : le président valide et signe ; le vice-président aussi quand le président
  *   a activé l'intérim. Un administrateur de la plateforme ne valide pas : il n'est pas signataire.
  *
+ * - Gabarits : les administrateurs et les designers du mandat (cellule communication) les importent, les
+ *   règlent et les publient. Un gabarit réservé à des délégations ne sert qu'à leurs membres (et au bureau).
+ *
  * `filtreLecture` (documents/requetes.ts) traduit `peutLireDocument` en SQL : les deux vont ensemble.
  */
 import { estRoleBureau, type Role } from "./roles";
@@ -22,7 +25,7 @@ import { estRoleBureau, type Role } from "./roles";
 export interface Acteur {
   id: string;
   estAdministrateur: boolean;
-  affectation: { role: Role; delegationId: string | null } | null;
+  affectation: { role: Role; delegationId: string | null; designer?: boolean } | null;
 }
 
 export function estBureau(u: Acteur): boolean {
@@ -118,4 +121,15 @@ export function peutLirePassation(u: Acteur, delegationId: string | null): boole
 export function peutEcrirePassation(u: Acteur, delegationId: string | null): boolean {
   if (u.estAdministrateur || estBureau(u)) return true;
   return delegationId !== null && u.affectation?.role === "responsable_delegation" && u.affectation.delegationId === delegationId;
+}
+
+/** Importer, régler et publier les gabarits. */
+export function peutGererGabarits(u: Acteur): boolean {
+  return u.estAdministrateur || Boolean(u.affectation?.designer);
+}
+
+/** Créer un document avec un gabarit, réservé ou non (`delegations` vide : toute la section). */
+export function peutUtiliserGabarit(u: Acteur, delegations: string[]): boolean {
+  if (!delegations.length || peutGererGabarits(u) || estBureau(u)) return true;
+  return Boolean(u.affectation?.delegationId && delegations.includes(u.affectation.delegationId));
 }

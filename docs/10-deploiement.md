@@ -97,9 +97,9 @@ Vérifier : `https://…/api/sante` doit répondre `"etat":"ok"` et `"stockage":
 ## 6. Publier le premier gabarit
 
 1. Dans Photoshop, marquer les calques avec le plugin DesignHub puis générer le dossier (doc 07).
-2. Ouvrir ce dossier dans l'atelier (`node outils/atelier/src/serveur.ts --dossier "…"`), écrire les libellés, vérifier l'aperçu, cliquer sur **Publier** (doc 08).
-3. Dans AEEMCI Studio, compte administrateur : **Créer** → **Importer un gabarit** → choisir le même dossier. Le PSD et les exports ne sont pas envoyés ; le dossier envoyé doit faire 30 Mo au plus.
-4. Le gabarit apparaît pour tous les membres. Republier puis réimporter sous le même nom crée une nouvelle révision ; les documents déjà créés gardent la leur.
+2. Dans AEEMCI Studio, compte administrateur ou designer : **Créer** → **Gérer les gabarits** → **Importer un dossier** → choisir ce dossier. Le PSD et les exports ne sont pas envoyés ; le dossier envoyé doit faire 30 Mo au plus.
+3. Dans l'écran du gabarit qui s'ouvre : écrire les libellés, vérifier l'aperçu (texte le plus long compris), cliquer sur **Publier** (doc 08).
+4. Le gabarit apparaît pour les membres. Une nouvelle version depuis Photoshop reprend les réglages ; les documents déjà créés gardent leur révision.
 
 Pour publier une nouvelle version : relancer la commande `gcloud run deploy` ci-dessus.
 

@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   if (u instanceof Response) return u;
   const d = Demande.safeParse(await request.json().catch(() => null));
   if (!d.success) return erreur(400, "Demande d'aperçu invalide.");
-  const g = await gabaritACompleter(d.data.gabaritId);
+  const g = await gabaritACompleter(d.data.gabaritId, u);
   if (!g) return erreur(404, "Ce gabarit n'est plus disponible.");
   try {
     const valeurs = await preparerValeurs(g.revision.contenu, d.data.valeurs, u.id, true);

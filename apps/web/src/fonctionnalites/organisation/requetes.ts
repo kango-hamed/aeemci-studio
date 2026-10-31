@@ -10,6 +10,7 @@ export interface AffectationCourante {
   delegation: string | null;
   delegationId: string | null;
   section: string;
+  designer: boolean;
 }
 
 /** Rôle du membre dans le mandat en cours de sa section, s'il en a un. */
@@ -22,6 +23,7 @@ export async function affectationCourante(userId: string): Promise<AffectationCo
       delegation: schema.delegation.nom,
       delegationId: schema.affectation.delegationId,
       section: schema.section.nom,
+      designer: schema.affectation.designer,
     })
     .from(schema.affectation)
     .innerJoin(schema.mandat, eq(schema.affectation.mandatId, schema.mandat.id))
@@ -90,6 +92,7 @@ export interface MembreDuMandat {
   role: Role;
   delegationId: string | null;
   delegation: string | null;
+  designer: boolean;
   compte: EtatCompte;
 }
 
@@ -131,6 +134,7 @@ export async function membresDuMandat(mandatId: string): Promise<MembreDuMandat[
       role: schema.affectation.role,
       delegationId: schema.affectation.delegationId,
       delegation: schema.delegation.nom,
+      designer: schema.affectation.designer,
     })
     .from(schema.affectation)
     .innerJoin(schema.user, eq(schema.affectation.userId, schema.user.id))
