@@ -97,6 +97,8 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 
 ## Lot 5 · Activités, archives et passation
 
+**Livré le 31/10/2026.** Fiches d'activité avec documents et photos rattachés et bilan, clôture du mandat (nouveau mandat avec son seul président), dossier de passation PDF par délégation, archives avec recherche plein texte et import en lot des anciens dossiers. Une seule délégation organisatrice par activité ; recherche sans index (à ajouter si le volume grandit). Décisions : doc 02.
+
 - **Activités** : fiche (date, lieu, délégations), documents rattachés, photos, bilan.
 - **Mandats** : clôture (documents en lecture seule, droits transmis), **dossier de passation** généré par délégation (activités, bilans, documents clés, points en suspens).
 - **Archives** : mandats précédents, recherche plein texte tous mandats (Postgres), import des anciens dossiers.

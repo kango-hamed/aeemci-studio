@@ -135,7 +135,13 @@ export default async function PageDocument({ params, searchParams }: { params: P
                 {libelleVisibilite(l.d.visibilite)}
                 {l.d.visibilite === "delegation" && l.delegation ? ` · ${l.delegation}` : ""}
               </span>
+              {l.d.fige && <span className="rounded-s bg-creme px-2 py-0.5">Mandat {l.mandat} clos · lecture seule</span>}
             </p>
+            {l.d.activiteId && l.activite && (
+              <p className="m-0 text-sm">
+                Activité : <Link href={`/activites/${l.d.activiteId}`}>{l.activite}</Link>
+              </p>
+            )}
           </div>
           {officiel && (await circuitDe(l, u, modifiable))}
           <ActionsDocument

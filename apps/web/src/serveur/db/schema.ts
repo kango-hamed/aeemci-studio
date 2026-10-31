@@ -8,6 +8,7 @@
  *
  * - Génération : gabarits et leurs révisions publiées, photos téléversées, documents générés.
  * - Documents administratifs : rédaction, circuit de validation, numérotation, signatures et cachet.
+ * - Activités (fiche, bilan, documents et photos rattachés) et notes de passation, par mandat.
  *
  * Ce fichier n'importe que drizzle-orm (et des types, effacés à l'exécution) : il est lu tel quel par les scripts Node (migrations, création
  * du premier administrateur) comme par l'application.
@@ -285,9 +286,16 @@ export const document = pgTable(
     /** Rattachement à la création : mandat et délégation de l'auteur (délégation vide : bureau exécutif ou administrateur). */
     mandatId: uuid("mandat_id").references(() => mandat.id),
     delegationId: uuid("delegation_id").references(() => delegation.id),
+    /** Activité à laquelle le document se rattache (affiche, PV, photos…). */
+    activiteId: uuid("activite_id").references(() => activite.id, { onDelete: "set null" }),
     ...horodatage,
   },
-  (t) => [index("document_auteur_idx").on(t.auteurId, t.createdAt), index("document_delegation_idx").on(t.delegationId, t.createdAt)],
+  (t) => [
+    index("document_auteur_idx").on(t.auteurId, t.createdAt),
+    index("document_delegation_idx").on(t.delegationId, t.createdAt),
+    index("document_activite_idx").on(t.activiteId),
+    index("document_mandat_idx").on(t.mandatId),
+  ],
 );
 
 /** Dernier numéro attribué, par section, code de délégation, type et année civile. */
@@ -317,4 +325,44 @@ export const evenementValidation = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("evenement_validation_document_idx").on(t.documentId, t.createdAt)],
+);
+
+// ── Activités et passation ─────────────────────────────────────────────────────
+
+/**
+ * Une activité de la section (conférence, sortie, journée d'intégration…), rattachée au mandat et à la
+ * délégation qui l'organise (aucune : le bureau exécutif). Se lit selon sa visibilité, comme un document publié.
+ */
+export const activite = pgTable(
+  "activite",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    mandatId: uuid("mandat_id").notNull().references(() => mandat.id),
+    delegationId: uuid("delegation_id").references(() => delegation.id),
+    auteurId: text("auteur_id").notNull().references(() => user.id),
+    titre: text("titre").notNull(),
+    /** Jour de l'activité (« 2026-11-14 ») et heure facultative (« 15:00 »). */
+    date: text("date").notNull(),
+    heure: text("heure"),
+    lieu: text("lieu"),
+    description: text("description"),
+    /** Bilan rédigé après l'activité : déroulement, participation, ce qu'il faut retenir. */
+    bilan: text("bilan"),
+    visibilite: visibiliteDocument("visibilite").notNull().default("section"),
+    ...horodatage,
+  },
+  (t) => [index("activite_mandat_idx").on(t.mandatId, t.date), index("activite_delegation_idx").on(t.delegationId, t.date)],
+);
+
+/** Points en suspens laissés au mandat suivant, par délégation (`cle` : identifiant de la délégation, ou « bureau »). */
+export const notePassation = pgTable(
+  "note_passation",
+  {
+    mandatId: uuid("mandat_id").notNull().references(() => mandat.id),
+    cle: text("cle").notNull(),
+    texte: text("texte").notNull(),
+    auteurId: text("auteur_id").references(() => user.id, { onDelete: "set null" }),
+    ...horodatage,
+  },
+  (t) => [primaryKey({ columns: [t.mandatId, t.cle] })],
 );

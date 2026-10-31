@@ -225,3 +225,8 @@ export async function rendrePageA4(o: Omit<OptionsDocument, "navigateur">, large
     return { pdf, miniature };
   });
 }
+
+/** PDF A4 seul (dossier de passation…), sans miniature. */
+export async function rendrePdfA4(o: Omit<OptionsDocument, "navigateur">): Promise<Buffer> {
+  return avecPlace(async () => rendreDocumentPdf({ ...o, navigateur: await navigateur() }));
+}

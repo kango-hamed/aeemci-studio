@@ -11,7 +11,7 @@ const COTE_MAX = 4000;
 const COTE_MINIATURE = 360;
 const champ = "min-h-12 w-full rounded-s border border-trait-champ bg-surface-relevee px-3 text-base text-encre";
 
-interface Prepare {
+export interface Prepare {
   fichier: Blob;
   nom: string;
   apercu: string | null;
@@ -38,7 +38,7 @@ function enJpeg(image: ImageBitmap, cote: number, qualite: number): Promise<{ bl
  * Prépare le fichier dans le navigateur : un PDF part tel quel ; une photo d'un format que le serveur
  * ne lit pas (HEIC de l'iPhone…) ou trop grande devient un JPEG, et reçoit sa miniature.
  */
-async function preparer(f: File): Promise<Prepare> {
+export async function preparer(f: File): Promise<Prepare> {
   if (f.type === "application/pdf") {
     if (f.size > TAILLE_MAX) throw new Error("PDF trop lourd (20 Mo au plus).");
     return { fichier: f, nom: f.name, apercu: null, miniature: null };

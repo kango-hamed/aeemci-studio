@@ -1,6 +1,5 @@
 /**
- * Entrées du menu principal. Chaque fonctionnalité ajoute la sienne ici quand elle est livrée
- * (lot 5 : « Activités », « Archives »).
+ * Entrées du menu principal. Chaque fonctionnalité ajoute la sienne ici quand elle est livrée.
  */
 export interface EntreeNavigation {
   href: string;
@@ -18,5 +17,7 @@ export const NAVIGATION: EntreeNavigation[] = [
   { href: "/gabarits", libelle: "Créer", aussi: ["/creer"] },
   { href: "/documents", libelle: "Documents" },
   { href: "/a-valider", libelle: "Officiels", libelleValideur: "À valider", aussi: ["/rediger", "/signature"] },
+  { href: "/activites", libelle: "Activités" },
+  { href: "/archives", libelle: "Archives", aussi: ["/passation"] },
   { href: "/organisation", libelle: "Organisation", reserve: "organisation" },
 ];

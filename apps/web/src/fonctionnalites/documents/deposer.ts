@@ -37,6 +37,8 @@ export interface Depot {
   hauteur?: number;
   statut?: StatutDocument;
   visibilite?: Visibilite;
+  /** Photo ou pièce d'une activité (droits vérifiés par l'appelant). */
+  activiteId?: string;
 }
 
 /** Dépose un fichier existant (PDF, image, scan) comme document de la plateforme. */
@@ -70,6 +72,7 @@ export async function deposerDocument(d: Depot, userId: string, rattachement: Ra
     delegationId: rattachement.delegationId,
     statut: d.statut ?? "publie",
     visibilite: visibiliteEffective(d.visibilite, rattachement.delegationId),
+    activiteId: d.activiteId ?? null,
   });
   return { id };
 }

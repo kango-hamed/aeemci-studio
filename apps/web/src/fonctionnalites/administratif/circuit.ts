@@ -44,7 +44,7 @@ function cheminPublic(nom: string): string {
   return trouve;
 }
 
-function ressourcesFixes(): Record<string, string> {
+export function ressourcesFixes(): Record<string, string> {
   const c = catalogue();
   const police = (nom: string) => {
     const p = c.trouver(nom);
@@ -65,12 +65,22 @@ function ressourcesFixes(): Record<string, string> {
 
 type LigneDocument = typeof schema.document.$inferSelect;
 
-async function documentRedige(id: string): Promise<LigneDocument & { typeAdministratif: TypeAdministratif; etatValidation: NonNullable<LigneDocument["etatValidation"]> }> {
+type DocumentRedige = LigneDocument & { typeAdministratif: TypeAdministratif; etatValidation: NonNullable<LigneDocument["etatValidation"]>; fige: boolean };
+
+/** Document rédigé, avec `fige` : rattaché à un mandat clos (lecture seule). */
+async function documentRedige(id: string): Promise<DocumentRedige> {
   if (!/^[0-9a-f-]{36}$/.test(id)) throw new ErreurSaisie("Document introuvable.");
-  const [d] = await db.select().from(schema.document).where(eq(schema.document.id, id));
+  const [l] = await db
+    .select({ d: schema.document, fige: sql<boolean>`coalesce(${schema.mandat.statut} = 'clos', false)` })
+    .from(schema.document)
+    .leftJoin(schema.mandat, eq(schema.document.mandatId, schema.mandat.id))
+    .where(eq(schema.document.id, id));
+  const d = l?.d;
   if (!d || d.origine !== "redige" || !d.typeAdministratif || !d.etatValidation) throw new ErreurSaisie("Document introuvable.");
-  return d as never;
+  return { ...d, fige: l.fige } as DocumentRedige;
 }
+
+const MESSAGE_FIGE = "Ce document appartient à un mandat clos : il est en lecture seule.";
 
 export async function signatureDe(userId: string): Promise<string | null> {
   const [s] = await db.select({ cle: schema.signature.cle }).from(schema.signature).where(eq(schema.signature.userId, userId));
@@ -147,6 +157,7 @@ export async function enregistrerRedaction(u: Acteur, r: Redaction, rattachement
   const m = await exigerMandat();
   const existant = r.id ? await documentRedige(r.id) : null;
   if (existant) {
+    if (existant.fige) throw new ErreurSaisie(MESSAGE_FIGE);
     if (!peutModifierDocument(u, existant)) throw new ErreurSaisie("Document introuvable.");
     if (existant.etatValidation === "soumis") throw new ErreurSaisie("Ce document attend la validation : il ne se modifie plus. Demande au président de te le renvoyer en correction.");
     if (existant.etatValidation === "valide") throw new ErreurSaisie("Ce document est validé : crée une nouvelle version pour le corriger.");
@@ -198,6 +209,7 @@ async function evenement(
 /** L'auteur (ou le bureau) soumet un document complet à la validation. */
 export async function soumettre(u: Acteur, id: string): Promise<void> {
   const d = await documentRedige(id);
+  if (d.fige) throw new ErreurSaisie(MESSAGE_FIGE);
   if (!peutModifierDocument(u, d)) throw new ErreurSaisie("Document introuvable.");
   if (d.etatValidation !== "redaction" && d.etatValidation !== "a_corriger") throw new ErreurSaisie("Ce document n'est pas en rédaction.");
   const t = definitionType(d.typeAdministratif)!;
@@ -230,6 +242,7 @@ async function exigerValideur(u: Acteur): Promise<MandatCourant> {
 /** Le valideur renvoie le document à son auteur, avec ce qu'il faut corriger. */
 export async function demanderCorrection(u: Acteur, id: string, commentaire: string): Promise<void> {
   await exigerValideur(u);
+  if ((await documentRedige(id)).fige) throw new ErreurSaisie(MESSAGE_FIGE);
   const texte = commentaire.trim().slice(0, 2000);
   if (!texte) throw new ErreurSaisie("Indique ce qu'il faut corriger.");
   await db.transaction(async (tx) => {
@@ -263,6 +276,7 @@ export function formaterNumero(section: string, code: string, type: TypeAdminist
 export async function valider(u: Acteur, id: string): Promise<{ numero: string }> {
   const m = await exigerValideur(u);
   const d = await documentRedige(id);
+  if (d.fige) throw new ErreurSaisie(MESSAGE_FIGE);
   if (d.etatValidation !== "soumis") throw new ErreurSaisie("Ce document n'attend pas de validation.");
   const t = definitionType(d.typeAdministratif)!;
   const erreurs = controlerContenu(t, d.contenu ?? {});
@@ -328,6 +342,7 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
 /** Corrige un document validé : une nouvelle version en rédaction, l'ancienne reste valable et figée. */
 export async function nouvelleVersion(u: Acteur, id: string, rattachement: { mandatId: string | null; delegationId: string | null }): Promise<{ id: string }> {
   const d = await documentRedige(id);
+  if (d.fige) throw new ErreurSaisie(MESSAGE_FIGE);
   if (!peutModifierDocument(u, d)) throw new ErreurSaisie("Document introuvable.");
   if (d.etatValidation !== "valide") throw new ErreurSaisie("Seul un document validé se corrige par une nouvelle version.");
   const nouveau = await enregistrerRedaction(

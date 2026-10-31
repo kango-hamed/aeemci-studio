@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, isNull, ne, or, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/serveur/db";
 import { estBureau, peutLireDocument, type Acteur, type StatutDocument, type Visibilite } from "@/fonctionnalites/organisation/droits";
 import type { EtatValidation, TypeAdministratif } from "@/fonctionnalites/administratif/types";
@@ -47,6 +47,12 @@ export interface FiltresDocuments {
   statut?: StatutDocument;
   /** Documents administratifs dans ces états du circuit. */
   etats?: EtatValidation[];
+  activiteId?: string;
+  /** Seulement les documents rattachés à aucune activité. */
+  sansActivite?: boolean;
+  mandatId?: string;
+  /** Recherche plein texte (titre, nom du fichier, texte d'un document officiel), tous mandats confondus. */
+  texte?: string;
   delegationId?: string;
 }
 
@@ -89,6 +95,12 @@ export async function rechercherDocuments(u: Acteur, f: FiltresDocuments = {}, l
         f.origine ? eq(d.origine, f.origine) : undefined,
         f.statut ? eq(d.statut, f.statut) : undefined,
         f.etats?.length ? inArray(d.etatValidation, f.etats) : undefined,
+        f.activiteId ? eq(d.activiteId, f.activiteId) : undefined,
+        f.sansActivite ? isNull(d.activiteId) : undefined,
+        f.mandatId ? eq(d.mandatId, f.mandatId) : undefined,
+        f.texte?.trim()
+          ? sql`to_tsvector('french', ${d.titre} || ' ' || coalesce(${d.nomFichier}, '') || ' ' || coalesce(${d.contenu}::text, '')) @@ websearch_to_tsquery('french', ${f.texte.trim().slice(0, 200)})`
+          : undefined,
         f.delegationId ? eq(d.delegationId, f.delegationId) : undefined,
       ),
     )
@@ -119,16 +131,23 @@ export async function documentLisible(id: string, u: Acteur) {
       revision: schema.revisionGabarit,
       auteur: schema.user.name,
       delegation: schema.delegation.nom,
+      activite: schema.activite.titre,
+      mandat: schema.mandat.libelle,
+      fige: sql<boolean>`coalesce(${schema.mandat.statut} = 'clos', false)`,
     })
     .from(schema.document)
     .leftJoin(schema.revisionGabarit, eq(schema.document.revisionId, schema.revisionGabarit.id))
     .leftJoin(schema.gabarit, eq(schema.revisionGabarit.gabaritId, schema.gabarit.id))
     .innerJoin(schema.user, eq(schema.document.auteurId, schema.user.id))
     .leftJoin(schema.delegation, eq(schema.document.delegationId, schema.delegation.id))
+    .leftJoin(schema.activite, eq(schema.document.activiteId, schema.activite.id))
+    .leftJoin(schema.mandat, eq(schema.document.mandatId, schema.mandat.id))
     .where(eq(schema.document.id, id));
   if (!l) return null;
-  if (!peutLireDocument(u, l.d)) return null;
-  return l;
+  // Rattachement et lecture seule réunis : `peutModifierDocument(u, l.d)` tient compte du mandat clos.
+  const d = { ...l.d, fige: l.fige };
+  if (!peutLireDocument(u, d)) return null;
+  return { ...l, d };
 }
 
 export type DocumentLisible = NonNullable<Awaited<ReturnType<typeof documentLisible>>>;

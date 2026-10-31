@@ -59,7 +59,7 @@ export function heureSaisie(v: string | undefined): string {
 }
 
 /** Paragraphes séparés par une ligne vide, retours à la ligne conservés. */
-function paragraphes(t: string | undefined): string {
+export function paragraphes(t: string | undefined): string {
   return (t ?? "")
     .trim()
     .split(/\n\s*\n/)
@@ -69,7 +69,7 @@ function paragraphes(t: string | undefined): string {
 }
 
 /** Une entrée par ligne ; les puces ou numéros saisis sont retirés. */
-function liste(t: string | undefined, numerotee = false): string {
+export function liste(t: string | undefined, numerotee = false): string {
   const lignes = (t ?? "")
     .split("\n")
     .map((l) => l.replace(/^\s*(?:[-•*]|\d+[.)-])\s*/, "").trim())
@@ -79,12 +79,12 @@ function liste(t: string | undefined, numerotee = false): string {
   return `<${balise}>${lignes.map((l) => `<li>${e(l)}</li>`).join("")}</${balise}>`;
 }
 
-function tableau(lignes: [string, string][]): string {
+export function tableau(lignes: [string, string][]): string {
   const remplies = lignes.filter(([, v]) => v.trim());
   return `<table class="infos">${remplies.map(([k, v]) => `<tr><th>${e(k)}</th><td>${v}</td></tr>`).join("")}</table>`;
 }
 
-function rubrique(titre: string, contenu: string): string {
+export function rubrique(titre: string, contenu: string): string {
   return contenu ? `<section class="rubrique"><h2>${e(titre)}</h2>${contenu}</section>` : "";
 }
 
@@ -171,16 +171,11 @@ function signatures(d: DonneesMiseEnPage): string {
   return `<div class="signatures${blocs.length > 1 ? " deux" : ""}">${blocs.join("")}</div>`;
 }
 
-export function htmlDocument(d: DonneesMiseEnPage): string {
-  const r = urlRessource;
-  const piecesJointes = d.type.code === "LET" ? rubrique("Pièces jointes", liste(d.contenu.pieces)) : "";
-  return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><title>${e(d.type.libelle)}</title>
-<style>
-@font-face{font-family:Titre;font-weight:400;src:url('${r("titre-400")}')}
-@font-face{font-family:Titre;font-weight:700;src:url('${r("titre-700")}')}
-@font-face{font-family:Texte;font-weight:400;src:url('${r("texte-400")}')}
-@font-face{font-family:Texte;font-weight:600;src:url('${r("texte-600")}')}
+/** Polices, page et éléments communs aux documents officiels (lettres, dossiers de passation…). */
+export const STYLE_PAGE = `@font-face{font-family:Titre;font-weight:400;src:url('${urlRessource("titre-400")}')}
+@font-face{font-family:Titre;font-weight:700;src:url('${urlRessource("titre-700")}')}
+@font-face{font-family:Texte;font-weight:400;src:url('${urlRessource("texte-400")}')}
+@font-face{font-family:Texte;font-weight:600;src:url('${urlRessource("texte-600")}')}
 *{box-sizing:border-box}
 html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{margin:0;font-family:Texte,sans-serif;font-size:11.5pt;line-height:1.5;color:#1f241f}
@@ -220,21 +215,34 @@ li{margin:0 0 1mm}
 .bloc .attente{font-family:Texte,sans-serif;font-weight:400;font-style:italic;color:#5a635b}
 .devise{margin-top:9mm;text-align:center;font-family:Titre,sans-serif;font-size:9.5pt;color:#185431}
 .filigrane{position:fixed;left:50%;top:48%;transform:translate(-50%,-50%) rotate(-35deg);font-family:Titre,sans-serif;font-weight:700;font-size:120pt;letter-spacing:.12em;color:rgba(180,35,24,.1);pointer-events:none;white-space:nowrap}
-</style></head>
-<body>
-${d.projet ? '<div class="filigrane" aria-hidden="true">PROJET</div>' : ""}
-<header class="entete">
-  <img class="sceau" src="${r("sceau")}" alt="Sceau de l'AEEMCI">
+`;
+
+/** En-tête officiel : sceau national à gauche, lignes de l'association, croissant de la section à droite. */
+export function enteteOfficiel(section: string): string {
+  return `<header class="entete">
+  <img class="sceau" src="${urlRessource("sceau")}" alt="Sceau de l'AEEMCI">
   <div class="lignes">
     <div class="fort">AEEMCI</div>
     <div>Association des Élèves et Étudiants Musulmans de Côte d'Ivoire</div>
     <div>Secrétariat Régional Abidjan Sud</div>
     <div>Sous Comité Treichville</div>
-    <div class="fort">Section ${e(d.section)}</div>
+    <div class="fort">Section ${e(section)}</div>
   </div>
-  <img class="croissant" src="${r("croissant")}" alt="Logo AEEMCI ${e(d.section)}">
+  <img class="croissant" src="${urlRessource("croissant")}" alt="Logo AEEMCI ${e(section)}">
 </header>
-<div class="filet"></div>
+<div class="filet"></div>`;
+}
+
+export function htmlDocument(d: DonneesMiseEnPage): string {
+  const piecesJointes = d.type.code === "LET" ? rubrique("Pièces jointes", liste(d.contenu.pieces)) : "";
+  return `<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>${e(d.type.libelle)}</title>
+<style>
+${STYLE_PAGE}
+</style></head>
+<body>
+${d.projet ? '<div class="filigrane" aria-hidden="true">PROJET</div>' : ""}
+${enteteOfficiel(d.section)}
 <div class="references">
   <span class="numero${d.numero ? "" : " projet"}">N° ${d.numero ? e(d.numero) : "attribué à la validation"}</span>
   <span>${VILLE}, le ${e(dateLongue(d.date))}</span>
