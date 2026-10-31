@@ -87,12 +87,13 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 
 ## Lot 4 · Documents administratifs et validation
 
+**Livré le 31/10/2026** (sauf notifications : le menu « À valider » affiche le nombre en attente). Rédaction des six types avec aperçu du projet, circuit de validation avec historique, signature et cachet détourés dans le navigateur, intérim, code de délégation dans Organisation. Décisions : doc 02.
+
 - **Mode document** du moteur : PDF A4 multipage à partir de la charte (en-tête officiel, pied, texte long), pour lettre, procès-verbal, convocation, communiqué, attestation.
 - **Numérotation** `AEEMCI-ESATIC/{délégation}/{type}/{année}/{n°}`, attribuée à la validation, sans trou.
 - **Circuit de validation** : envoi au président, validation ou demande de correction avec commentaire, intérim (vice-président). Notifications.
 - **Signature et cachet** : images importées par le président, stockées en privé, apposées par le serveur à la validation ; PDF signé figé, toute correction crée une nouvelle version.
 - Écran : validation et signature.
-- Points à confirmer avant le lot : documents à signature, cachet ou les deux ; signataires multiples d'un PV ; remise à zéro de la numérotation (année ou mandat).
 
 ## Lot 5 · Activités, archives et passation
 

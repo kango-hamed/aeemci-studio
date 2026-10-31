@@ -3,7 +3,19 @@ import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { CataloguePolices, chromium, LANCEMENT_CHROMIUM, rendrePlan, type Browser, type Gabarit, type ResultatRendu, type Valeurs } from "@aeemci-studio/moteur";
+import {
+  CataloguePolices,
+  chromium,
+  LANCEMENT_CHROMIUM,
+  rendreApercuDocument,
+  rendreDocumentPdf,
+  rendrePlan,
+  type Browser,
+  type Gabarit,
+  type OptionsDocument,
+  type ResultatRendu,
+  type Valeurs,
+} from "@aeemci-studio/moteur";
 import { stockage } from "@/serveur/stockage";
 
 /**
@@ -202,4 +214,14 @@ export async function rendre(d: DemandeRendu): Promise<ResultatRendu> {
     }),
     d.hd,
   );
+}
+
+/** Document en mode page (HTML A4) : le PDF et la miniature JPEG de sa première page, l'un après l'autre. */
+export async function rendrePageA4(o: Omit<OptionsDocument, "navigateur">, largeurMiniature: number): Promise<{ pdf: Buffer; miniature: Buffer }> {
+  return avecPlace(async () => {
+    const b = await navigateur();
+    const pdf = await rendreDocumentPdf({ ...o, navigateur: b });
+    const miniature = await rendreApercuDocument({ ...o, navigateur: b, largeur: largeurMiniature, format: "jpeg" });
+    return { pdf, miniature };
+  });
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FileText } from "lucide-react";
 import type { ResumeDocument } from "./requetes";
+import { EtatCircuit } from "@/fonctionnalites/administratif/EtatCircuit";
 
 const date = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Abidjan" });
 
@@ -28,10 +29,15 @@ export function CarteDocument({ d }: { d: ResumeDocument }) {
             <span className="etiquette">{d.type === "application/pdf" ? "PDF" : "Fichier"}</span>
           </span>
         )}
-        {d.statut === "brouillon" && <span className="absolute top-2 left-2 rounded-s bg-encre px-2 py-1 text-xs font-semibold text-surface">Brouillon</span>}
+        {d.etatValidation ? (
+          <EtatCircuit etat={d.etatValidation} className="absolute top-2 left-2" />
+        ) : (
+          d.statut === "brouillon" && <span className="absolute top-2 left-2 rounded-s bg-encre px-2 py-1 text-xs font-semibold text-surface">Brouillon</span>
+        )}
       </span>
       <span className="flex flex-col gap-0.5 p-4">
         <span className="font-semibold group-hover:text-vert-esatic">{d.titre}</span>
+        {d.numero && <span className="text-xs leading-4 break-all text-encre-douce">N° {d.numero}</span>}
         <span className="text-sm leading-5 text-encre-douce">
           {d.estAMoi ? "" : `${d.auteur} · `}
           {dateFr(d.createdAt)}

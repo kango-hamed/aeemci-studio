@@ -8,3 +8,5 @@ export { chromium, type Browser } from "playwright";
 export { controlerGabarit, valeursEssai, PHOTO_ESSAI, type Controles } from "./controles.ts";
 export type { ErreurChamp } from "./valeurs.ts";
 export type { OptionsRendu, ResultatRendu } from "./rendu.ts";
+/** Mode document : HTML → PDF A4 multipage (lettres, procès-verbaux…). */
+export { A4_PX, echapperHtml, rendreApercuDocument, rendreDocumentPdf, urlRessource, type OptionsDocument } from "./document.ts";

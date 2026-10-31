@@ -8,7 +8,15 @@ import { visibilitesPour } from "./partage";
 const champ = "min-h-11 w-full rounded-s border border-trait-champ bg-surface-relevee px-3 text-base text-encre";
 
 /** Titre, visibilité et publication d'un document, pour son auteur et le bureau. */
-export function ReglagesDocument(p: { id: string; titre: string; statut: StatutDocument; visibilite: Visibilite; aUneDelegation: boolean }) {
+export function ReglagesDocument(p: {
+  id: string;
+  titre: string;
+  statut: StatutDocument;
+  visibilite: Visibilite;
+  aUneDelegation: boolean;
+  /** Faux pour un document officiel : c'est sa validation qui le publie. */
+  publication?: boolean;
+}) {
   const [etat, envoyer, enCours] = useActionState<EtatModification, FormData>(enregistrerDocument, {});
   const brouillon = p.statut === "brouillon";
 
@@ -39,23 +47,25 @@ export function ReglagesDocument(p: { id: string; titre: string; statut: StatutD
           Enregistrer
         </button>
       </form>
-      <form action={envoyer} className="flex flex-col gap-2 border-t border-trait pt-3">
-        <input type="hidden" name="id" value={p.id} />
-        <input type="hidden" name="statut" value={brouillon ? "publie" : "brouillon"} />
-        <p className="m-0 text-sm leading-5 text-encre-douce">
-          {brouillon ? "Brouillon : seuls toi et le bureau exécutif le voyez." : "Publié : visible selon le réglage ci-dessus."}
-        </p>
-        <button
-          type="submit"
-          disabled={enCours}
-          className={
-            "flex min-h-11 items-center justify-center rounded-m px-4 font-semibold disabled:opacity-70 " +
-            (brouillon ? "bg-vert-esatic text-sur-vert" : "border border-trait-champ text-encre")
-          }
-        >
-          {brouillon ? "Publier" : "Repasser en brouillon"}
-        </button>
-      </form>
+      {p.publication !== false && (
+        <form action={envoyer} className="flex flex-col gap-2 border-t border-trait pt-3">
+          <input type="hidden" name="id" value={p.id} />
+          <input type="hidden" name="statut" value={brouillon ? "publie" : "brouillon"} />
+          <p className="m-0 text-sm leading-5 text-encre-douce">
+            {brouillon ? "Brouillon : seuls toi et le bureau exécutif le voyez." : "Publié : visible selon le réglage ci-dessus."}
+          </p>
+          <button
+            type="submit"
+            disabled={enCours}
+            className={
+              "flex min-h-11 items-center justify-center rounded-m px-4 font-semibold disabled:opacity-70 " +
+              (brouillon ? "bg-vert-esatic text-sur-vert" : "border border-trait-champ text-encre")
+            }
+          >
+            {brouillon ? "Publier" : "Repasser en brouillon"}
+          </button>
+        </form>
+      )}
       {etat.erreur && (
         <p role="alert" className="m-0 rounded-m bg-fond-danger p-3 text-sm text-danger">
           {etat.erreur}

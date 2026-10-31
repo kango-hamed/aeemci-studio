@@ -74,12 +74,12 @@ export async function lienPourMembre(_e: EtatAction, f: FormData): Promise<EtatA
 
 export async function creerDelegation(_e: EtatAction, f: FormData): Promise<EtatAction> {
   return executer(async (acteur) => {
-    await gestion.creerDelegation(acteur, texte(f, "nom"));
+    await gestion.creerDelegation(acteur, texte(f, "nom"), texte(f, "code"));
   });
 }
 
 export async function renommerDelegation(_e: EtatAction, f: FormData): Promise<EtatAction> {
-  return executer((acteur) => gestion.renommerDelegation(acteur, Id.parse(texte(f, "id")), texte(f, "nom")));
+  return executer((acteur) => gestion.renommerDelegation(acteur, Id.parse(texte(f, "id")), texte(f, "nom"), f.has("code") ? texte(f, "code") : undefined));
 }
 
 export async function archiverDelegation(_e: EtatAction, f: FormData): Promise<EtatAction> {

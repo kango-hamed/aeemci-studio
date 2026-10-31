@@ -29,6 +29,10 @@ function LigneDelegation({ d }: { d: Delegation }) {
               Nouveau nom de la délégation
             </label>
             <input id={`nom-${d.id}`} name="nom" defaultValue={d.nom} required className={champ + " min-w-[200px] flex-1"} />
+            <label htmlFor={`code-${d.id}`} className="sr-only">
+              Code des numéros
+            </label>
+            <input id={`code-${d.id}`} name="code" defaultValue={d.code ?? ""} placeholder="Code" maxLength={6} className={champ + " w-24 uppercase"} />
             <button type="submit" disabled={nomEnCours} className="flex min-h-11 items-center rounded-m bg-vert-esatic px-4 font-semibold text-sur-vert disabled:opacity-70">
               Enregistrer
             </button>
@@ -40,6 +44,7 @@ function LigneDelegation({ d }: { d: Delegation }) {
           <span className="flex min-w-[200px] flex-1 flex-col">
             <span className={d.archivee ? "text-encre-douce" : "font-semibold"}>
               {d.nom}
+              {d.code && <span className="ml-2 rounded-s bg-creme px-1.5 py-0.5 text-xs font-semibold text-orange-texte">{d.code}</span>}
               {d.archivee && " (archivée)"}
             </span>
             <span className="text-sm text-encre-douce">{d.membres > 1 ? `${d.membres} membres` : d.membres === 1 ? "1 membre" : "Aucun membre"} dans le mandat</span>
@@ -49,7 +54,7 @@ function LigneDelegation({ d }: { d: Delegation }) {
           <div className="flex flex-wrap gap-2">
             <button type="button" className={bouton} onClick={() => setEdition(true)}>
               <Pencil size={16} aria-hidden />
-              Renommer
+              Modifier
             </button>
             <form action={envoyerArchive}>
               <input type="hidden" name="id" value={d.id} />
@@ -83,11 +88,20 @@ export function GestionDelegations({ delegations }: { delegations: Delegation[] 
           </label>
           <input id="delegation-nom" name="nom" required placeholder="Cellule communication" className={champ} />
         </div>
+        <div className="flex w-32 flex-col gap-1.5">
+          <label htmlFor="delegation-code" className="text-sm font-semibold">
+            Code
+          </label>
+          <input id="delegation-code" name="code" placeholder="COM" maxLength={6} aria-describedby="aide-code" className={champ + " uppercase"} />
+        </div>
         <button type="submit" disabled={enCours} className="flex min-h-11 items-center gap-2 rounded-m bg-vert-esatic px-4 font-semibold text-sur-vert disabled:opacity-70">
           <Plus size={18} aria-hidden />
           Créer
         </button>
       </form>
+      <p id="aide-code" className="m-0 text-sm text-encre-douce">
+        Le code entre dans le numéro des documents officiels de la délégation : AEEMCI-ESATIC/<b>COM</b>/LET/2026/001. Le bureau exécutif a « BE ».
+      </p>
       <MessageErreur id="erreur-delegation" erreur={etat.erreur} />
       {delegations.length ? (
         <ul className="m-0 list-none p-0">

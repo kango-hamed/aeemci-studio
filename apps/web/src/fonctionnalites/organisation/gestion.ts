@@ -154,28 +154,47 @@ function nomDeDelegation(nom: string): string {
   return n;
 }
 
-export async function creerDelegation(acteur: Acteur, nom: string): Promise<string> {
+/** Code du numéro des documents officiels : 2 à 6 lettres ou chiffres, en majuscules ; « BE » est au bureau exécutif. */
+export function codeDeDelegation(code: string | undefined): string | null {
+  const c = (code ?? "").trim().toUpperCase();
+  if (!c) return null;
+  if (!/^[A-Z0-9]{2,6}$/.test(c)) throw new ErreurOrganisation("Le code d'une délégation fait de 2 à 6 lettres ou chiffres, sans espace (ex. : COM).");
+  if (c === "BE") throw new ErreurOrganisation("« BE » est le code du bureau exécutif.");
+  return c;
+}
+
+function messageDoublon(e: unknown): string {
+  return String((e as { constraint?: string }).constraint ?? (e as { cause?: { constraint?: string } }).cause?.constraint ?? "").includes("code")
+    ? "Une autre délégation a déjà ce code."
+    : "Une délégation porte déjà ce nom.";
+}
+
+export async function creerDelegation(acteur: Acteur, nom: string, code?: string): Promise<string> {
   const m = await contexte(acteur);
   try {
-    const [d] = await db.insert(schema.delegation).values({ sectionId: m.sectionId, nom: nomDeDelegation(nom) }).returning({ id: schema.delegation.id });
+    const [d] = await db
+      .insert(schema.delegation)
+      .values({ sectionId: m.sectionId, nom: nomDeDelegation(nom), code: codeDeDelegation(code) })
+      .returning({ id: schema.delegation.id });
     return d!.id;
   } catch (e) {
-    if (estDoublon(e)) throw new ErreurOrganisation("Une délégation porte déjà ce nom.");
+    if (estDoublon(e)) throw new ErreurOrganisation(messageDoublon(e));
     throw e;
   }
 }
 
-export async function renommerDelegation(acteur: Acteur, id: string, nom: string): Promise<void> {
+/** Renomme une délégation et fixe son code ; `code` absent : inchangé, vide : retiré. */
+export async function renommerDelegation(acteur: Acteur, id: string, nom: string, code?: string): Promise<void> {
   const m = await contexte(acteur);
   try {
     const maj = await db
       .update(schema.delegation)
-      .set({ nom: nomDeDelegation(nom) })
+      .set({ nom: nomDeDelegation(nom), ...(code !== undefined ? { code: codeDeDelegation(code) } : {}) })
       .where(and(eq(schema.delegation.id, id), eq(schema.delegation.sectionId, m.sectionId)))
       .returning({ id: schema.delegation.id });
     if (!maj.length) throw new ErreurOrganisation("Délégation inconnue.");
   } catch (e) {
-    if (estDoublon(e)) throw new ErreurOrganisation("Une délégation porte déjà ce nom.");
+    if (estDoublon(e)) throw new ErreurOrganisation(messageDoublon(e));
     throw e;
   }
 }

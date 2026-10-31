@@ -25,7 +25,8 @@ export function descriptionRole(u: Utilisateur): string {
   return u.estAdministrateur ? "Administrateur de la plateforme" : "Sans rôle dans le mandat en cours";
 }
 
-export function EnTete({ utilisateur }: { utilisateur: Utilisateur }) {
+/** `aValider` : nombre de documents officiels qui attendent la validation, pour le président (ou le vice-président en intérim). */
+export function EnTete({ utilisateur, aValider }: { utilisateur: Utilisateur; aValider: number | null }) {
   const entrees = NAVIGATION.filter(
     (e) => !e.reserve || (e.reserve === "administrateur" ? utilisateur.estAdministrateur : peutGererOrganisation(utilisateur)),
   );
@@ -42,7 +43,13 @@ export function EnTete({ utilisateur }: { utilisateur: Utilisateur }) {
         <nav aria-label="Navigation principale" className="flex flex-auto flex-wrap gap-1">
           {entrees.map((e) => (
             <LienNavigation key={e.href} href={e.href} aussi={e.aussi}>
-              {e.libelle}
+              {aValider !== null && e.libelleValideur ? e.libelleValideur : e.libelle}
+              {aValider !== null && e.libelleValideur && aValider > 0 && (
+                <span className="ml-1.5 rounded-full bg-orange-croissant px-2 text-sm font-bold text-sur-orange">
+                  {aValider}
+                  <span className="sr-only"> en attente</span>
+                </span>
+              )}
             </LienNavigation>
           ))}
         </nav>

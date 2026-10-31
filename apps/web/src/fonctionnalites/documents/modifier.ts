@@ -17,6 +17,7 @@ export async function modifierDocument(u: Acteur, id: string, m: Modification): 
   if (!l || !peutModifierDocument(u, l.d)) throw new ErreurSaisie("Document introuvable.");
   const titre = m.titre?.trim();
   if (m.titre !== undefined && !titre) throw new ErreurSaisie("Donne un titre au document.");
+  if (m.statut && l.d.origine === "redige") throw new ErreurSaisie("Un document officiel est publié par sa validation.");
   await db
     .update(schema.document)
     .set({

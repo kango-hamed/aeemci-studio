@@ -5,6 +5,7 @@ import {
   peutLireDocument,
   peutModifierDocument,
   peutToucherAuPresident,
+  peutValider,
   type Acteur,
   type StatutDocument,
   type Visibilite,
@@ -69,5 +70,13 @@ describe("droits", () => {
     expect(peutModifierDocument(membre("responsable_delegation", "communication"), { auteurId: "autre" })).toBe(false);
     expect(peutModifierDocument(membre("vice_president"), { auteurId: "autre" })).toBe(true);
     expect(peutModifierDocument(membre(null, null, true), { auteurId: "autre" })).toBe(true);
+  });
+
+  it("le président valide les documents officiels ; le vice-président seulement pendant l'intérim", () => {
+    expect(peutValider(membre("president"), false)).toBe(true);
+    expect(peutValider(membre("vice_president"), false)).toBe(false);
+    expect(peutValider(membre("vice_president"), true)).toBe(true);
+    expect(peutValider(membre("secretaire_general"), true)).toBe(false);
+    expect(peutValider(membre(null, null, true), true)).toBe(false);
   });
 });

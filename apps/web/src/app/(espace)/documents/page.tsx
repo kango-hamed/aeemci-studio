@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Search, Upload } from "lucide-react";
+import { PenLine, Search, Upload } from "lucide-react";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { CarteDocument } from "@/fonctionnalites/documents/CarteDocument";
 import { rechercherDocuments, type FiltresDocuments } from "@/fonctionnalites/documents/requetes";
@@ -26,7 +26,7 @@ function filtres(p: Parametres): FiltresDocuments {
   return {
     q: un(p, "q"),
     portee: parmi(un(p, "portee"), ["miens", "autres"] as const),
-    origine: parmi(un(p, "origine"), ["genere", "depose"] as const),
+    origine: parmi(un(p, "origine"), ["genere", "depose", "redige"] as const),
     statut: parmi(un(p, "statut"), ["brouillon", "publie"] as const),
     delegationId: delegationId && /^[0-9a-f-]{36}$/.test(delegationId) ? delegationId : undefined,
   };
@@ -51,10 +51,16 @@ export default async function PageDocuments({ searchParams }: { searchParams: Pr
           </p>
         </div>
         {peutCreerDocuments(u) && (
-          <Link href="/documents/deposer" className="flex min-h-11 items-center gap-2 rounded-m border border-vert-esatic px-4 font-semibold no-underline">
-            <Upload size={18} aria-hidden />
-            Déposer un fichier
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/rediger" className="flex min-h-11 items-center gap-2 rounded-m border border-vert-esatic px-4 font-semibold no-underline">
+              <PenLine size={18} aria-hidden />
+              Rédiger un document officiel
+            </Link>
+            <Link href="/documents/deposer" className="flex min-h-11 items-center gap-2 rounded-m border border-vert-esatic px-4 font-semibold no-underline">
+              <Upload size={18} aria-hidden />
+              Déposer un fichier
+            </Link>
+          </div>
         )}
       </div>
 
@@ -83,6 +89,7 @@ export default async function PageDocuments({ searchParams }: { searchParams: Pr
             <option value="">Tous</option>
             <option value="genere">Créés depuis un gabarit</option>
             <option value="depose">Fichiers déposés</option>
+            <option value="redige">Documents officiels</option>
           </select>
         </div>
         <div className="flex min-w-[150px] flex-1 flex-col gap-1.5">

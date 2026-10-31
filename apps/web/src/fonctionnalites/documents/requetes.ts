@@ -1,13 +1,20 @@
 import "server-only";
-import { and, desc, eq, ilike, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/serveur/db";
 import { estBureau, peutLireDocument, type Acteur, type StatutDocument, type Visibilite } from "@/fonctionnalites/organisation/droits";
+import type { EtatValidation, TypeAdministratif } from "@/fonctionnalites/administratif/types";
+
+export type OrigineDocument = "genere" | "depose" | "redige";
 
 export interface ResumeDocument {
   id: string;
   titre: string;
-  origine: "genere" | "depose";
+  origine: OrigineDocument;
   statut: StatutDocument;
+  /** Document administratif rédigé : type, état du circuit, numéro une fois validé. */
+  typeAdministratif: TypeAdministratif | null;
+  etatValidation: EtatValidation | null;
+  numero: string | null;
   visibilite: Visibilite;
   /** Gabarit d'un document généré. */
   gabarit: string | null;
@@ -36,8 +43,10 @@ export interface FiltresDocuments {
   q?: string;
   /** `miens` : seulement les documents du membre ; `autres` : seulement ceux des autres. */
   portee?: "miens" | "autres";
-  origine?: "genere" | "depose";
+  origine?: OrigineDocument;
   statut?: StatutDocument;
+  /** Documents administratifs dans ces états du circuit. */
+  etats?: EtatValidation[];
   delegationId?: string;
 }
 
@@ -54,6 +63,9 @@ export async function rechercherDocuments(u: Acteur, f: FiltresDocuments = {}, l
       origine: d.origine,
       statut: d.statut,
       visibilite: d.visibilite,
+      typeAdministratif: d.typeAdministratif,
+      etatValidation: d.etatValidation,
+      numero: d.numero,
       gabarit: schema.gabarit.nom,
       type: d.type,
       largeur: d.largeur,
@@ -76,11 +88,18 @@ export async function rechercherDocuments(u: Acteur, f: FiltresDocuments = {}, l
         f.portee === "miens" ? eq(d.auteurId, u.id) : f.portee === "autres" ? ne(d.auteurId, u.id) : undefined,
         f.origine ? eq(d.origine, f.origine) : undefined,
         f.statut ? eq(d.statut, f.statut) : undefined,
+        f.etats?.length ? inArray(d.etatValidation, f.etats) : undefined,
         f.delegationId ? eq(d.delegationId, f.delegationId) : undefined,
       ),
     )
     .orderBy(desc(d.createdAt))
     .limit(limite);
+}
+
+/** Documents administratifs qui attendent une validation (pour le président, ou le vice-président en intérim). */
+export async function nombreAValider(): Promise<number> {
+  const [r] = await db.select({ n: count() }).from(schema.document).where(eq(schema.document.etatValidation, "soumis"));
+  return r?.n ?? 0;
 }
 
 /** Documents créés par le membre, du plus récent au plus ancien. */

@@ -7,12 +7,13 @@
  *   invitations (lien d'activation ou de réinitialisation remis par le bureau).
  *
  * - Génération : gabarits et leurs révisions publiées, photos téléversées, documents générés.
+ * - Documents administratifs : rédaction, circuit de validation, numérotation, signatures et cachet.
  *
  * Ce fichier n'importe que drizzle-orm (et des types, effacés à l'exécution) : il est lu tel quel par les scripts Node (migrations, création
  * du premier administrateur) comme par l'application.
  */
 import type { Gabarit } from "@aeemci-studio/moteur";
-import { boolean, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 const horodatage = {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -83,6 +84,8 @@ export const section = pgTable("section", {
   id: uuid("id").primaryKey().defaultRandom(),
   /** Nom court affiché : « ESATIC ». */
   nom: text("nom").notNull().unique(),
+  /** Image du cachet de la section (stockage privé), apposée à la validation des documents administratifs. */
+  cachet: text("cachet"),
   ...horodatage,
 });
 
@@ -95,9 +98,11 @@ export const delegation = pgTable(
     nom: text("nom").notNull(),
     /** Archivée : plus proposée pour les affectations, ses documents restent lisibles. */
     archivee: boolean("archivee").notNull().default(false),
+    /** Code court du numéro des documents administratifs (« COM ») ; le bureau exécutif a « BE ». */
+    code: text("code"),
     ...horodatage,
   },
-  (t) => [uniqueIndex("delegation_section_nom_idx").on(t.sectionId, t.nom)],
+  (t) => [uniqueIndex("delegation_section_nom_idx").on(t.sectionId, t.nom), uniqueIndex("delegation_section_code_idx").on(t.sectionId, t.code)],
 );
 
 export const statutMandat = pgEnum("statut_mandat", ["en_cours", "clos"]);
@@ -112,6 +117,8 @@ export const mandat = pgTable(
     statut: statutMandat("statut").notNull().default("en_cours"),
     debut: timestamp("debut", { withTimezone: true }),
     fin: timestamp("fin", { withTimezone: true }),
+    /** Intérim activé par le président : le vice-président valide et signe à sa place. */
+    interim: boolean("interim").notNull().default(false),
     ...horodatage,
   },
   (t) => [uniqueIndex("mandat_section_libelle_idx").on(t.sectionId, t.libelle)],
@@ -132,6 +139,15 @@ export const affectation = pgTable(
   },
   (t) => [index("affectation_user_idx").on(t.userId), uniqueIndex("affectation_mandat_user_idx").on(t.mandatId, t.userId)],
 );
+
+/** Image de signature d'un membre (stockage privé), apposée sur les documents qu'il signe. */
+export const signature = pgTable("signature", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  cle: text("cle").notNull(),
+  ...horodatage,
+});
 
 /**
  * Lien d'activation (premier mot de passe) ou de réinitialisation, remis par le bureau au membre.
@@ -198,7 +214,18 @@ export const televersement = pgTable(
   (t) => [index("televersement_user_idx").on(t.userId)],
 );
 
-export const origineDocument = pgEnum("origine_document", ["genere", "depose"]);
+export const origineDocument = pgEnum("origine_document", ["genere", "depose", "redige"]);
+/** Types de documents administratifs ; le code entre dans le numéro (AEEMCI-ESATIC/COM/LET/2026/014). */
+export const typeAdministratif = pgEnum("type_administratif", ["LET", "PV", "CONV", "COM", "ATT", "OM"]);
+/** Circuit de validation d'un document administratif. */
+export const etatValidation = pgEnum("etat_validation", ["redaction", "soumis", "a_corriger", "valide"]);
+
+/** Signataire apposé sur un document validé (instantané : le nom et le rôle au moment de la validation). */
+export interface Signataire {
+  role: "secretaire_seance" | "president" | "interim";
+  userId: string;
+  nom: string;
+}
 /** Brouillon : visible par l'auteur et le bureau exécutif seulement. Publié : selon la visibilité. */
 export const statutDocument = pgEnum("statut_document", ["brouillon", "publie"]);
 /** Qui lit un document publié, en plus de l'auteur et du bureau : sa délégation, ou toute la section. */
@@ -242,12 +269,52 @@ export const document = pgTable(
     /** Dimensions en pixels d'une image ; vides pour un PDF. */
     largeur: integer("largeur"),
     hauteur: integer("hauteur"),
-    /** Miniature JPEG ; vide pour un PDF (icône à la place). */
+    /** Miniature JPEG ; vide pour un PDF déposé (icône à la place). */
     miniature: text("miniature"),
+    /** Document administratif rédigé dans la plateforme : type, champs saisis, validation. */
+    typeAdministratif: typeAdministratif("type_administratif"),
+    contenu: jsonb("contenu").$type<Record<string, string>>(),
+    etatValidation: etatValidation("etat_validation"),
+    /** Attribué à la validation, sans trou dans la séquence. */
+    numero: text("numero").unique(),
+    valideLe: timestamp("valide_le", { withTimezone: true }),
+    valideParId: text("valide_par_id").references(() => user.id),
+    signataires: jsonb("signataires").$type<Signataire[]>(),
+    /** Version précédente : un document validé est figé, sa correction crée une nouvelle version. */
+    versionDeId: uuid("version_de_id"),
     /** Rattachement à la création : mandat et délégation de l'auteur (délégation vide : bureau exécutif ou administrateur). */
     mandatId: uuid("mandat_id").references(() => mandat.id),
     delegationId: uuid("delegation_id").references(() => delegation.id),
     ...horodatage,
   },
   (t) => [index("document_auteur_idx").on(t.auteurId, t.createdAt), index("document_delegation_idx").on(t.delegationId, t.createdAt)],
+);
+
+/** Dernier numéro attribué, par section, code de délégation, type et année civile. */
+export const compteur = pgTable(
+  "compteur",
+  {
+    sectionId: uuid("section_id").notNull().references(() => section.id),
+    delegation: text("delegation").notNull(),
+    type: typeAdministratif("type").notNull(),
+    annee: integer("annee").notNull(),
+    dernier: integer("dernier").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.sectionId, t.delegation, t.type, t.annee] })],
+);
+
+export const actionValidation = pgEnum("action_validation", ["soumis", "correction_demandee", "valide", "nouvelle_version"]);
+
+/** Historique du circuit de validation d'un document : qui, quoi, quand, avec quel commentaire. */
+export const evenementValidation = pgTable(
+  "evenement_validation",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    documentId: uuid("document_id").notNull().references(() => document.id, { onDelete: "cascade" }),
+    acteurId: text("acteur_id").references(() => user.id, { onDelete: "set null" }),
+    action: actionValidation("action").notNull(),
+    commentaire: text("commentaire"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("evenement_validation_document_idx").on(t.documentId, t.createdAt)],
 );

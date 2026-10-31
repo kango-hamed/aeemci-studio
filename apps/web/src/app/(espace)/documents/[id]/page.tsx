@@ -8,7 +8,12 @@ import { libelleVisibilite } from "@/fonctionnalites/documents/partage";
 import { ReglagesDocument } from "@/fonctionnalites/documents/ReglagesDocument";
 import { documentLisible, type DocumentLisible } from "@/fonctionnalites/documents/requetes";
 import { LARGEUR_HD } from "@/fonctionnalites/generation/rendu";
-import { peutModifierDocument } from "@/fonctionnalites/organisation/droits";
+import { peutModifierDocument, peutValider } from "@/fonctionnalites/organisation/droits";
+import { mandatCourant } from "@/fonctionnalites/organisation/requetes";
+import { cachetDeSection, historique, signatureDe, versionSuivante } from "@/fonctionnalites/administratif/circuit";
+import { PanneauCircuit } from "@/fonctionnalites/administratif/PanneauCircuit";
+import { definitionType } from "@/fonctionnalites/administratif/types";
+import type { Utilisateur } from "@/fonctionnalites/authentification/session";
 
 export const metadata: Metadata = { title: "Document" };
 
@@ -28,15 +33,41 @@ function taille(octets: number | null) {
   return octets > 1024 * 1024 ? `${(octets / 1024 / 1024).toFixed(1).replace(".", ",")} Mo` : `${Math.ceil(octets / 1024)} Ko`;
 }
 
+/** Panneau de validation d'un document officiel : ce que le membre peut faire, ce qui manque, l'historique. */
+async function circuitDe(l: DocumentLisible, u: Utilisateur, modifiable: boolean) {
+  const m = await mandatCourant();
+  const valideur = peutValider(u, m?.interim ?? false);
+  const manque: string[] = [];
+  if (valideur && l.d.etatValidation === "soumis") {
+    if (!(await signatureDe(u.id))) manque.push("Ta signature n'est pas encore enregistrée.");
+    if (m && !(await cachetDeSection(m.sectionId))) manque.push("Le cachet de la section n'est pas encore enregistré.");
+  }
+  return (
+    <PanneauCircuit
+      id={l.d.id}
+      etat={l.d.etatValidation!}
+      numero={l.d.numero}
+      valideLe={l.d.valideLe ? dateFr(l.d.valideLe) : null}
+      modifiable={modifiable}
+      valideur={valideur}
+      manque={manque}
+      evenements={(await historique(l.d.id)).map((e) => ({ ...e, date: dateFr(e.date) }))}
+      versionPrecedente={l.d.versionDeId}
+      versionSuivante={await versionSuivante(l.d.id)}
+    />
+  );
+}
+
 export default async function PageDocument({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ plan?: string }> }) {
   const u = await exigerUtilisateur();
   const l = await documentLisible((await params).id, u);
   if (!l) notFound();
   const { plan: planDemande } = await searchParams;
   const genere = l.d.origine === "genere";
+  const officiel = l.d.origine === "redige" && l.d.etatValidation ? definitionType(l.d.typeAdministratif ?? "") : undefined;
   const formats = genere ? declinaisons(l) : [];
   const choisi = formats.find((f) => f.plan === planDemande) ?? formats[0];
-  const src = `/api/documents/${l.d.id}/fichier${choisi && !choisi.principale ? `?plan=${encodeURIComponent(choisi.plan)}` : ""}`;
+  const src = `/api/documents/${l.d.id}/fichier${choisi && !choisi.principale ? `?plan=${encodeURIComponent(choisi.plan)}` : officiel ? `?v=${l.d.updatedAt.getTime()}` : ""}`;
   const modifiable = peutModifierDocument(u, l.d);
 
   let hd: { largeur: number; hauteur: number } | undefined;
@@ -91,7 +122,7 @@ export default async function PageDocument({ params, searchParams }: { params: P
         </div>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <span className="etiquette text-encre-douce">{genere ? l.gabarit : "Fichier déposé"}</span>
+            <span className="etiquette text-encre-douce">{genere ? l.gabarit : officiel ? `Document officiel · ${officiel.libelle}` : "Fichier déposé"}</span>
             <h1 className="titre-2 m-0">{l.d.titre}</h1>
             <p className="m-0 text-sm leading-5 text-encre-douce">
               {l.d.auteurId !== u.id ? `Par ${l.auteur} le ` : "Créé le "}
@@ -99,13 +130,14 @@ export default async function PageDocument({ params, searchParams }: { params: P
               {genere ? ` · gabarit révision ${l.numero}` : ` · ${taille(l.d.taille)}`}
             </p>
             <p className="m-0 flex flex-wrap gap-2 text-sm">
-              {l.d.statut === "brouillon" && <span className="rounded-s bg-encre px-2 py-0.5 font-semibold text-surface">Brouillon</span>}
+              {l.d.statut === "brouillon" && !officiel && <span className="rounded-s bg-encre px-2 py-0.5 font-semibold text-surface">Brouillon</span>}
               <span className="rounded-s bg-creme px-2 py-0.5">
                 {libelleVisibilite(l.d.visibilite)}
                 {l.d.visibilite === "delegation" && l.delegation ? ` · ${l.delegation}` : ""}
               </span>
             </p>
           </div>
+          {officiel && (await circuitDe(l, u, modifiable))}
           <ActionsDocument
             id={l.d.id}
             titre={l.d.titre}
@@ -115,7 +147,14 @@ export default async function PageDocument({ params, searchParams }: { params: P
             hd={hd}
           />
           {modifiable && (
-            <ReglagesDocument id={l.d.id} titre={l.d.titre} statut={l.d.statut} visibilite={l.d.visibilite} aUneDelegation={Boolean(l.d.delegationId)} />
+            <ReglagesDocument
+              id={l.d.id}
+              titre={l.d.titre}
+              statut={l.d.statut}
+              visibilite={l.d.visibilite}
+              aUneDelegation={Boolean(l.d.delegationId)}
+              publication={!officiel}
+            />
           )}
           {genere && l.gabaritId && (
             <Link href={`/creer/${l.gabaritId}`} className="font-semibold">

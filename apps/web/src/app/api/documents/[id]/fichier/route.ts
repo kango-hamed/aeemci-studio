@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const url = new URL(request.url);
   const telecharger = url.searchParams.has("telecharger");
 
-  if (l.d.origine === "depose") {
+  if (l.d.origine !== "genere") {
     const contenu = await stockage().lire(l.d.fichier);
     if (!contenu) return erreur(404, "Fichier introuvable.");
     return fichier(contenu, l.d.type, l.d.nomFichier ?? nomDeFichier(l.d.titre, "bin"), telecharger);

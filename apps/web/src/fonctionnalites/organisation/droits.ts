@@ -8,6 +8,8 @@
  *   l'auteur), « section » (tout membre connecté), « bureau » (personne de plus). Un brouillon ne se lit
  *   que par son auteur et le bureau.
  * - Sans rôle dans le mandat en cours : ne crée plus rien, garde la lecture de ses propres documents.
+ * - Documents administratifs : le président valide et signe ; le vice-président aussi quand le président
+ *   a activé l'intérim. Un administrateur de la plateforme ne valide pas : il n'est pas signataire.
  *
  * `filtreLecture` (documents/requetes.ts) traduit `peutLireDocument` en SQL : les deux vont ensemble.
  */
@@ -58,4 +60,15 @@ export function peutLireDocument(u: Acteur, d: RattachementDocument): boolean {
   if (d.statut !== "publie") return false;
   if (d.visibilite === "section") return true;
   return d.visibilite === "delegation" && d.delegationId !== null && u.affectation?.delegationId === d.delegationId;
+}
+
+/** Valider (ou renvoyer en correction) un document administratif. */
+export function peutValider(u: Acteur, interim: boolean): boolean {
+  const role = u.affectation?.role;
+  return role === "president" || (role === "vice_president" && interim);
+}
+
+/** Cachet de la section et intérim : le président et les administrateurs. */
+export function peutGererCachet(u: Acteur): boolean {
+  return u.estAdministrateur || u.affectation?.role === "president";
 }
