@@ -6,6 +6,6 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
   const u = await membreOuRefus();
   if (u instanceof Response) return u;
   const l = await documentLisible((await params).id, u);
-  const contenu = l ? await stockage().lire(l.d.miniature) : null;
+  const contenu = l?.d.miniature ? await stockage().lire(l.d.miniature) : null;
   return contenu ? fichier(contenu, "image/jpeg") : erreur(404, "Miniature introuvable.");
 }

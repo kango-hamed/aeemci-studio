@@ -6,7 +6,7 @@ Successeur de `aeemci-plateform` (V1, générateur d'affiches React/Vite + Neon)
 
 ## État
 
-Lot 2 (organisation : membres, rôles, délégations, liens d'activation, lecture par délégation) livré le 30/10/2026, après les lots 1a et 1b : **application en ligne de bout en bout** (connexion, import des gabarits publiés par l'atelier, formulaire avec aperçu en direct, documents enregistrés et re-téléchargeables, haute définition, partage sur téléphone). Prochaine étape : mise en ligne (doc 10) et bascule depuis la V1 (lot 1c), puis lot 3 (documents par délégation).
+Lots 2 (organisation, rôles, liens d'activation) et 3 (documents : brouillon et visibilité, dépôt de fichiers, déclinaisons, recherche) livrés les 30 et 31/10/2026, après les lots 1a et 1b : **application en ligne de bout en bout** (connexion, import des gabarits publiés par l'atelier, formulaire avec aperçu en direct, documents enregistrés et re-téléchargeables, haute définition, partage sur téléphone). Prochaine étape : mise en ligne (doc 10) et bascule depuis la V1 (lot 1c), puis lot 4 (documents administratifs et validation).
 
 Déjà en place avant : moteur de rendu v0.1 (doc 06), atelier v0.1 (doc 08), plugin DesignHub 0.2 validé dans Photoshop sur `panel.psd` (doc 05).
 

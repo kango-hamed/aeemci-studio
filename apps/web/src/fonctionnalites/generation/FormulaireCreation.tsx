@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Download, ImagePlus, Loader2 } from "lucide-react";
+import { ChampsPartage } from "@/fonctionnalites/documents/ChampsPartage";
 
 export interface ChampFormulaire {
   nom: string;
@@ -54,7 +55,19 @@ function formatPlan(p: PlanFormulaire) {
   return `${genre} · ${p.largeur} × ${p.hauteur}`;
 }
 
-export function FormulaireCreation({ gabaritId, revisionId, champs, plans }: { gabaritId: string; revisionId: string; champs: ChampFormulaire[]; plans: PlanFormulaire[] }) {
+export function FormulaireCreation({
+  gabaritId,
+  revisionId,
+  champs,
+  plans,
+  aUneDelegation,
+}: {
+  gabaritId: string;
+  revisionId: string;
+  champs: ChampFormulaire[];
+  plans: PlanFormulaire[];
+  aUneDelegation: boolean;
+}) {
   const router = useRouter();
   const [valeurs, setValeurs] = useState<Record<string, Valeur>>({});
   const [photos, setPhotos] = useState<Record<string, { url: string; nom: string; envoi: boolean; erreur?: string }>>({});
@@ -120,9 +133,10 @@ export function FormulaireCreation({ gabaritId, revisionId, champs, plans }: { g
     }
   }
 
-  async function creer(e: React.FormEvent) {
+  async function creer(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setMessage(null);
+    const partage = new FormData(e.currentTarget);
     const manquants: Record<string, string> = {};
     for (const c of champs) if (c.obligatoire && !valeurs[c.nom]?.toString().trim()) manquants[c.nom] = `« ${c.libelle} » est obligatoire.`;
     if (Object.keys(manquants).length) {
@@ -133,7 +147,14 @@ export function FormulaireCreation({ gabaritId, revisionId, champs, plans }: { g
     }
     setCreation(true);
     try {
-      const r = await fetch("/api/documents", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ gabaritId, revisionId, plan, valeurs }) });
+      const r = await fetch("/api/documents", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+          gabaritId,
+          revisionId,
+          plan,
+          valeurs,
+          visibilite: partage.get("visibilite") || undefined,
+          statut: partage.get("brouillon") ? "brouillon" : "publie",
+        }) });
       const json = await r.json();
       if (r.ok) {
         router.push(`/documents/${json.id}`);
@@ -266,6 +287,14 @@ export function FormulaireCreation({ gabaritId, revisionId, champs, plans }: { g
             </div>
           );
         })}
+
+        <ChampsPartage prefixe="creation" aUneDelegation={aUneDelegation} />
+
+        {plans.length > 1 && (
+          <p className="m-0 text-sm leading-5 text-encre-douce">
+            Le document est créé dans les {plans.length} formats du gabarit ({plans.map(formatPlan).map((f) => f.split(" · ")[0]).join(", ")}), avec les mêmes saisies.
+          </p>
+        )}
 
         <button
           type="submit"

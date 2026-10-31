@@ -15,7 +15,7 @@ function prenom(nom: string) {
 
 export default async function PageAccueil() {
   const u = await exigerUtilisateur();
-  const [gabarits, documents] = await Promise.all([gabaritsDisponibles(), documentsDe(u.id, 4)]);
+  const [gabarits, documents] = await Promise.all([gabaritsDisponibles(), documentsDe(u, 4)]);
   const surtitre = u.affectation ? `${u.affectation.delegation ?? "Bureau exécutif"} · Mandat ${u.affectation.mandat}` : "Section ESATIC";
 
   return (

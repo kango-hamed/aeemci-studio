@@ -44,6 +44,7 @@ export default async function PageCreer({ params }: { params: Promise<{ id: stri
           revisionId={g.revision.id}
           champs={champs}
           plans={contenu.plans.map((p) => ({ plan: p.plan, largeur: p.largeur_px, hauteur: p.hauteur_px }))}
+          aUneDelegation={Boolean(u.affectation?.delegationId)}
         />
       ) : (
         <p className="m-0 rounded-l bg-creme p-6">{MESSAGE_SANS_ROLE}</p>

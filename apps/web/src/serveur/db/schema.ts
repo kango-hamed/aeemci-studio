@@ -198,22 +198,52 @@ export const televersement = pgTable(
   (t) => [index("televersement_user_idx").on(t.userId)],
 );
 
-/** Document généré : les valeurs saisies et la révision suffisent à le refaire, en haute définition par exemple. */
+export const origineDocument = pgEnum("origine_document", ["genere", "depose"]);
+/** Brouillon : visible par l'auteur et le bureau exécutif seulement. Publié : selon la visibilité. */
+export const statutDocument = pgEnum("statut_document", ["brouillon", "publie"]);
+/** Qui lit un document publié, en plus de l'auteur et du bureau : sa délégation, ou toute la section. */
+export const visibiliteDocument = pgEnum("visibilite_document", ["bureau", "delegation", "section"]);
+
+/** Fichier d'une déclinaison supplémentaire (story à côté du post…), fait avec le même formulaire. */
+export interface Declinaison {
+  plan: string;
+  fichier: string;
+  type: string;
+  largeur: number;
+  hauteur: number;
+}
+
+/**
+ * Document de la plateforme : généré depuis un gabarit (les valeurs saisies et la révision suffisent à le
+ * refaire, en haute définition par exemple) ou déposé tel quel (PDF, image, scan).
+ */
 export const document = pgTable(
   "document",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     auteurId: text("auteur_id").notNull().references(() => user.id),
-    revisionId: uuid("revision_id").notNull().references(() => revisionGabarit.id),
+    origine: origineDocument("origine").notNull().default("genere"),
+    statut: statutDocument("statut").notNull().default("publie"),
+    visibilite: visibiliteDocument("visibilite").notNull().default("delegation"),
+    /** Document généré seulement. */
+    revisionId: uuid("revision_id").references(() => revisionGabarit.id),
     titre: text("titre").notNull(),
-    plan: text("plan").notNull(),
-    /** Valeurs saisies ; une image y figure sous la forme `televersement:<id>`. */
-    valeurs: jsonb("valeurs").$type<Record<string, string | number | null>>().notNull(),
+    /** Déclinaison principale (document généré seulement). */
+    plan: text("plan"),
+    /** Valeurs saisies ; une image y figure sous la forme `televersement:<id>`. Vide pour un dépôt. */
+    valeurs: jsonb("valeurs").$type<Record<string, string | number | null>>().notNull().default({}),
+    /** Autres déclinaisons produites avec le même formulaire. */
+    declinaisons: jsonb("declinaisons").$type<Declinaison[]>().notNull().default([]),
     fichier: text("fichier").notNull(),
     type: text("type").notNull(),
-    largeur: integer("largeur").notNull(),
-    hauteur: integer("hauteur").notNull(),
-    miniature: text("miniature").notNull(),
+    /** Nom du fichier déposé, pour le téléchargement. */
+    nomFichier: text("nom_fichier"),
+    taille: integer("taille"),
+    /** Dimensions en pixels d'une image ; vides pour un PDF. */
+    largeur: integer("largeur"),
+    hauteur: integer("hauteur"),
+    /** Miniature JPEG ; vide pour un PDF (icône à la place). */
+    miniature: text("miniature"),
     /** Rattachement à la création : mandat et délégation de l'auteur (délégation vide : bureau exécutif ou administrateur). */
     mandatId: uuid("mandat_id").references(() => mandat.id),
     delegationId: uuid("delegation_id").references(() => delegation.id),

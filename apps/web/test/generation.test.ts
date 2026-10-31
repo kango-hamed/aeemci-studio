@@ -134,12 +134,12 @@ describe.skipIf(!url)("génération (Postgres + Chromium)", () => {
     expect(await m.docs.documentLisible(documentId, u(membre))).not.toBeNull();
     expect(await m.docs.documentLisible(documentId, u(admin, true))).not.toBeNull();
     expect(await m.docs.documentLisible(documentId, u("quelqu-un"))).toBeNull();
-    expect((await m.docs.documentsDe(membre)).map((d) => d.titre)).toEqual(["Membre retenu – Awa Koné"]);
+    expect((await m.docs.documentsDe(u(membre))).map((d) => d.titre)).toEqual(["Membre retenu – Awa Koné"]);
   });
 
   it("refait le document en haute définition, à la taille du plan, et le garde", async () => {
     const l = (await m.docs.documentLisible(documentId, { id: membre, estAdministrateur: false, affectation: null }))!;
-    const hd = await m.creer.fichierHauteDefinition(l.d, { id: l.revision.id, prefixe: l.revision.prefixe, contenu: l.revision.contenu });
+    const hd = await m.creer.fichierHauteDefinition(l.d, { id: l.revision!.id, prefixe: l.revision!.prefixe, contenu: l.revision!.contenu }, l.d.plan!);
     expect(hd.subarray(0, 2)).toEqual(Buffer.from([0xff, 0xd8]));
     expect(await m.stockage.stockage().lire(`documents/${documentId}/${l.d.plan}-hd.jpg`)).toEqual(hd);
   });

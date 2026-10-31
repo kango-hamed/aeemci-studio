@@ -153,7 +153,7 @@ describe.skipIf(!url)("organisation (Postgres)", () => {
     expect(await m.docs.documentLisible(doc, await acteur(moussa.userId))).not.toBeNull();
     expect(await m.docs.documentLisible(doc, await acteur(ibrahim.userId))).toBeNull();
     expect(await m.docs.documentLisible(doc, president)).not.toBeNull();
-    expect((await m.docs.documentsPartages(await acteur(ibrahim.userId)))!.map((d) => d.titre)).toEqual([]);
-    expect((await m.docs.documentsPartages(president))!.map((d) => [d.titre, d.auteur])).toEqual([["Affiche com", "Moussa Traoré"]]);
+    expect((await m.docs.rechercherDocuments(await acteur(ibrahim.userId))).map((d) => d.titre)).toEqual([]);
+    expect((await m.docs.rechercherDocuments(president)).map((d) => [d.titre, d.auteur])).toEqual([["Affiche com", "Moussa Traoré"]]);
   });
 });

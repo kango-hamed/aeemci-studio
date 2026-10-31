@@ -77,6 +77,8 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 
 ## Lot 3 · Documents et centralisation
 
+**Livré le 31/10/2026** (sauf rattachement à une activité, qui arrive avec le lot 5). Statut et visibilité, dépôt de fichiers depuis l'ordinateur ou l'appareil photo du téléphone, déclinaisons produites ensemble, espace « Documents » avec recherche et filtres (auteur, type, statut, délégation pour le bureau). Décisions : doc 02.
+
 - Objet **Document** : fichier, gabarit et révision, valeurs saisies, auteur, délégation, mandat, activité, statut (brouillon, publié), visibilité (délégation, bureau, public).
 - Espace **Documents de la délégation** : filtres, recherche, dépôt de fichiers existants (PDF, images, scans).
 - **Déclinaisons** : un formulaire produit post et story (plusieurs plans du gabarit).
