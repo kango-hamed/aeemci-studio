@@ -4,7 +4,8 @@ import { Plus } from "lucide-react";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { CarteDocument } from "@/fonctionnalites/documents/CarteDocument";
 import { documentsDe } from "@/fonctionnalites/documents/requetes";
-import { InviterInstallation } from "@/fonctionnalites/accueil/Installation";
+import { InviterInstallation, InviterNotifications } from "@/fonctionnalites/accueil/Installation";
+import { notificationsConfigurees } from "@/fonctionnalites/notifications/envoi";
 import { CarteGabarit } from "@/fonctionnalites/gabarits/CarteGabarit";
 import { gabaritsDisponibles } from "@/fonctionnalites/gabarits/requetes";
 
@@ -22,6 +23,7 @@ export default async function PageAccueil() {
   return (
     <>
       <InviterInstallation />
+      <InviterNotifications disponibles={notificationsConfigurees()} />
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-2">
           <span className="etiquette text-encre-douce">{surtitre}</span>

@@ -14,6 +14,7 @@ import { mandatCourant, type MandatCourant } from "@/fonctionnalites/organisatio
 import { controlerEnvoi, lettrePour, suffixeLettre, type Destinataire } from "./envois";
 import { htmlDocument, htmlLettres, piedDocument, RESSOURCE_CACHET, type BlocSignature, type DonneesMiseEnPage } from "./mise-en-page";
 import { controlerContenu, definitionType, LONGUEUR_MAX_CHAMP, titreParDefaut, type DefinitionType, type TypeAdministratif } from "./types";
+import { notifierDecision, notifierPublication, notifierSoumission } from "@/fonctionnalites/notifications/evenements";
 
 /**
  * Circuit des documents administratifs.
@@ -307,6 +308,7 @@ export async function soumettre(u: Acteur, id: string): Promise<void> {
     if (!maj.length) throw new ErreurSaisie("Ce document n'est plus en rédaction.");
     await evenement(tx, id, u.id, "soumis");
   });
+  await notifierSoumission(id);
 }
 
 async function exigerValideur(u: Acteur): Promise<MandatCourant> {
@@ -331,6 +333,7 @@ export async function demanderCorrection(u: Acteur, id: string, commentaire: str
     if (!maj.length) throw new ErreurSaisie("Ce document n'attend pas de validation.");
     await evenement(tx, id, u.id, "correction_demandee", texte);
   });
+  await notifierDecision(id, "correction", texte);
 }
 
 /** Code de la délégation du document dans le numéro : « BE » pour le bureau exécutif. */
@@ -380,7 +383,7 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
 
   const maintenant = new Date();
   const annee = anneeCivile(maintenant);
-  return db.transaction(async (tx) => {
+  const resultat = await db.transaction(async (tx) => {
     // Verrou sur le document : deux validations simultanées ne prennent pas deux numéros.
     const [verrou] = await tx.select({ etat: schema.document.etatValidation }).from(schema.document).where(eq(schema.document.id, id)).for("update");
     if (verrou?.etat !== "soumis") throw new ErreurSaisie("Ce document n'attend plus de validation.");
@@ -432,6 +435,9 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
     await evenement(tx, id, u.id, "valide");
     return { numero };
   });
+  await notifierDecision(id, "valide");
+  await notifierPublication(id);
+  return resultat;
 }
 
 /** Corrige un document validé : une nouvelle version en rédaction, l'ancienne reste valable et figée. */

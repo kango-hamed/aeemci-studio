@@ -9,6 +9,7 @@
  * - Génération : gabarits et leurs révisions publiées, photos téléversées, documents générés.
  * - Documents administratifs : rédaction, circuit de validation, numérotation, signatures et cachet.
  * - Activités (fiche, bilan, documents et photos rattachés) et notes de passation, par mandat.
+ * - Notifications : appareils abonnés et choix de chaque membre.
  *
  * Ce fichier n'importe que drizzle-orm (et des types, effacés à l'exécution) : il est lu tel quel par les scripts Node (migrations, création
  * du premier administrateur) comme par l'application.
@@ -367,6 +368,8 @@ export const activite = pgTable(
     /** Bilan rédigé après l'activité : déroulement, participation, ce qu'il faut retenir. */
     bilan: text("bilan"),
     visibilite: visibiliteDocument("visibilite").notNull().default("section"),
+    /** Rappel de la veille envoyé : il ne part qu'une fois, même si la date change ensuite. */
+    rappelEnvoyeLe: timestamp("rappel_envoye_le", { withTimezone: true }),
     ...horodatage,
   },
   (t) => [index("activite_mandat_idx").on(t.mandatId, t.date), index("activite_delegation_idx").on(t.delegationId, t.date)],
@@ -384,3 +387,34 @@ export const notePassation = pgTable(
   },
   (t) => [primaryKey({ columns: [t.mandatId, t.cle] })],
 );
+
+// ── Notifications ──────────────────────────────────────────────────────────────
+
+/** Appareil (téléphone, navigateur) qui reçoit les notifications d'un membre : abonnement Web Push. */
+export const abonnementNotification = pgTable(
+  "abonnement_notification",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    /** Adresse du service de notification du navigateur ; unique par appareil. */
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    /** « Android · Chrome »… pour que le membre reconnaisse ses appareils. */
+    appareil: text("appareil"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("abonnement_notification_user_idx").on(t.userId)],
+);
+
+/** Notifications choisies par un membre ; sans ligne, il les reçoit toutes. */
+export const preferenceNotification = pgTable("preference_notification", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  aValider: boolean("a_valider").notNull().default(true),
+  decision: boolean("decision").notNull().default(true),
+  partage: boolean("partage").notNull().default(true),
+  rappel: boolean("rappel").notNull().default(true),
+  ...horodatage,
+});

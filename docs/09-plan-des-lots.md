@@ -124,10 +124,10 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 
 ## Lot 8 · Version mobile
 
-**8a livré le 31/10/2026.** Application web installable (PWA), sans passer par les stores. Décisions : doc 02.
+**Livré le 31/10/2026** (8a et 8b). Application web installable (PWA), sans passer par les stores. Décisions : doc 02.
 
 - 8a : barre d'onglets en bas et panneau « Plus », installation (manifeste, icônes, page hors connexion, invitation à installer), écrans repris pour le téléphone (création d'affiche, rédaction, validation, documents, activités, archives).
-- 8b (à venir) : recevoir une photo partagée depuis la galerie, notifications essentielles (document à valider, document validé).
+- 8b : partage depuis la galerie du téléphone (photos d'une activité, photo d'une affiche, dépôt), notifications (document à valider, validé ou à corriger, nouveau document partagé, rappel la veille d'une activité) avec le choix de chacun ; mise en ligne : doc 10, section 7.
 
 ---
 

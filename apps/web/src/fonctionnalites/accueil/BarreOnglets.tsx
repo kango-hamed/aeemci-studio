@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { Archive, BadgeCheck, CalendarDays, FileText, House, LogOut, Menu, Palette, PenLine, Users, X, type LucideIcon } from "lucide-react";
+import { Archive, BadgeCheck, Bell, CalendarDays, FileText, House, LogOut, Menu, Palette, PenLine, Users, X, type LucideIcon } from "lucide-react";
 import { seDeconnecter } from "@/fonctionnalites/authentification/actions";
 import type { EntreeNavigation } from "@/fonctionnalites/navigation";
 
@@ -19,6 +19,7 @@ const ICONES: Record<string, LucideIcon> = {
   "/archives": Archive,
   "/organisation": Users,
   "/signature": PenLine,
+  "/notifications": Bell,
 };
 
 function estActif(chemin: string, e: Pick<EntreeNavigation, "href" | "aussi">) {
@@ -33,8 +34,12 @@ export function BarreOnglets(p: { entrees: EntreeNavigation[]; aValider: number 
   const chemin = usePathname();
   const panneau = useRef<HTMLDialogElement>(null);
   const onglets = p.entrees.filter((e) => ONGLETS.includes(e.href));
-  // La signature n'est pas au menu du bureau : sur téléphone, on la met à portée dans « Plus ».
-  const autres = [...p.entrees.filter((e) => !ONGLETS.includes(e.href)), { href: "/signature", libelle: "Ma signature" }];
+  // La signature et les notifications ne sont pas au menu du bureau : sur téléphone, on les met à portée dans « Plus ».
+  const autres = [
+    ...p.entrees.filter((e) => !ONGLETS.includes(e.href)),
+    { href: "/signature", libelle: "Ma signature" },
+    { href: "/notifications", libelle: "Notifications" },
+  ];
   const plusActif = autres.some((e) => estActif(chemin, e)) && !onglets.some((e) => estActif(chemin, e));
 
   // Une navigation depuis le panneau le referme.

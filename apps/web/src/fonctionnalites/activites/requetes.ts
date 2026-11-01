@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, gte, lt, or, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/serveur/db";
-import { estBureau, peutLireActivite, type Acteur, type Visibilite } from "@/fonctionnalites/organisation/droits";
+import { estBureau, peutLireActivite, peutModifierActivite, type Acteur, type Visibilite } from "@/fonctionnalites/organisation/droits";
 
 export interface ResumeActivite {
   id: string;
@@ -97,3 +97,22 @@ export async function activiteLisible(id: string, u: Acteur) {
 }
 
 export type ActiviteLisible = NonNullable<Awaited<ReturnType<typeof activiteLisible>>>;
+
+/**
+ * Activités du mandat en cours où le membre peut ajouter des photos (partage depuis la galerie) : les
+ * prochaines d'abord, puis les plus récentes.
+ */
+export async function activitesPourPhotos(u: Acteur): Promise<{ id: string; titre: string; date: string }[]> {
+  const a = schema.activite;
+  const lignes = await db
+    .select({ id: a.id, titre: a.titre, date: a.date, auteurId: a.auteurId, delegationId: a.delegationId })
+    .from(a)
+    .innerJoin(schema.mandat, eq(a.mandatId, schema.mandat.id))
+    .where(and(eq(schema.mandat.statut, "en_cours"), filtreLectureActivite(u)))
+    .orderBy(desc(a.date))
+    .limit(60);
+  const jour = aujourdhui();
+  const modifiables = lignes.filter((l) => peutModifierActivite(u, l));
+  // Aujourd'hui et les jours passés d'abord (les photos se prennent pendant ou après), puis celles à venir.
+  return [...modifiables.filter((l) => l.date <= jour), ...modifiables.filter((l) => l.date > jour).reverse()].map(({ id, titre, date }) => ({ id, titre, date }));
+}

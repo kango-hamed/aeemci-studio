@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { seDeconnecter } from "@/fonctionnalites/authentification/actions";
 import type { Utilisateur } from "@/fonctionnalites/authentification/session";
 import { peutGererOrganisation } from "@/fonctionnalites/organisation/droits";
@@ -38,7 +38,7 @@ export function EnTete({ utilisateur, aValider }: { utilisateur: Utilisateur; aV
     <header className="bg-vert-profond pt-[env(safe-area-inset-top)] text-sur-vert-profond">
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-2.5 sm:px-6 lg:py-3">
         <Link href="/" className="flex items-center gap-3 text-sur-vert-profond no-underline">
-          <span className="flex rounded-m bg-surface-relevee px-2 py-1 lg:px-2.5 lg:py-1.5">
+          <span className="flex rounded-m bg-[#fcfaf2] px-2 py-1 lg:px-2.5 lg:py-1.5">
             <Image src="/logo-aeemci-esatic.png" alt="Logo AEEMCI ESATIC" width={54} height={32} priority className="h-7 w-auto lg:h-8" />
           </span>
           <span className="font-titre text-lg font-bold">AEEMCI Studio</span>
@@ -69,6 +69,9 @@ export function EnTete({ utilisateur, aValider }: { utilisateur: Utilisateur; aV
             <span className="font-semibold">{utilisateur.nom}</span>
             <span className="text-[13px] opacity-80">{descriptionRole(utilisateur)}</span>
           </span>
+          <Link href="/notifications" aria-label="Notifications" title="Notifications" className="ml-1 flex size-11 items-center justify-center rounded-m text-sur-vert-profond hover:bg-white/10">
+            <Bell size={20} aria-hidden />
+          </Link>
           <form action={seDeconnecter}>
             <button
               type="submit"

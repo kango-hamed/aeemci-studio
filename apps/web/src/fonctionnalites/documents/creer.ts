@@ -7,6 +7,7 @@ import { rendre } from "@/fonctionnalites/generation/rendu";
 import { preparerValeurs, titreParDefaut, type ValeursSaisies } from "@/fonctionnalites/generation/valeurs";
 import { gabaritACompleter } from "@/fonctionnalites/gabarits/requetes";
 import type { StatutDocument, Visibilite } from "@/fonctionnalites/organisation/droits";
+import { notifierPublication } from "@/fonctionnalites/notifications/evenements";
 
 /** Largeur du fichier enregistré : celle des réseaux sociaux. La haute définition se refait à la demande. */
 export const LARGEUR_RESEAUX = 1080;
@@ -95,6 +96,7 @@ export async function creerDocument(d: DemandeDocument, userId: string, rattache
     if (e instanceof ErreurRendu) throw new ErreurSaisie(e.message, e.erreurs);
     throw e;
   }
+  await notifierPublication(id);
   return { id };
 }
 

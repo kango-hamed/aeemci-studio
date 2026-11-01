@@ -19,6 +19,13 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icone-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
       { src: "/icone-masquable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
+    // Partager une photo ou un PDF depuis la galerie du téléphone (Android) : reçu par le service worker, page /partage.
+    share_target: {
+      action: "/partage",
+      method: "POST",
+      enctype: "multipart/form-data",
+      params: { files: [{ name: "fichiers", accept: ["image/jpeg", "image/png", "image/webp", "application/pdf"] }] },
+    },
     shortcuts: [
       { name: "Créer une affiche", url: "/gabarits", icons: [{ src: "/icone-192.png", sizes: "192x192" }] },
       { name: "Documents", url: "/documents", icons: [{ src: "/icone-192.png", sizes: "192x192" }] },

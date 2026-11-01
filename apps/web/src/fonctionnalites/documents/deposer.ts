@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { db, schema } from "@/serveur/db";
 import { stockage } from "@/serveur/stockage";
 import type { StatutDocument, Visibilite } from "@/fonctionnalites/organisation/droits";
+import { notifierPublication } from "@/fonctionnalites/notifications/evenements";
 import { ErreurSaisie, visibiliteEffective, type Rattachement } from "./creer";
 
 /** Fichiers acceptés au dépôt, reconnus par leurs premiers octets (pas par l'extension annoncée). */
@@ -74,5 +75,7 @@ export async function deposerDocument(d: Depot, userId: string, rattachement: Ra
     visibilite: visibiliteEffective(d.visibilite, rattachement.delegationId),
     activiteId: d.activiteId ?? null,
   });
+  // Les photos d'une activité arrivent par séries : on ne prévient pas pour chacune.
+  if (!d.activiteId) await notifierPublication(id);
   return { id };
 }

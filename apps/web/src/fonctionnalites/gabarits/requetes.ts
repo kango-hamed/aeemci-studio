@@ -14,6 +14,8 @@ export interface GabaritDisponible {
   largeur: number;
   hauteur: number;
   nbPlans: number;
+  /** Le formulaire demande une photo : proposé pour une photo partagée depuis la galerie. */
+  aPhoto: boolean;
 }
 
 /** Délégations auxquelles chaque gabarit est réservé (absent : toute la section). */
@@ -52,6 +54,7 @@ export async function gabaritsDisponibles(u: Acteur): Promise<GabaritDisponible[
       largeur: r.contenu.plans[0]?.largeur_px ?? 0,
       hauteur: r.contenu.plans[0]?.hauteur_px ?? 0,
       nbPlans: r.contenu.plans.length,
+      aPhoto: r.contenu.champs.some((c) => c.type === "image"),
     }));
 }
 

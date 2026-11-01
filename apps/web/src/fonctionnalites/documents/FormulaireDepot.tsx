@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { fichiersPartages, oublierPartage } from "@/fonctionnalites/partage/fichiers";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Camera, FileText, FolderOpen, Loader2, Upload } from "lucide-react";
 import { ChampsPartage } from "./ChampsPartage";
@@ -88,6 +89,18 @@ export function FormulaireDepot({ aUneDelegation }: { aUneDelegation: boolean })
     }
     setEtat("");
   }
+
+  // Fichier partagé depuis la galerie (page /partage), lu une seule fois à l'arrivée.
+  const partageLu = useRef(false);
+  useEffect(() => {
+    if (partageLu.current || !new URLSearchParams(window.location.search).has("partage")) return;
+    partageLu.current = true;
+    void fichiersPartages().then(async (f) => {
+      if (f[0]) await choisir(f[0]);
+      await oublierPartage();
+      window.history.replaceState(null, "", window.location.pathname);
+    });
+  }, []);
 
   async function envoyer(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

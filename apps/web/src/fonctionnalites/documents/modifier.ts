@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/serveur/db";
 import { peutModifierDocument, type Acteur, type StatutDocument, type Visibilite } from "@/fonctionnalites/organisation/droits";
 import { ErreurSaisie, visibiliteEffective } from "./creer";
+import { notifierPublication } from "@/fonctionnalites/notifications/evenements";
 import { documentLisible } from "./requetes";
 
 export interface Modification {
@@ -26,4 +27,5 @@ export async function modifierDocument(u: Acteur, id: string, m: Modification): 
       ...(m.visibilite ? { visibilite: visibiliteEffective(m.visibilite, l.d.delegationId) } : {}),
     })
     .where(eq(schema.document.id, l.d.id));
+  if (m.statut === "publie" && l.d.statut === "brouillon") await notifierPublication(l.d.id);
 }

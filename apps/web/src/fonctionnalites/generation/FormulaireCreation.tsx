@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { fichiersPartages, oublierPartage } from "@/fonctionnalites/partage/fichiers";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Download, Eye, ImagePlus, Loader2, X } from "lucide-react";
 import { ChampsPartage } from "@/fonctionnalites/documents/ChampsPartage";
@@ -141,6 +142,21 @@ export function FormulaireCreation({
       setPhotos((p) => ({ ...p, [nom]: { url: locale, nom: f.name, envoi: false, erreur: e instanceof Error ? e.message : "Envoi impossible." } }));
     }
   }
+
+  // Photo partagée depuis la galerie (page /partage) : elle remplit le premier champ photo.
+  const partageLu = useRef(false);
+  useEffect(() => {
+    if (partageLu.current || !new URLSearchParams(window.location.search).has("partage")) return;
+    partageLu.current = true;
+    const champ = champs.find((c) => c.type === "image");
+    void fichiersPartages().then(async (f) => {
+      const photo = f.find((x) => x.type.startsWith("image/"));
+      if (champ && photo) await choisirPhoto(champ.nom, photo);
+      await oublierPartage();
+      window.history.replaceState(null, "", window.location.pathname);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- une seule fois, à l'arrivée depuis /partage
+  }, []);
 
   async function creer(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

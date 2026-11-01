@@ -103,6 +103,27 @@ Vérifier : `https://…/api/sante` doit répondre `"etat":"ok"` et `"stockage":
 
 Pour publier une nouvelle version : relancer la commande `gcloud run deploy` ci-dessus.
 
+## 7. Notifications (facultatif)
+
+Sans cette étape, la plateforme marche sans notifications (l'écran Notifications l'indique).
+
+1. Générer la paire de clés, une fois (ne plus la changer : les téléphones abonnés seraient perdus) : `npx web-push generate-vapid-keys`.
+2. Secret Manager : `aeemci-vapid-privee` (clé privée) et `aeemci-rappels-secret` (32 caractères aléatoires, même commande que `aeemci-auth-secret`), lisibles par Cloud Run comme les autres (section 4).
+3. Les donner au service :
+
+```bash
+gcloud run services update aeemci-studio --region europe-west1   --update-secrets VAPID_PRIVEE=aeemci-vapid-privee:latest,RAPPELS_SECRET=aeemci-rappels-secret:latest   --update-env-vars VAPID_PUBLIQUE=<clé publique>,VAPID_CONTACT=mailto:<adresse du bureau>
+```
+
+4. Rappel de la veille des activités, chaque jour à 18 h (Abidjan) :
+
+```bash
+gcloud services enable cloudscheduler.googleapis.com
+gcloud scheduler jobs create http aeemci-rappels --location europe-west1 --schedule "0 18 * * *" --time-zone "Africa/Abidjan"   --http-method POST --uri https://aeemci-studio-….run.app/api/notifications/rappels   --headers "Authorization=Bearer <valeur de aeemci-rappels-secret>"
+```
+
+Cloud Scheduler : 3 tâches gratuites par mois. Vérifier : **Exécuter maintenant** dans la console Cloud Scheduler doit répondre 200.
+
 ### Réglages et coûts
 
 - `--min-instances 0` : le service s'éteint quand personne ne s'en sert (gratuit au repos). La première visite après une pause attend quelques secondes.
