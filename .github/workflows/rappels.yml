@@ -1,0 +1,27 @@
+name: Rappels des activités
+
+# Chaque jour à 18 h (Abidjan, UTC+0) : notifications de rappel pour les activités du lendemain.
+# Variable du dépôt `ADRESSE_APPLICATION` (https://….azurecontainerapps.io) et secret `RAPPELS_SECRET`
+# (même valeur que dans Azure), doc 10, section 7. Sans eux, la tâche ne fait rien.
+
+on:
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+jobs:
+  rappels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appeler /api/notifications/rappels
+        env:
+          ADRESSE: ${{ vars.ADRESSE_APPLICATION }}
+          SECRET: ${{ secrets.RAPPELS_SECRET }}
+        run: |
+          if [ -z "$ADRESSE" ] || [ -z "$SECRET" ]; then
+            echo "Rappels non configurés (doc 10, section 7)."
+            exit 0
+          fi
+          # Le service peut être éteint : la première requête attend son démarrage.
+          curl -fsS --retry 3 --retry-delay 20 --retry-all-errors --max-time 180 \
+            -X POST -H "Authorization: Bearer $SECRET" "$ADRESSE/api/notifications/rappels"

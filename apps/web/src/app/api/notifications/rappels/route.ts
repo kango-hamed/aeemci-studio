@@ -3,8 +3,8 @@ import { erreur } from "@/serveur/reponses";
 import { envoyerRappels } from "@/fonctionnalites/notifications/evenements";
 
 /**
- * Rappels des activités du lendemain. Appelé une fois par jour par le planificateur (Cloud Scheduler,
- * doc 10), avec l'en-tête `Authorization: Bearer <RAPPELS_SECRET>`. Réponse : `{ activites }`.
+ * Rappels des activités du lendemain. Appelé une fois par jour par le planificateur (tâche GitHub Actions
+ * `rappels.yml`, doc 10), avec l'en-tête `Authorization: Bearer <RAPPELS_SECRET>`. Réponse : `{ activites }`.
  */
 export async function POST(request: Request) {
   const secret = process.env.RAPPELS_SECRET;

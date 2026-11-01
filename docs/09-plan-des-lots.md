@@ -1,6 +1,6 @@
 # 09 · Plan de développement par lots
 
-Date : 30/10/2026. **Plan validé par Kango le 30/10/2026**, puis **révisé le même jour** : la V2 est une nouvelle application Next.js (monolithe modulaire) dont les piliers sont des fonctionnalités. `aeemci-plateform` (V1) reste en service jusqu'à ce que la V2 fasse au moins ce qu'elle fait. Hébergement : Google Cloud Run + Neon, en gratuit (doc 10).
+Date : 30/10/2026. **Plan validé par Kango le 30/10/2026**, puis **révisé le même jour** : la V2 est une nouvelle application Next.js (monolithe modulaire) dont les piliers sont des fonctionnalités. `aeemci-plateform` (V1) reste en service jusqu'à ce que la V2 fasse au moins ce qu'elle fait. Hébergement : Azure Container Apps (Azure for Students) + Neon + R2, en gratuit (doc 10, révisé le 01/11/2026).
 
 ## Principes
 
@@ -135,7 +135,7 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 
 | Lot | Décision |
 |---|---|
-| 1 | ~~Hébergement~~ (Cloud Run 2 Go + Neon + R2, gratuit) ; date de bascule depuis la V1 (1c) ; largeur d'impression souhaitée (3600 px par défaut) |
+| 1 | ~~Hébergement~~ (Azure Container Apps 2 Go + Neon + R2, gratuit, révisé le 01/11) ; date de bascule depuis la V1 (1c) ; largeur d'impression souhaitée (3600 px par défaut) |
 | 2 | ~~Délégations~~ (gérées dans l'application) ; ~~qui crée les comptes~~ (bureau exécutif, lien à partager) ; gabarits réservés à certaines délégations ou non |
 | 4 | Signature et cachet par type de document ; signataires des PV ; remise à zéro de la numérotation |
 | 5 | Durée de conservation des documents ; données des membres conservées après leur départ |

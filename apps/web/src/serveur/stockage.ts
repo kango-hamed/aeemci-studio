@@ -9,7 +9,7 @@ import { DeleteObjectCommand, GetObjectCommand, NoSuchKey, PutObjectCommand, S3C
  * - `STOCKAGE=r2` (production) : Cloudflare R2, par son API compatible S3. Variables `R2_COMPTE`
  *   (identifiant du compte Cloudflare), `R2_CLE`, `R2_SECRET`, `R2_SEAU`.
  * - sinon : un dossier local (`STOCKAGE_DOSSIER`, défaut `.stockage`). Pour le développement et
- *   les tests seulement : le disque d'un conteneur Cloud Run est effacé à chaque redémarrage.
+ *   les tests seulement : le disque d'un conteneur en production est effacé à chaque redémarrage.
  *
  * Les fichiers ne sont jamais servis directement : l'application les lit après avoir vérifié les droits.
  * Clés : `gabarits/<gabarit>/<revision>/…`, `televersements/<membre>/<id>`, `documents/<id>/…`.

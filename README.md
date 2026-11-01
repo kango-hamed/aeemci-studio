@@ -35,7 +35,7 @@ Démarrage rapide : `npm install`, puis la section 1 du doc 10.
 | 07 | [Guide designers](docs/07-guide-designers.md) | Préparer un PSD pour en faire un gabarit (fiche pour l'équipe communication) |
 | 08 | [Écran Gabarits](docs/08-atelier.md) | Importer, régler et publier un gabarit : libellés, contraintes, aperçu en direct, révisions |
 | 09 | [Plan des lots](docs/09-plan-des-lots.md) | Découpage du développement : lot 1 = nouvelle application + moteur de rendu, puis organisation, documents, administratif, archives |
-| 10 | [Installer et déployer](docs/10-deploiement.md) | En local, puis Neon + Google Cloud Run (gratuit) |
+| 10 | [Installer et déployer](docs/10-deploiement.md) | En local, puis Neon + R2 + Azure Container Apps (Azure for Students, sans carte) |
 
 Charte graphique : design system « AEEMCI ESATIC » (Claude, lien privé : https://claude.ai/artifact/YT1zcSKt7Ahdywmfdm93x5), copie des jetons et du guide dans `charte/` ; logos extraits des PSD dans `charte/sources/`.
 

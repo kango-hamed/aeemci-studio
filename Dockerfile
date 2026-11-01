@@ -1,5 +1,5 @@
 # AEEMCI Studio : une seule image (application Next.js + Chromium pour le moteur de rendu).
-# Construite par l'intégration continue et par `gcloud run deploy --source .` (Cloud Build).
+# Construite par l'intégration continue, publiée sur ghcr.io depuis main, lancée par Azure Container Apps (doc 10).
 
 ARG NODE_VERSION=22
 ARG PLAYWRIGHT_VERSION=1.63.0
