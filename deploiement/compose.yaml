@@ -1,0 +1,27 @@
+# AEEMCI Studio sur un serveur (AWS EC2, ou tout serveur avec Docker) : doc 10, section 5.
+# L'application (image publiée par l'intégration continue) derrière Caddy, qui obtient et renouvelle
+# seul le certificat HTTPS de `DOMAINE`. Les variables viennent du fichier `.env` posé à côté.
+
+services:
+  app:
+    # VERSION=<numéro de commit> pour revenir à une version précise.
+    image: ghcr.io/kango-hamed/aeemci-studio:${VERSION:-latest}
+    restart: unless-stopped
+    env_file: .env
+    expose: ["8080"]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      DOMAINE: ${DOMAINE}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_donnees:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_donnees:
+  caddy_config:

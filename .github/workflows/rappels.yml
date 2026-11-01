@@ -1,8 +1,8 @@
 name: Rappels des activités
 
 # Chaque jour à 18 h (Abidjan, UTC+0) : notifications de rappel pour les activités du lendemain.
-# Variable du dépôt `ADRESSE_APPLICATION` (https://….azurecontainerapps.io) et secret `RAPPELS_SECRET`
-# (même valeur que dans Azure), doc 10, section 7. Sans eux, la tâche ne fait rien.
+# Variable du dépôt `ADRESSE_APPLICATION` (https://…sslip.io) et secret `RAPPELS_SECRET`
+# (même valeur que sur le serveur), doc 10, section 7. Sans eux, la tâche ne fait rien.
 
 on:
   schedule:

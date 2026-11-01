@@ -1,16 +1,18 @@
 # 10 · Installer et déployer AEEMCI Studio
 
-Date : 30/10/2026, **révisé le 01/11/2026** : hébergement sur **Azure Container Apps** (Azure for Students) au lieu de Google Cloud Run, qui demandait un prépaiement de 30 $. Application Next.js, base Neon, fichiers sur Cloudflare R2, image Docker publiée sur GitHub. Aucune carte bancaire n'est demandée par Azure for Students ; le crédit annuel couvre largement l'usage d'une section.
+Date : 30/10/2026, **révisé le 01/11/2026** : hébergement provisoire sur **AWS EC2** (offre gratuite du compte de Kango), pour la présentation et les premiers mois. Google Cloud demandait un prépaiement de 30 $, Oracle une carte bancaire, et Azure for Students ne reconnaît pas le domaine de l'ESATIC. **La section devra choisir un hébergement durable** (« Après AWS », en fin de document) : la base Neon et les fichiers R2 ne bougent pas, seul le serveur change.
+
+Application Next.js dans une image Docker publiée sur GitHub, base Neon, fichiers sur Cloudflare R2. Sur le serveur, Docker lance l'application derrière Caddy, qui fournit le HTTPS (obligatoire pour installer l'application sur téléphone et recevoir les notifications).
 
 ## Ce qu'il faut
 
 - Node.js 22 (version notée dans `.nvmrc`) et Git.
 - Un compte **Neon** (base Postgres, gratuit).
-- Un compte **Cloudflare** avec un seau R2 (gratuit ; une carte peut être demandée pour activer R2).
-- Un abonnement **Azure for Students** : https://azure.microsoft.com/free/students, avec l'adresse étudiante de l'ESATIC. 100 $ de crédit valables un an, renouvelables chaque année tant que le titulaire est étudiant, sans carte.
+- Un compte **Cloudflare** avec un seau R2 (gratuit).
+- Un compte **AWS** avec son offre gratuite (crédits).
 - Le dépôt GitHub privé `kango-hamed/aeemci-studio` : l'intégration continue y construit l'image et la publie.
 
-Rien à installer pour Azure : les commandes passent par **Cloud Shell**, le terminal du portail Azure (bouton `>_` en haut de https://portal.azure.com, choisir **Bash**, puis « Pas de compte de stockage » / session éphémère).
+Rien à installer pour le serveur : on s'y connecte depuis la console AWS, dans le navigateur (EC2 Instance Connect).
 
 ## 1. Lancer l'application sur ton ordinateur
 
@@ -31,7 +33,7 @@ Tests : `npm test`. Les tests d'authentification ont besoin d'une base jetable d
 
 ## 2. Créer la base Neon
 
-1. https://console.neon.tech → **New project**, nom `aeemci-studio`, Postgres 16 ou plus, région **Europe (Frankfurt)**.
+1. https://console.neon.tech → **New project**, nom `aeemci-studio`, Postgres 16 ou plus, région **AWS Europe Central 1 (Frankfurt)**.
 2. **Connect** → cocher **Connection pooling** → copier la chaîne (`postgresql://…-pooler…/neondb?sslmode=require`). C'est la `DATABASE_URL` de production.
 3. Depuis ton ordinateur, appliquer les migrations et créer ton compte sur cette base. Sous Windows, dans PowerShell, à la racine du dépôt :
 
@@ -46,7 +48,7 @@ Remove-Item Env:DATABASE_URL
 
 ## 3. Le stockage R2
 
-Le disque du conteneur est effacé à chaque redémarrage : les fichiers doivent vivre ailleurs.
+Le serveur ne garde aucun fichier : tout va dans R2, ce qui permet de changer d'hébergeur sans rien perdre.
 
 1. https://dash.cloudflare.com → **R2 Object Storage** → **Create bucket** (par exemple `aeemci-studio`), emplacement automatique. Le seau reste **privé** : l'application lit les fichiers et vérifie les droits avant de les servir.
 2. R2 → **Manage R2 API Tokens** → **Create API token** : permission **Object Read & Write**, limitée à ce seau. Noter l'**Access Key ID** (`R2_CLE`) et le **Secret Access Key** (`R2_SECRET`), affichés une seule fois.
@@ -57,66 +59,81 @@ Le disque du conteneur est effacé à chaque redémarrage : les fichiers doivent
 À chaque envoi sur `main`, l'intégration continue (`.github/workflows/ci.yml`) vérifie le code puis publie l'image sur `ghcr.io/kango-hamed/aeemci-studio` (étiquettes `latest` et numéro du commit). Le paquet reste **privé**, comme le dépôt.
 
 1. Onglet **Actions** du dépôt : les deux jobs (« Lint, types, tests, build » et « Image Docker ») doivent être verts. Le paquet apparaît alors dans **Packages** sur la page du compte GitHub.
-2. Créer le jeton qui permettra à Azure de tirer l'image : GitHub → **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)** → **Generate new token (classic)**, nom `azure-aeemci`, expiration **No expiration** (ou un an, à renouveler), **une seule case : `read:packages`**. Noter le jeton (`ghp_…`).
+2. Créer le jeton qui permettra au serveur de tirer l'image : GitHub → **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)** → **Generate new token (classic)**, nom `serveur-aeemci`, expiration un an, **une seule case : `read:packages`**. Noter le jeton (`ghp_…`).
 
-## 5. Déployer sur Azure
+## 5. Le serveur AWS
 
-Dans Cloud Shell (Bash). Une fois :
+### A. Vérifier l'offre gratuite (une fois)
 
-```bash
-az provider register --namespace Microsoft.App --wait
-az provider register --namespace Microsoft.OperationalInsights --wait
-az group create --name aeemci-studio --location francecentral
-az containerapp env create --name aeemci-env --resource-group aeemci-studio --location francecentral
-```
+Console AWS → **Facturation et gestion des coûts** → **Offre gratuite** (ou **Crédits**).
 
-Si Azure refuse la région (`RequestDisallowedByAzure` : l'abonnement étudiant limite les régions), reprendre ces deux dernières commandes avec `westeurope`, `northeurope` ou `germanywestcentral` (le message d'erreur liste les régions permises).
+- **Compte ouvert après le 15/07/2025** (« plan gratuit », 100 à 200 $ de crédits, 6 mois) : prendre une **t3.small** (2 vCPU, 2 Go), éligible au plan gratuit. C'est le cas prévu ci-dessous.
+- **Compte plus ancien** (offre de 12 mois, 750 h par mois) : seule la **t3.micro** (1 Go) est gratuite. Elle suffit pour la présentation avec 3 Go de swap (étape D) et `RENDUS_SIMULTANES=1` dans `.env`, au prix d'aperçus plus lents ; une t3.small serait facturée (environ 17 $ par mois).
 
-Puis saisir les secrets **sans qu'ils restent dans l'historique** (chaque `read` attend une valeur collée puis Entrée, rien ne s'affiche) :
+Puis **Budgets** → **Créer un budget** → modèle **Budget de dépenses nulles** (« Zero spend budget »), avec ton e-mail : AWS prévient au premier centime facturé hors crédits.
 
-```bash
-read -rsp "Chaîne Neon pooled : " DB; echo
-read -rsp "Access Key ID R2 : " R2CLE; echo
-read -rsp "Secret Access Key R2 : " R2SECRET; echo
-read -rsp "Jeton GitHub read:packages : " GHCR; echo
-AUTH=$(openssl rand -base64 32 | tr -d '\n')
-```
+### B. Créer la machine
 
-Créer l'application (remplacer `<COMPTE>` par l'identifiant du compte Cloudflare et `<SEAU>` par le nom du seau) :
+Console AWS, région **Europe (Francfort) eu-central-1** (en haut à droite ; la même que Neon) → **EC2** → **Lancer une instance** :
 
-```bash
-az containerapp create --name aeemci-studio --resource-group aeemci-studio --environment aeemci-env \
-  --image ghcr.io/kango-hamed/aeemci-studio:latest \
-  --registry-server ghcr.io --registry-username kango-hamed --registry-password "$GHCR" \
-  --ingress external --target-port 8080 \
-  --cpu 1 --memory 2Gi --min-replicas 0 --max-replicas 2 \
-  --scale-rule-name http --scale-rule-type http --scale-rule-http-concurrency 20 \
-  --secrets database-url="$DB" auth-secret="$AUTH" r2-cle="$R2CLE" r2-secret="$R2SECRET" \
-  --env-vars DATABASE_URL=secretref:database-url BETTER_AUTH_SECRET=secretref:auth-secret \
-    R2_CLE=secretref:r2-cle R2_SECRET=secretref:r2-secret STOCKAGE=r2 R2_COMPTE=<COMPTE> R2_SEAU=<SEAU>
-```
+| Réglage | Valeur |
+|---|---|
+| Nom | `aeemci-studio` |
+| Image (AMI) | **Ubuntu Server 24.04 LTS**, architecture 64 bits (x86) |
+| Type d'instance | **t3.small** (ou t3.micro, voir A) |
+| Paire de clés | **Continuer sans paire de clés** (connexion par la console) |
+| Réseau | Créer un groupe de sécurité : cocher **Autoriser le trafic SSH**, **Autoriser HTTPS** et **Autoriser HTTP depuis Internet** |
+| Stockage | **20 Gio**, gp3 |
 
-Donner son adresse à l'application, une fois :
+**Lancer l'instance.** Ensuite, pour que l'adresse ne change pas à chaque redémarrage : EC2 → **Adresses IP Elastic** → **Allouer l'adresse IP Elastic** → **Allouer**, puis **Actions** → **Associer l'adresse IP Elastic** → choisir l'instance → **Associer**. Noter cette adresse, par exemple `3.120.45.67`.
+
+**Adresse publique de l'application** : l'IP avec des tirets, suivie de `.sslip.io`, par exemple `3-120-45-67.sslip.io`. Ce service gratuit renvoie vers l'IP écrite dans le nom, ce qui permet d'avoir un certificat HTTPS sans acheter de domaine. Avec un vrai domaine plus tard, il suffit de le pointer sur l'IP et de changer `DOMAINE` et `BETTER_AUTH_URL`.
+
+### C. Se connecter
+
+EC2 → **Instances** → `aeemci-studio` → **Se connecter** → onglet **EC2 Instance Connect** → **Se connecter**. Un terminal s'ouvre dans le navigateur (utilisateur `ubuntu`). Coller avec **Ctrl+Maj+V**.
+
+### D. Docker et swap (une fois)
 
 ```bash
-ADRESSE=https://$(az containerapp show --name aeemci-studio --resource-group aeemci-studio --query properties.configuration.ingress.fqdn -o tsv)
-az containerapp update --name aeemci-studio --resource-group aeemci-studio --set-env-vars BETTER_AUTH_URL=$ADRESSE
-echo $ADRESSE
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker ubuntu
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+exit
 ```
 
-Vérifier : `https://…azurecontainerapps.io/api/sante` doit répondre `"etat":"ok"` et `"stockage":"r2"` (la première visite attend le démarrage, jusqu'à une minute), puis se connecter avec le compte créé à l'étape 2. En cas d'erreur, les journaux :
+Le swap (`3G` sur une t3.micro) évite un arrêt brutal si Chromium dépasse la mémoire. Se **reconnecter** (étape C) pour que Docker soit utilisable sans `sudo`.
+
+### E. Fichiers de l'application (une fois)
 
 ```bash
-az containerapp logs show --name aeemci-studio --resource-group aeemci-studio --follow
+mkdir -p ~/aeemci && cd ~/aeemci
+nano compose.yaml
 ```
 
-**Publier une nouvelle version** : envoyer sur `main`, attendre que l'intégration continue soit verte (migration éventuelle d'abord, section 2), puis dans Cloud Shell :
+Coller le contenu de [`deploiement/compose.yaml`](../deploiement/compose.yaml), enregistrer (**Ctrl+O**, Entrée) et quitter (**Ctrl+X**). Même chose pour `nano Caddyfile` ([`deploiement/Caddyfile`](../deploiement/Caddyfile)) et `nano .env` ([`deploiement/.env.exemple`](../deploiement/.env.exemple), à remplir : `DOMAINE`, `BETTER_AUTH_URL`, chaîne Neon, identifiants R2). Pour `BETTER_AUTH_SECRET`, générer une valeur avec `openssl rand -base64 32` et la coller. Puis :
 
 ```bash
-az containerapp update --name aeemci-studio --resource-group aeemci-studio --image ghcr.io/kango-hamed/aeemci-studio:latest --revision-suffix v$(date +%Y%m%d%H%M)
+chmod 600 .env
+read -rsp "Jeton GitHub read:packages : " GHCR; echo; echo "$GHCR" | docker login ghcr.io -u kango-hamed --password-stdin; unset GHCR
+docker compose up -d
+docker compose logs -f
 ```
 
-Le suffixe force une nouvelle révision, qui retire l'image `latest`. Pour revenir en arrière : même commande avec `:<numéro du commit>` à la place de `:latest`.
+Attendre la ligne de Caddy indiquant que le certificat est obtenu (`certificate obtained successfully`), puis **Ctrl+C** pour quitter les journaux (l'application continue de tourner).
+
+**Vérifier** : `https://3-120-45-67.sslip.io/api/sante` doit répondre `"etat":"ok"` et `"stockage":"r2"`, puis se connecter avec le compte créé à l'étape 2. En cas d'erreur : `docker compose logs app` ou `docker compose logs caddy`.
+
+### F. Publier une nouvelle version
+
+Envoyer sur `main`, attendre que l'intégration continue soit verte (migration éventuelle d'abord, section 2), puis sur le serveur :
+
+```bash
+cd ~/aeemci && docker compose pull && docker compose up -d && docker image prune -f
+```
+
+Revenir à une version précise : `VERSION=<numéro du commit> docker compose up -d`. Le serveur redémarre seul l'application après un redémarrage de la machine (`restart: unless-stopped`).
 
 ## 6. Publier le premier gabarit
 
@@ -128,40 +145,28 @@ Le suffixe force une nouvelle révision, qui retire l'image `latest`. Pour reven
 Sans cette étape, la plateforme marche sans notifications (l'écran Notifications l'indique).
 
 1. Générer la paire de clés, une fois, sur ton ordinateur (ne plus la changer : les téléphones abonnés seraient perdus) : `npx web-push generate-vapid-keys`.
-2. Dans Cloud Shell :
-
-```bash
-read -rsp "Clé privée VAPID : " VAPID; echo
-RAPPELS=$(openssl rand -base64 32 | tr -d '\n'); echo "Secret des rappels : $RAPPELS"
-az containerapp secret set --name aeemci-studio --resource-group aeemci-studio --secrets vapid-privee="$VAPID" rappels-secret="$RAPPELS"
-az containerapp update --name aeemci-studio --resource-group aeemci-studio \
-  --set-env-vars VAPID_PRIVEE=secretref:vapid-privee RAPPELS_SECRET=secretref:rappels-secret \
-    VAPID_PUBLIQUE=<clé publique> VAPID_CONTACT=mailto:<adresse du bureau>
-```
-
+2. Sur le serveur, `nano ~/aeemci/.env` : décommenter et remplir `VAPID_PUBLIQUE`, `VAPID_PRIVEE`, `VAPID_CONTACT`, et `RAPPELS_SECRET` (valeur de `openssl rand -base64 32`). Puis `cd ~/aeemci && docker compose up -d`.
 3. Rappel de la veille des activités, chaque jour à 18 h (Abidjan) : la tâche `.github/workflows/rappels.yml` du dépôt. GitHub → dépôt → **Settings** → **Secrets and variables** → **Actions** :
-   - onglet **Secrets** : `RAPPELS_SECRET` = le secret des rappels affiché ci-dessus ;
-   - onglet **Variables** : `ADRESSE_APPLICATION` = l'adresse de l'application (`https://…azurecontainerapps.io`, sans `/` final).
+   - onglet **Secrets** : `RAPPELS_SECRET` = la même valeur que dans `.env` ;
+   - onglet **Variables** : `ADRESSE_APPLICATION` = l'adresse de l'application (`https://3-120-45-67.sslip.io`, sans `/` final).
 
 Vérifier : **Actions** → « Rappels des activités » → **Run workflow** ; le job doit être vert et afficher `{"activites":…}`. GitHub peut retarder une tâche planifiée de quelques minutes, et la suspend après 60 jours sans activité sur le dépôt (un e-mail prévient ; la réactiver dans l'onglet Actions).
 
 ## Réglages et coûts
 
-- `--min-replicas 0` : le service s'éteint quand personne ne s'en sert (gratuit au repos). La première visite après une pause attend son démarrage (tirage de l'image, puis Chromium), de quelques secondes à une minute.
-- `--memory 2Gi` : Chromium (moteur de rendu) a besoin de place. Mesuré sur le gabarit « panéliste » (fond de 5400 × 6414 px) : pic de 1,4 Go pour l'import, les aperçus, la création et la haute définition. Pour tenir, l'import prépare des fonds réduits (1620 px) pour l'aperçu et le fichier réseaux, la haute définition est plafonnée à 3600 px de large (impression A4 et A3 ; réglable par `LARGEUR_HD`) et rendue seule. Si les journaux signalent un manque de mémoire, passer à `--cpu 2 --memory 4Gi` ou `RENDUS_SIMULTANES=1`.
-- **Part gratuite de Container Apps**, chaque mois : 180 000 vCPU-secondes, 360 000 Gio-secondes et 2 millions de requêtes, soit environ 50 heures d'activité à 1 vCPU. Le temps compte tant qu'une instance tourne, y compris les quelques minutes avant qu'elle s'éteigne. Au-delà, le crédit étudiant paie.
-- **Crédit épuisé** : l'abonnement Azure for Students s'arrête (le service est coupé) au lieu de facturer. Suivre la consommation : portail Azure → **Abonnements** → **Analyse des coûts**.
-- `--max-replicas 2` : plafond de sécurité contre un emballement.
-- L'environnement crée un espace de journaux (Log Analytics) : 5 Go gratuits par mois, suffisants.
-- **Passation** : l'abonnement appartient à un étudiant. Avant son départ, ajouter un membre du nouveau bureau comme **Propriétaire** de l'abonnement (portail → abonnement → **Contrôle d'accès (IAM)**), puis recréer le service sur l'abonnement d'un autre étudiant (sections 5 et 7, mêmes secrets : la base et les fichiers ne bougent pas).
+- **Toujours allumé** : pas d'attente à la première visite, contrairement à un service qui s'éteint au repos.
+- **Mémoire** : Chromium (moteur de rendu) a besoin de place. Mesuré sur le gabarit « panéliste » (fond de 5400 × 6414 px) : pic de 1,4 Go pour l'import, les aperçus, la création et la haute définition. Pour tenir, l'import prépare des fonds réduits (1620 px) pour l'aperçu et le fichier réseaux, la haute définition est plafonnée à 3600 px de large (impression A4 et A3 ; réglable par `LARGEUR_HD`) et rendue seule. Si l'application s'arrête faute de mémoire (`docker compose logs app`, ou `dmesg | grep -i kill`), ajouter `RENDUS_SIMULTANES=1` dans `.env`.
+- **Consommation des crédits** (ordre de grandeur, Francfort) : t3.small environ 17 $ par mois, disque de 20 Gio environ 2 $, adresse IPv4 publique environ 4 $ : un peu plus de 20 $ par mois. À suivre dans **Facturation** → **Crédits**.
+- **Fin du plan gratuit** : au bout de 6 mois ou quand les crédits sont épuisés, AWS ferme le compte s'il n'est pas passé en payant. Avant cette date, déménager (« Après AWS ») : rien à copier, la base et les fichiers sont ailleurs.
+- **Sécurité** : la machine n'accepte que SSH (par clé, poussée par la console) et le web ; les secrets ne vivent que dans `~/aeemci/.env` (lisible par `ubuntu` seul). Mises à jour du système de temps en temps : `sudo apt update && sudo apt upgrade -y`.
 
-## Si l'association investit
+## Après AWS : hébergement durable
 
-La même image tourne ailleurs sans modification :
+La même image et les mêmes variables tournent ailleurs sans modification :
 
-- **Container Apps payant** : `--min-replicas 1` supprime l'attente de la première visite.
-- **Google Cloud Run** : `gcloud run deploy --image ghcr.io/…` avec les mêmes variables (Secret Manager pour les secrets), 2 Gio de mémoire.
-- **Petit serveur virtuel** (quelques euros par mois) : `docker run -p 80:8080 --env-file .env ghcr.io/kango-hamed/aeemci-studio:latest`.
+- **Petit serveur virtuel payant** (quelques euros par mois, chez un hébergeur au choix) : exactement la section 5, étapes C à F.
+- **Azure Container Apps** (Azure for Students, sans carte, si un étudiant peut faire vérifier son statut) : service qui s'éteint au repos, 1 vCPU et 2 Go ; commandes Cloud Shell dans la version du doc 10 du commit `1d693ca`.
+- **Google Cloud Run** : `gcloud run deploy --image ghcr.io/…` avec les mêmes variables, 2 Gio de mémoire (prépaiement demandé).
 - **Neon** : passage à l'offre payante pour plus de stockage et une base qui ne se met pas en veille.
 - **R2** : au-delà de la part gratuite, facturé au stockage ; les documents sont légers (PNG réseaux d'environ 2 Mo, HD faite à la demande).
 

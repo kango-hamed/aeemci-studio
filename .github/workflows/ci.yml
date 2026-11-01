@@ -45,7 +45,7 @@ jobs:
       - run: npm run build
 
   # Sur main, une fois les vérifications passées, l'image est publiée sur GitHub (ghcr.io, privée) :
-  # Azure Container Apps la tire de là (doc 10). Sur une pull request, elle est seulement construite.
+  # le serveur la tire de là (doc 10). Sur une pull request, elle est seulement construite.
   image:
     name: Image Docker
     needs: verifier
