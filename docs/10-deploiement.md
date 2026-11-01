@@ -12,7 +12,7 @@ Application Next.js dans une image Docker publiée sur GitHub, base Neon, fichie
 - Un compte **AWS** avec son offre gratuite (crédits).
 - Le dépôt GitHub privé `kango-hamed/aeemci-studio` : l'intégration continue y construit l'image et la publie.
 
-Rien à installer pour le serveur : on s'y connecte depuis la console AWS, dans le navigateur (EC2 Instance Connect).
+Rien à installer pour le serveur : on s'y connecte en SSH depuis PowerShell, avec la clé créée au lancement de la machine (section 5).
 
 ## 1. Lancer l'application sur ton ordinateur
 
@@ -74,24 +74,30 @@ Puis **Budgets** → **Créer un budget** → modèle **Budget de dépenses null
 
 ### B. Créer la machine
 
-Console AWS, région **Europe (Francfort) eu-central-1** (en haut à droite ; la même que Neon) → **EC2** → **Lancer une instance** :
+Console AWS, région **Europe (Francfort) eu-central-1** ou **Europe (Paris) eu-west-3** (en haut à droite ; proches de Neon à Francfort, Paris l'est un peu plus d'Abidjan ; l'instance de la section est à Paris) → **EC2** → **Lancer une instance** :
 
 | Réglage | Valeur |
 |---|---|
 | Nom | `aeemci-studio` |
 | Image (AMI) | **Ubuntu Server 24.04 LTS**, architecture 64 bits (x86) |
 | Type d'instance | **t3.small** (ou t3.micro, voir A) |
-| Paire de clés | **Continuer sans paire de clés** (connexion par la console) |
+| Paire de clés | **Créer une paire de clés** : nom `aeemci-studio`, type ED25519, format `.pem` (téléchargée une seule fois, voir C) |
 | Réseau | Créer un groupe de sécurité : cocher **Autoriser le trafic SSH**, **Autoriser HTTPS** et **Autoriser HTTP depuis Internet** |
 | Stockage | **20 Gio**, gp3 |
 
-**Lancer l'instance.** Ensuite, pour que l'adresse ne change pas à chaque redémarrage : EC2 → **Adresses IP Elastic** → **Allouer l'adresse IP Elastic** → **Allouer**, puis **Actions** → **Associer l'adresse IP Elastic** → choisir l'instance → **Associer**. Noter cette adresse, par exemple `3.120.45.67`.
+**Lancer l'instance.** Ensuite, pour que l'adresse ne change pas à chaque redémarrage : EC2 → **Adresses IP Elastic** → **Allouer l'adresse IP Elastic** → **Allouer**, puis **Actions** → **Associer l'adresse IP Elastic** → choisir l'instance → **Associer**. Noter cette adresse, par exemple `13.39.112.125`.
 
-**Adresse publique de l'application** : l'IP avec des tirets, suivie de `.sslip.io`, par exemple `3-120-45-67.sslip.io`. Ce service gratuit renvoie vers l'IP écrite dans le nom, ce qui permet d'avoir un certificat HTTPS sans acheter de domaine. Avec un vrai domaine plus tard, il suffit de le pointer sur l'IP et de changer `DOMAINE` et `BETTER_AUTH_URL`.
+**Adresse publique de l'application** : l'IP avec des tirets, suivie de `.sslip.io`, par exemple `13-39-112-125.sslip.io`. Ce service gratuit renvoie vers l'IP écrite dans le nom, ce qui permet d'avoir un certificat HTTPS sans acheter de domaine. Avec un vrai domaine plus tard, il suffit de le pointer sur l'IP et de changer `DOMAINE` et `BETTER_AUTH_URL`.
 
 ### C. Se connecter
 
-EC2 → **Instances** → `aeemci-studio` → **Se connecter** → onglet **EC2 Instance Connect** → **Se connecter**. Un terminal s'ouvre dans le navigateur (utilisateur `ubuntu`). Coller avec **Ctrl+Maj+V**.
+Ranger la clé téléchargée dans `%USERPROFILE%\.ssh` et la rendre lisible par toi seul (sinon `ssh` la refuse), dans PowerShell :
+
+```powershell
+icacls "$env:USERPROFILE\.ssh\aeemci-studio.pem" /inheritance:r /grant:r "$($env:USERNAME):R"
+```
+
+Puis `ssh -i "$env:USERPROFILE\.ssh\aeemci-studio.pem" ubuntu@<IP élastique>` (répondre `yes` à la première connexion). La clé n'est jamais envoyée par WhatsApp ni mise dans le dépôt ; en garder une copie sûre : perdue, elle ne se retélécharge pas. Sans la clé, la console reste possible : EC2 → **Instances** → `aeemci-studio` → **Se connecter** → **EC2 Instance Connect**.
 
 ### D. Docker et swap (une fois)
 
@@ -107,12 +113,15 @@ Le swap (`3G` sur une t3.micro) évite un arrêt brutal si Chromium dépasse la 
 
 ### E. Fichiers de l'application (une fois)
 
-```bash
-mkdir -p ~/aeemci && cd ~/aeemci
-nano compose.yaml
+Depuis ton ordinateur, à la racine du dépôt, envoyer les fichiers de [`deploiement/`](../deploiement/compose.yaml) :
+
+```powershell
+ssh -i "$env:USERPROFILE\.ssh\aeemci-studio.pem" ubuntu@<IP> "mkdir -p ~/aeemci"
+scp -i "$env:USERPROFILE\.ssh\aeemci-studio.pem" deploiement\compose.yaml deploiement\Caddyfile ubuntu@<IP>:~/aeemci/
+scp -i "$env:USERPROFILE\.ssh\aeemci-studio.pem" deploiement\.env.exemple ubuntu@<IP>:~/aeemci/.env
 ```
 
-Coller le contenu de [`deploiement/compose.yaml`](../deploiement/compose.yaml), enregistrer (**Ctrl+O**, Entrée) et quitter (**Ctrl+X**). Même chose pour `nano Caddyfile` ([`deploiement/Caddyfile`](../deploiement/Caddyfile)) et `nano .env` ([`deploiement/.env.exemple`](../deploiement/.env.exemple), à remplir : `DOMAINE`, `BETTER_AUTH_URL`, chaîne Neon, identifiants R2). Pour `BETTER_AUTH_SECRET`, générer une valeur avec `openssl rand -base64 32` et la coller. Puis :
+Sur le serveur, `cd ~/aeemci && openssl rand -base64 32 && nano .env` : remplacer **chaque** valeur entre `<…>` (la valeur affichée par `openssl` va dans `BETTER_AUTH_SECRET`), enregistrer (**Ctrl+O**, Entrée) et quitter (**Ctrl+X**). Contrôle : `grep -n '<' .env | cut -d= -f1` ne doit rien afficher (une valeur oubliée, par exemple `DOMAINE`, empêche Caddy d'obtenir le certificat : « Timeout during connect »). Puis :
 
 ```bash
 chmod 600 .env
@@ -123,7 +132,7 @@ docker compose logs -f
 
 Attendre la ligne de Caddy indiquant que le certificat est obtenu (`certificate obtained successfully`), puis **Ctrl+C** pour quitter les journaux (l'application continue de tourner).
 
-**Vérifier** : `https://3-120-45-67.sslip.io/api/sante` doit répondre `"etat":"ok"` et `"stockage":"r2"`, puis se connecter avec le compte créé à l'étape 2. En cas d'erreur : `docker compose logs app` ou `docker compose logs caddy`.
+**Vérifier** : `https://13-39-112-125.sslip.io/api/sante` doit répondre `"etat":"ok"` et `"stockage":"r2"`, puis se connecter avec le compte créé à l'étape 2. En cas d'erreur : `docker compose logs app` ou `docker compose logs caddy`.
 
 ### F. Publier une nouvelle version
 
@@ -148,7 +157,7 @@ Sans cette étape, la plateforme marche sans notifications (l'écran Notificatio
 2. Sur le serveur, `nano ~/aeemci/.env` : décommenter et remplir `VAPID_PUBLIQUE`, `VAPID_PRIVEE`, `VAPID_CONTACT`, et `RAPPELS_SECRET` (valeur de `openssl rand -base64 32`). Puis `cd ~/aeemci && docker compose up -d`.
 3. Rappel de la veille des activités, chaque jour à 18 h (Abidjan) : la tâche `.github/workflows/rappels.yml` du dépôt. GitHub → dépôt → **Settings** → **Secrets and variables** → **Actions** :
    - onglet **Secrets** : `RAPPELS_SECRET` = la même valeur que dans `.env` ;
-   - onglet **Variables** : `ADRESSE_APPLICATION` = l'adresse de l'application (`https://3-120-45-67.sslip.io`, sans `/` final).
+   - onglet **Variables** : `ADRESSE_APPLICATION` = l'adresse de l'application (`https://13-39-112-125.sslip.io`, sans `/` final).
 
 Vérifier : **Actions** → « Rappels des activités » → **Run workflow** ; le job doit être vert et afficher `{"activites":…}`. GitHub peut retarder une tâche planifiée de quelques minutes, et la suspend après 60 jours sans activité sur le dépôt (un e-mail prévient ; la réactiver dans l'onglet Actions).
 
