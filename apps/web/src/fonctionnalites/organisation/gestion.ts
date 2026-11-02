@@ -1,8 +1,9 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { and, count, eq, ne } from "drizzle-orm";
+import { and, count, eq, inArray, ne } from "drizzle-orm";
 import { db, schema } from "@/serveur/db";
 import { peutGererOrganisation, peutToucherAuPresident, type Acteur } from "./droits";
+import { cleDelegation, type LigneImport } from "./import-membres";
 import { LIMITES_IDENTITE, lignesEntete, type SaisieIdentite } from "./identite";
 import { nouveauLien } from "./invitations";
 import { mandatCourant, type MandatCourant } from "./requetes";
@@ -10,7 +11,7 @@ import { estRoleBureau, type Role } from "./roles";
 
 /**
  * Gestion de l'organisation par le bureau exécutif : comptes, rôles du mandat en cours, délégations,
- * papier à en-tête des documents officiels.
+ * import du bureau depuis un fichier, papier à en-tête des documents officiels.
  * Chaque opération vérifie elle-même les droits de l'acteur ; les actions serveur ne font que valider
  * la saisie et rafraîchir l'écran.
  */
@@ -249,4 +250,160 @@ export async function archiverDelegation(acteur: Acteur, id: string, archivee: b
     .where(and(eq(schema.delegation.id, id), eq(schema.delegation.sectionId, m.sectionId)))
     .returning({ id: schema.delegation.id });
   if (!maj.length) throw new ErreurOrganisation("Délégation inconnue.");
+}
+
+/** Suite donnée à une ligne d'import : compte créé, ancien membre réaffecté, ou déjà dans le mandat (ignoré). */
+export type SuiteImport = "nouveau" | "reaffecte" | "deja";
+
+export interface LigneAnalysee extends LigneImport {
+  /** Absente quand la ligne a des erreurs. */
+  suite?: SuiteImport;
+}
+
+export interface AnalyseImport {
+  lignes: LigneAnalysee[];
+  /** Délégations que l'import créera. */
+  nouvellesDelegations: { nom: string; code: string | null }[];
+  valide: boolean;
+}
+
+/** Délégation d'une ligne : existante (`id`) ou à créer ; `codeAjoute` : code à donner à une existante qui n'en a pas. */
+interface DelegationPrevue {
+  id?: string;
+  nom: string;
+  code: string | null;
+  codeAjoute?: string;
+}
+
+/** Contrôles qui demandent la base : délégations, comptes existants, président, droits de l'acteur. Rien n'est enregistré. */
+async function analyser(acteur: Acteur, m: MandatCourant, lignes: LigneImport[]) {
+  const existantes = await db.select().from(schema.delegation).where(eq(schema.delegation.sectionId, m.sectionId));
+  const parCle = new Map(existantes.map((d) => [cleDelegation(d.nom), d]));
+  const codes = new Map(existantes.filter((d) => d.code).map((d) => [d.code!, cleDelegation(d.nom)]));
+  const emails = [...new Set(lignes.map((l) => l.email).filter(Boolean))];
+  const comptes = emails.length ? await db.select({ id: schema.user.id, email: schema.user.email }).from(schema.user).where(inArray(schema.user.email, emails)) : [];
+  const compteDe = new Map(comptes.map((c) => [c.email, c.id]));
+  const affectations = await db.select({ userId: schema.affectation.userId, role: schema.affectation.role }).from(schema.affectation).where(eq(schema.affectation.mandatId, m.id));
+  const dansLeMandat = new Set(affectations.map((a) => a.userId));
+  let president: number | null = affectations.some((a) => a.role === "president") ? 0 : null;
+
+  const prevues = new Map<string, DelegationPrevue>();
+  const analysees = lignes.map((l): LigneAnalysee => {
+    const erreurs = [...l.erreurs];
+    if (erreurs.length || !l.role) return { ...l, erreurs };
+    const userId = compteDe.get(l.email);
+    if (userId && dansLeMandat.has(userId)) return { ...l, erreurs, suite: "deja" };
+
+    if (l.role === "president") {
+      if (!peutToucherAuPresident(acteur)) erreurs.push("Seul le président (ou un administrateur) peut confier le rôle de président.");
+      else if (president === 0) erreurs.push("Le mandat a déjà un président.");
+      else if (president) erreurs.push(`Un seul président : déjà à la ligne ${president}.`);
+      else president = l.ligne;
+    }
+    if (l.delegation) {
+      const cle = cleDelegation(l.delegation);
+      const existante = parCle.get(cle);
+      let code: string | null = null;
+      try {
+        if (!existante) nomDeDelegation(l.delegation);
+        code = codeDeDelegation(l.code);
+      } catch (e) {
+        if (!(e instanceof ErreurOrganisation)) throw e;
+        erreurs.push(e.message);
+      }
+      let prevue = prevues.get(cle);
+      if (!prevue) {
+        prevue = existante ? { id: existante.id, nom: existante.nom, code: existante.code } : { nom: nomPropre(l.delegation), code: null };
+        prevues.set(cle, prevue);
+      }
+      if (existante?.archivee) erreurs.push(`La délégation « ${existante.nom} » est archivée.`);
+      if (code && code !== prevue.code) {
+        if (prevue.code) erreurs.push(`La délégation « ${prevue.nom} » a déjà le code ${prevue.code}.`);
+        else if (codes.has(code)) erreurs.push(`Le code ${code} est déjà pris par une autre délégation.`);
+        else {
+          prevue.code = code;
+          if (prevue.id) prevue.codeAjoute = code;
+          codes.set(code, cle);
+        }
+      }
+    }
+    return { ...l, erreurs, suite: erreurs.length ? undefined : userId ? "reaffecte" : "nouveau" };
+  });
+  return { analysees, prevues };
+}
+
+const nomPropre = (nom: string) => nom.trim().replace(/\s+/g, " ");
+
+export async function analyserImport(acteur: Acteur, lignes: LigneImport[]): Promise<AnalyseImport> {
+  const m = await contexte(acteur);
+  const { analysees, prevues } = await analyser(acteur, m, lignes);
+  return {
+    lignes: analysees,
+    nouvellesDelegations: [...prevues.values()].filter((d) => !d.id).map(({ nom, code }) => ({ nom, code })),
+    valide: analysees.every((l) => !l.erreurs.length),
+  };
+}
+
+export interface MembreImporte {
+  nom: string;
+  email: string;
+  suite: SuiteImport;
+  /** Lien d'activation à transmettre, si le compte n'a pas encore de mot de passe. */
+  jeton: string | null;
+}
+
+/**
+ * Importe le fichier en une fois : délégations manquantes, comptes, rôles du mandat en cours. Tout ou rien :
+ * une seule erreur et rien n'est enregistré. Les membres déjà dans le mandat sont laissés tels quels.
+ */
+export async function importerMembres(acteur: Acteur, lignes: LigneImport[]): Promise<MembreImporte[]> {
+  const m = await contexte(acteur);
+  const { analysees, prevues } = await analyser(acteur, m, lignes);
+  if (analysees.some((l) => l.erreurs.length)) throw new ErreurOrganisation("Le fichier a des erreurs : corrige-les, puis vérifie-le à nouveau.");
+  const comptes = new Map<string, string>();
+  try {
+    await db.transaction(async (tx) => {
+      for (const d of prevues.values()) {
+        if (d.id) {
+          if (d.codeAjoute) await tx.update(schema.delegation).set({ code: d.codeAjoute }).where(eq(schema.delegation.id, d.id));
+          continue;
+        }
+        const [creee] = await tx.insert(schema.delegation).values({ sectionId: m.sectionId, nom: d.nom, code: d.code }).returning({ id: schema.delegation.id });
+        d.id = creee!.id;
+      }
+      for (const l of analysees) {
+        if (l.suite === "deja") continue;
+        let userId = l.suite === "reaffecte" ? (await tx.select({ id: schema.user.id }).from(schema.user).where(eq(schema.user.email, l.email)))[0]?.id : undefined;
+        if (!userId) {
+          userId = randomUUID();
+          await tx.insert(schema.user).values({ id: userId, name: l.nom, email: l.email });
+        }
+        const delegationId = l.delegation ? prevues.get(cleDelegation(l.delegation))!.id! : null;
+        await tx.insert(schema.affectation).values({ mandatId: m.id, userId, role: l.role!, delegationId, designer: l.designer });
+        comptes.set(l.email, userId);
+      }
+    });
+  } catch (e) {
+    if (estDoublon(e)) throw new ErreurOrganisation("Le mandat ou les délégations ont changé pendant l'import : vérifie à nouveau le fichier.");
+    throw e;
+  }
+
+  // Liens après l'enregistrement : un lien perdu se régénère depuis la liste des membres.
+  const ids = [...comptes.values()];
+  const actifs = new Set(
+    ids.length
+      ? (
+          await db
+            .select({ userId: schema.account.userId })
+            .from(schema.account)
+            .where(and(inArray(schema.account.userId, ids), eq(schema.account.providerId, "credential")))
+        ).map((c) => c.userId)
+      : [],
+  );
+  const resultat: MembreImporte[] = [];
+  for (const l of analysees) {
+    const userId = comptes.get(l.email);
+    resultat.push({ nom: l.nom, email: l.email, suite: l.suite!, jeton: userId && !actifs.has(userId) ? await nouveauLien(userId, acteur.id) : null });
+  }
+  return resultat;
 }

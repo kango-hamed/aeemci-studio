@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import * as gestion from "./gestion";
+import { ErreurImport, lireImport } from "./import-membres";
 import { ROLES } from "./roles";
 
 /** Résultat renvoyé aux formulaires : un message d'erreur, ou le lien à transmettre au membre. */
@@ -94,4 +95,27 @@ export async function modifierIdentite(_e: EtatAction, f: FormData): Promise<Eta
 
 export async function archiverDelegation(_e: EtatAction, f: FormData): Promise<EtatAction> {
   return executer((acteur) => gestion.archiverDelegation(acteur, Id.parse(texte(f, "id")), texte(f, "archivee") === "1"));
+}
+
+/** Import du bureau depuis un fichier : contrôle (rien n'est enregistré), puis import si tout est correct. */
+export interface EtatImport {
+  erreur?: string;
+  analyse?: gestion.AnalyseImport;
+  importes?: gestion.MembreImporte[];
+}
+
+export async function importerMembres(_e: EtatImport, f: FormData): Promise<EtatImport> {
+  const acteur = await exigerUtilisateur();
+  const fichier = f.get("fichier");
+  if (!(fichier instanceof File) || fichier.size === 0) return { erreur: "Choisis le fichier CSV des membres." };
+  try {
+    const lignes = lireImport(new Uint8Array(await fichier.arrayBuffer()));
+    if (texte(f, "intention") !== "importer") return { analyse: await gestion.analyserImport(acteur, lignes) };
+    const importes = await gestion.importerMembres(acteur, lignes);
+    revalidatePath("/organisation");
+    return { importes };
+  } catch (e) {
+    if (e instanceof ErreurImport || e instanceof gestion.ErreurOrganisation) return { erreur: e.message };
+    throw e;
+  }
 }

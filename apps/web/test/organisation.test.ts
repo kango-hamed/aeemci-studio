@@ -137,6 +137,49 @@ describe.skipIf(!url)("organisation (Postgres)", () => {
     await expect(m.gestion.modifierIdentite(moussa, vide)).rejects.toThrow(/bureau/);
   });
 
+  it("importe le bureau d'un fichier : contrôle sans rien enregistrer, puis tout ou rien", async () => {
+    const { lireImport } = await import("@/fonctionnalites/organisation/import-membres");
+    const fichier = (lignes: string[]) => lireImport(new TextEncoder().encode(["nom;email;role;delegation;code;designer", ...lignes].join("\n")));
+    const sectionId = (await m.requetes.mandatCourant())!.sectionId;
+    const nbDelegations = async () => (await m.requetes.delegationsDe(sectionId, mandatId)).length;
+    const avant = await nbDelegations();
+    const valides = [
+      "Moussa Traoré;moussa@esatic.edu.ci;Membre;Cellule communication;;",
+      "Salif Ouattara;salif@esatic.edu.ci;Membre;cellule  COMMUNICATION;COMM;",
+      "Mariam Sylla;mariam@esatic.edu.ci;Responsable;Cellule sport;SPORT;oui",
+      "Yao Kouassi;yao@esatic.edu.ci;;Cellule sport;;",
+    ];
+
+    const erreurs = await m.gestion.analyserImport(president, fichier([...valides, "Autre Président;p3@esatic.edu.ci;Président;;;", "Code Pris;cp@esatic.edu.ci;Membre;Cellule théâtre;SPORT;"]));
+    expect(erreurs.valide).toBe(false);
+    expect(erreurs.lignes.map((l) => l.suite ?? l.erreurs[0])).toEqual(["deja", "nouveau", "nouveau", "nouveau", "Le mandat a déjà un président.", "Le code SPORT est déjà pris par une autre délégation."]);
+    await expect(m.gestion.importerMembres(president, fichier([...valides, "Autre Président;p3@esatic.edu.ci;Président;;;"]))).rejects.toThrow(/erreurs/);
+    expect(await nbDelegations()).toBe(avant);
+
+    const analyse = await m.gestion.analyserImport(president, fichier(valides));
+    expect(analyse.valide).toBe(true);
+    expect(analyse.nouvellesDelegations).toEqual([{ nom: "Cellule sport", code: "SPORT" }]);
+    const importes = await m.gestion.importerMembres(president, fichier(valides));
+    expect(importes.map((x) => [x.email, x.suite, Boolean(x.jeton)])).toEqual([
+      ["moussa@esatic.edu.ci", "deja", false],
+      ["salif@esatic.edu.ci", "nouveau", true],
+      ["mariam@esatic.edu.ci", "nouveau", true],
+      ["yao@esatic.edu.ci", "nouveau", true],
+    ]);
+    expect(await m.invitations.lienValide(importes[1]!.jeton!)).toBeTruthy();
+    const delegations = await m.requetes.delegationsDe(sectionId, mandatId);
+    expect(delegations.find((d) => d.id === communication)?.code).toBe("COMM");
+    expect(delegations.find((d) => d.nom === "Cellule sport")?.code).toBe("SPORT");
+    const membres = await m.requetes.membresDuMandat(mandatId);
+    expect(membres.find((x) => x.email === "mariam@esatic.edu.ci")).toMatchObject({ role: "responsable_delegation", delegation: "Cellule sport", designer: true });
+    expect(membres.find((x) => x.email === "salif@esatic.edu.ci")).toMatchObject({ role: "membre", delegationId: communication, designer: false });
+
+    // Le même fichier une seconde fois : tout est déjà dans le mandat.
+    expect((await m.gestion.importerMembres(president, fichier(valides))).every((x) => x.suite === "deja" && !x.jeton)).toBe(true);
+    const moussa = await acteur(membres.find((x) => x.email === "moussa@esatic.edu.ci")!.userId);
+    await expect(m.gestion.analyserImport(moussa, fichier(valides))).rejects.toThrow(/bureau/);
+  });
+
   it("retiré du mandat, un membre garde son compte mais perd son rôle", async () => {
     const r = await m.gestion.ajouterMembre(president, { nom: "Ibrahim Coulibaly", email: "ibrahim@esatic.edu.ci", role: "membre", delegationId: culture });
     const aff = (await m.requetes.membresDuMandat(mandatId)).find((x) => x.userId === r.userId)!;

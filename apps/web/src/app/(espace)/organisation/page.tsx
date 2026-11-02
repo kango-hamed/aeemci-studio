@@ -4,6 +4,7 @@ import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { peutGererOrganisation } from "@/fonctionnalites/organisation/droits";
 import { FormulaireMembre } from "@/fonctionnalites/organisation/FormulaireMembre";
 import { GestionDelegations } from "@/fonctionnalites/organisation/GestionDelegations";
+import { ImportMembres } from "@/fonctionnalites/organisation/ImportMembres";
 import { LigneMembre } from "@/fonctionnalites/organisation/LigneMembre";
 import { PapierEnTete } from "@/fonctionnalites/organisation/PapierEnTete";
 import { anciensMembres, delegationsDe, identiteSection, mandatCourant, membresDuMandat } from "@/fonctionnalites/organisation/requetes";
@@ -52,6 +53,7 @@ export default async function PageOrganisation() {
           Membres du mandat <span className="font-normal text-encre-douce">({membres.length})</span>
         </h2>
         <FormulaireMembre delegations={actives} />
+        <ImportMembres />
         <ul className="m-0 list-none rounded-l border border-trait bg-surface-relevee px-5 py-1 shadow-carte">
           {membres.map((m) => (
             <LigneMembre key={m.affectationId} m={m} delegations={actives} estMoi={m.userId === u.id} />

@@ -6,6 +6,8 @@
  * Module sans dépendance serveur : le formulaire s'en sert aussi pour afficher les variables.
  */
 
+import { lignesCsv, nettoyerCellule, simplifier } from "@/fonctionnalites/csv";
+
 export type Destinataire = Record<string, string>;
 
 export const MAX_DESTINATAIRES = 100;
@@ -28,72 +30,15 @@ export class ErreurEnvoi extends Error {}
 
 /** « Nom et prénoms » → « nom_et_prenoms », puis nom reconnu s'il y en a un. */
 export function normaliserColonne(entete: string): string {
-  const brut = entete
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_|_$/g, "");
+  const brut = simplifier(entete);
   for (const [nom, alias] of Object.entries(COLONNES)) if (alias.includes(brut)) return nom;
   return brut;
-}
-
-/** UTF-8 (avec ou sans BOM), sinon Windows-1252 : ce qu'Excel produit en français. */
-function decoder(octets: Uint8Array): string {
-  let texte: string;
-  try {
-    texte = new TextDecoder("utf-8", { fatal: true }).decode(octets);
-  } catch {
-    texte = new TextDecoder("windows-1252").decode(octets);
-  }
-  return texte.replace(/^﻿/, "");
-}
-
-/** Séparateur de la première ligne : point-virgule (Excel français), virgule ou tabulation. */
-function separateur(texte: string): string {
-  const ligne = texte.split(/\r?\n/, 1)[0] ?? "";
-  const compte = (c: string) => ligne.split(c).length - 1;
-  return [";", ",", "\t"].reduce((a, b) => (compte(b) > compte(a) ? b : a));
-}
-
-/** Lignes et cellules d'un CSV (guillemets doublés, retours à la ligne dans une cellule). */
-export function decouperCsv(texte: string, sep: string): string[][] {
-  const lignes: string[][] = [];
-  let ligne: string[] = [];
-  let cellule = "";
-  let guillemets = false;
-  for (let i = 0; i < texte.length; i++) {
-    const c = texte[i]!;
-    if (guillemets) {
-      if (c === '"' && texte[i + 1] === '"') {
-        cellule += '"';
-        i++;
-      } else if (c === '"') guillemets = false;
-      else cellule += c;
-    } else if (c === '"' && cellule === "") guillemets = true;
-    else if (c === sep) {
-      ligne.push(cellule);
-      cellule = "";
-    } else if (c === "\n" || c === "\r") {
-      if (c === "\r" && texte[i + 1] === "\n") i++;
-      ligne.push(cellule);
-      lignes.push(ligne);
-      ligne = [];
-      cellule = "";
-    } else cellule += c;
-  }
-  if (cellule !== "" || ligne.length) {
-    ligne.push(cellule);
-    lignes.push(ligne);
-  }
-  return lignes;
 }
 
 /** Destinataires d'un fichier CSV : une ligne d'en-tête, puis une ligne par destinataire. */
 export function lireCsv(octets: Uint8Array): Destinataire[] {
   if (octets.length > TAILLE_MAX_CSV) throw new ErreurEnvoi("Le fichier des destinataires dépasse 200 Ko.");
-  const texte = decoder(octets);
-  const [entete, ...lignes] = decouperCsv(texte, separateur(texte)).filter((l) => l.some((c) => c.trim()));
+  const [entete, ...lignes] = lignesCsv(octets);
   if (!entete) throw new ErreurEnvoi("Le fichier des destinataires est vide.");
   const colonnes = entete.map(normaliserColonne);
   if (!colonnes.includes("nom") && !colonnes.includes("organisme"))
@@ -106,11 +51,8 @@ export function lireCsv(octets: Uint8Array): Destinataire[] {
   return lignes.map((l, i) => {
     const d: Destinataire = {};
     colonnes.forEach((c, j) => {
-      const v = (l[j] ?? "")
-        .replace(/\r\n?/g, "\n")
-        .replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "")
-        .trim();
-      if (c && v) d[c] = v.slice(0, LONGUEUR_MAX_VALEUR);
+      const v = nettoyerCellule(l[j], LONGUEUR_MAX_VALEUR);
+      if (c && v) d[c] = v;
     });
     if (!d.nom && !d.organisme) throw new ErreurEnvoi(`Ligne ${i + 2} du fichier : ni nom ni organisme.`);
     return d;

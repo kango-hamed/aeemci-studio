@@ -6,6 +6,7 @@ import type { Visibilite } from "@/fonctionnalites/organisation/droits";
 import { visibilitesPour } from "@/fonctionnalites/documents/partage";
 import { enregistrerRedaction, type EtatCircuit } from "./actions";
 import { contenuParDefaut, definitionType, LONGUEUR_MAX_CHAMP, type TypeAdministratif } from "./types";
+import { lienCsv } from "@/fonctionnalites/csv";
 import { colonnesDe, COLONNES_ADRESSE, MAX_DESTINATAIRES, MODELE_CSV, type Destinataire } from "./envois";
 
 const champ = "w-full rounded-s border border-trait-champ bg-surface-relevee px-3 text-base text-encre aria-invalid:border-danger";
@@ -185,7 +186,7 @@ function Destinataires({ liste, erreur }: { liste: Destinataire[]; erreur?: stri
         )}
       </div>
       <a
-        href={`data:text/csv;charset=utf-8,${encodeURIComponent("\uFEFF" + MODELE_CSV)}`}
+        href={lienCsv(MODELE_CSV)}
         download="destinataires-modele.csv"
         className="flex min-h-11 items-center gap-2 self-start text-sm font-semibold"
       >

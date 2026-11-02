@@ -3,17 +3,27 @@
 import { useState, useSyncExternalStore } from "react";
 import { Check, Copy, MessageCircle } from "lucide-react";
 
-/** Lien d'activation à transmettre au membre : copie ou partage WhatsApp. Affiché une seule fois. */
-export function LienActivation({ jeton, pour }: { jeton: string; pour?: string }) {
+/** Adresse du lien d'activation, composée avec l'origine de la page (vide au rendu serveur). */
+export function useAdresseActivation(): (jeton: string) => string {
   const origine = useSyncExternalStore(
     () => () => {},
     () => window.location.origin,
     () => "",
   );
-  const adresse = `${origine}/activer/${jeton}`;
+  return (jeton) => `${origine}/activer/${jeton}`;
+}
+
+/** Message à envoyer au membre avec son lien. */
+export function messageActivation(pour: string | undefined, adresse: string): string {
+  return `Salam ${pour ?? ""} ! Voici ton accès à AEEMCI Studio : choisis ton mot de passe ici (lien valable 7 jours, à usage unique) : ${adresse}`;
+}
+
+/** Lien d'activation à transmettre au membre : copie ou partage WhatsApp. Affiché une seule fois. */
+export function LienActivation({ jeton, pour }: { jeton: string; pour?: string }) {
+  const adresse = useAdresseActivation()(jeton);
   const [copie, setCopie] = useState(false);
 
-  const message = `Salam ${pour ?? ""} ! Voici ton accès à AEEMCI Studio : choisis ton mot de passe ici (lien valable 7 jours, à usage unique) : ${adresse}`;
+  const message = messageActivation(pour, adresse);
 
   async function copier() {
     try {
