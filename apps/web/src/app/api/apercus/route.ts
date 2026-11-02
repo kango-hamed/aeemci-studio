@@ -9,9 +9,11 @@ const Demande = z.object({
   gabaritId: z.string(),
   plan: z.string().optional(),
   valeurs: z.record(z.string(), z.union([z.string(), z.number(), z.null()])),
+  /** Faux pour une ligne de lot : un champ vide reste vide, comme dans le document créé. */
+  exemples: z.boolean().optional(),
 });
 
-/** Aperçu en cours de saisie : petite taille, rien n'est enregistré, champs vides remplis par l'exemple. */
+/** Aperçu en cours de saisie : petite taille, rien n'est enregistré, champs vides remplis par l'exemple (sauf `exemples: false`). */
 export async function POST(request: Request) {
   const u = await createurOuRefus();
   if (u instanceof Response) return u;
@@ -20,7 +22,7 @@ export async function POST(request: Request) {
   const g = await gabaritACompleter(d.data.gabaritId, u);
   if (!g) return erreur(404, "Ce gabarit n'est plus disponible.");
   try {
-    const valeurs = await preparerValeurs(g.revision.contenu, d.data.valeurs, u.id, true);
+    const valeurs = await preparerValeurs(g.revision.contenu, d.data.valeurs, u.id, d.data.exemples !== false);
     const r = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: d.data.plan, format: "jpeg", largeurMax: 720 });
     return new Response(new Uint8Array(r.fichier), {
       headers: {

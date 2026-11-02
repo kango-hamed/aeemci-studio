@@ -38,7 +38,7 @@ export const GUIDES = [
           "Clique sur « Créer le document » : l'affiche en haute définition est prête en quelques instants.",
           "Télécharge-la ou partage-la ; elle reste rangée dans Documents.",
         ],
-        astuce: "Les dates s'écrivent dans le format prévu par le designer : saisis-les simplement dans le sélecteur de date.",
+        astuce: "Plusieurs affiches du même gabarit (panélistes…) ? Onglet « Plusieurs à la fois (fichier CSV) » : une ligne par affiche, les photos, puis « Télécharger tout (ZIP) ».",
         savoir: "Un gabarit manquant ou à corriger ? Signale-le aux designers de la section.",
       },
       {

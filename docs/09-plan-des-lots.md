@@ -136,7 +136,7 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 
 D'après les lettres aux donateurs du Ramadan (lettre, puis devis, pour chaque destinataire). Décisions : doc 02.
 
-- 9a (fait le 02/11/2026) : en-tête et pied de page officiels réglables dans Organisation (coordonnées de la section, rattachement), pied répété sur chaque page avec numéro et pagination ; lettre enrichie (salutation, citations, pièces jointes). Import du bureau depuis un fichier CSV (délégations et membres en une fois, liens d'activation à transmettre).
+- 9a (fait le 02/11/2026) : en-tête et pied de page officiels réglables dans Organisation (coordonnées de la section, rattachement), pied répété sur chaque page avec numéro et pagination ; lettre enrichie (salutation, citations, pièces jointes). Import du bureau depuis un fichier CSV (délégations et membres en une fois, liens d'activation à transmettre). Création d'affiches par lot depuis un fichier CSV et les photos (contrôle, aperçu ligne par ligne, ZIP du lot).
 - 9b : modèles de texte par type de document, enregistrés et versionnés (une demande de dons, une invitation…), pour repartir d'un texte validé.
 - 9c : type « Devis » rattaché à une activité : lignes (désignation, quantité, prix unitaire), totaux calculés, versions ; joint en annexe à chaque lettre d'un envoi.
 

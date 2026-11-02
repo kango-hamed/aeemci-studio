@@ -39,7 +39,7 @@ const DELAI_APERCU = 450;
 const COTE_MAX_PHOTO = 2000;
 
 /** Réduit la photo dans le navigateur avant l'envoi : moins de données mobiles, envoi plus rapide. */
-async function reduirePhoto(f: File): Promise<Blob> {
+export async function reduirePhoto(f: File): Promise<Blob> {
   const image = await createImageBitmap(f, { imageOrientation: "from-image" });
   const echelle = Math.min(1, COTE_MAX_PHOTO / Math.max(image.width, image.height));
   if (echelle === 1 && f.type === "image/jpeg" && f.size < 3_000_000) return f;

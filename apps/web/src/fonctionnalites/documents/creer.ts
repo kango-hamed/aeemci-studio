@@ -46,7 +46,12 @@ export function visibiliteEffective(v: Visibilite | undefined, delegationId: str
   return voulue === "delegation" && !delegationId ? "bureau" : voulue;
 }
 
-export async function creerDocument(d: DemandeDocument, userId: string, rattachement: Rattachement = { mandatId: null, delegationId: null }): Promise<{ id: string }> {
+export async function creerDocument(
+  d: DemandeDocument,
+  userId: string,
+  rattachement: Rattachement = { mandatId: null, delegationId: null },
+  { notifier = true }: { notifier?: boolean } = {},
+): Promise<{ id: string }> {
   const g = await gabaritACompleter(d.gabaritId);
   if (!g) throw new ErreurSaisie("Ce gabarit n'est plus disponible.");
   if (g.revision.id !== d.revisionId)
@@ -96,7 +101,7 @@ export async function creerDocument(d: DemandeDocument, userId: string, rattache
     if (e instanceof ErreurRendu) throw new ErreurSaisie(e.message, e.erreurs);
     throw e;
   }
-  await notifierPublication(id);
+  if (notifier) await notifierPublication(id);
   return { id };
 }
 
