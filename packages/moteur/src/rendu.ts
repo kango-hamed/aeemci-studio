@@ -44,6 +44,8 @@ export interface OptionsRendu {
   dossierImages?: string;
   /** Navigateur partagé entre plusieurs rendus (sinon lancé puis fermé). */
   navigateur?: Browser;
+  /** Délai maximal de chaque étape du rendu, en ms (défaut : 30 s de Playwright). La haute définition en demande plus sur un petit serveur. */
+  delaiMs?: number;
 }
 
 export interface ResultatRendu {
@@ -163,6 +165,7 @@ ${fond ? `<image href="${fond}" x="0" y="0" width="${W}" height="${H}" preserveA
 
   const navigateur = o.navigateur ?? (await chromium.launch(LANCEMENT_CHROMIUM));
   const page = await navigateur.newPage({ viewport: { width: largeur, height: hauteur } });
+  if (o.delaiMs) page.setDefaultTimeout(o.delaiMs);
   try {
     await page.route(`${ORIGINE}/**`, async (route) => {
       const chemin = fichiers.get(new URL(route.request().url()).pathname);

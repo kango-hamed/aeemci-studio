@@ -66,6 +66,7 @@ async function navigateur(): Promise<Browser> {
 const limite = Math.max(1, Number(process.env.RENDUS_SIMULTANES) || 2);
 export const LARGEUR_REDUITE = 1620;
 export const LARGEUR_HD = Math.max(LARGEUR_REDUITE, Number(process.env.LARGEUR_HD) || 3600);
+const DELAI_HD_MS = 180_000;
 let enCours = 0;
 const attente: { poids: number; ok: () => void }[] = [];
 
@@ -211,6 +212,8 @@ export async function rendre(d: DemandeRendu): Promise<ResultatRendu> {
       format: d.format ?? "png",
       largeurSortie: largeur,
       navigateur: await navigateur(),
+      // Mesuré : plus de 30 s pour la HD du panéliste sur une t3.small (2 vCPU, sans GPU).
+      delaiMs: d.hd ? DELAI_HD_MS : undefined,
     }),
     d.hd,
   );
