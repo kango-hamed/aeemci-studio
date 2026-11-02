@@ -11,18 +11,20 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrer } from "../scripts/migrer.ts";
 import { creerAdmin } from "../scripts/creer-admin.ts";
 import type { Acteur } from "@/fonctionnalites/organisation/droits";
-import { htmlDocument, heureSaisie, dateSaisie } from "@/fonctionnalites/administratif/mise-en-page";
-import { controlerContenu, definitionType } from "@/fonctionnalites/administratif/types";
+import { htmlDocument, heureSaisie, dateSaisie, piedDocument } from "@/fonctionnalites/administratif/mise-en-page";
+import { contenuParDefaut, controlerContenu, definitionType } from "@/fonctionnalites/administratif/types";
+import { identiteDe } from "@/fonctionnalites/organisation/identite";
 
 const url = process.env.TEST_DATABASE_URL;
 const IMAGE = fs.readFileSync(path.resolve(import.meta.dirname, "../public/sceau-aeemci.png"));
 const LETTRE = { destinataire: "Monsieur le Directeur\nde l'ESATIC", objet: "Demande de salle", appel: "Monsieur le Directeur,", corps: "Nous avons l'honneur…" };
+const ESATIC = identiteDe("ESATIC", { entete: null, rattachement: null, email: null, telephones: null });
 const PV = { reunion: "Réunion du bureau", date: "2026-10-10", debut: "15:00", lieu: "Salle B12", presents: "Awa\nMoussa", ordre: "Bilan\nProgramme", deroulement: "La séance est ouverte." };
 
 describe("mise en page", () => {
   it("échappe la saisie, met le filigrane sur un projet, formate dates et heures", () => {
     const t = definitionType("COM")!;
-    const html = htmlDocument({ type: t, contenu: { titre: "<b>Report</b>", corps: "Ligne 1\nLigne 2\n\nParagraphe" }, numero: null, date: new Date("2026-11-01T10:00:00Z"), section: "ESATIC", signatures: [{ titre: "Le Président", nom: "" }], projet: true });
+    const html = htmlDocument({ type: t, contenu: { titre: "<b>Report</b>", corps: "Ligne 1\nLigne 2\n\nParagraphe" }, numero: null, date: new Date("2026-11-01T10:00:00Z"), section: ESATIC, signatures: [{ titre: "Le Président", nom: "" }], projet: true });
     expect(html).toContain("&lt;b&gt;Report&lt;/b&gt;");
     expect(html).toContain("<p>Ligne 1<br>Ligne 2</p><p>Paragraphe</p>");
     expect(html).toContain('class="filigrane"');
@@ -31,6 +33,31 @@ describe("mise en page", () => {
     expect(dateSaisie("2026-10-10")).toBe("samedi 10 octobre 2026");
     expect(heureSaisie("15:00")).toBe("15 h");
     expect(heureSaisie("09:30")).toBe("9 h 30");
+  });
+
+  it("met en forme la lettre : salutation, citation, pièces jointes, en-tête et pied de la section", () => {
+    const t = definitionType("LET")!;
+    const contenu = {
+      ...contenuParDefaut(t),
+      ...LETTRE,
+      corps: "Nous avons l'honneur…\n\n« Et entraidez-vous dans l'accomplissement des bonnes œuvres. »\n> (Sourate 5, verset 2)\n\nVeuillez agréer…",
+      pieces: "- Devis de l'activité",
+    };
+    const html = htmlDocument({ type: t, contenu, numero: null, date: new Date("2026-11-01T10:00:00Z"), section: ESATIC, signatures: [], projet: true });
+    expect(html).toContain('<div class="formule">As Salamou Aleykoum Wa Rahmatoulah Wa Barakatouhou</div>');
+    expect(html).toContain('<blockquote class="citation">« Et entraidez-vous dans l&#39;accomplissement des bonnes œuvres. »<br>(Sourate 5, verset 2)</blockquote>');
+    expect(html).toContain('<p class="pj"><span class="libelle">PJ :</span> Devis de l&#39;activité</p>');
+    expect(html).toContain("Sous-Comité de Treichville");
+    expect(html).toContain('<div class="section">Section ESATIC</div>');
+
+    const perso = identiteDe("ESATIC", { entete: "Ligne A\nLigne B", rattachement: null, email: "aeemci@exemple.ci", telephones: "05 00 00 00 00" });
+    expect(perso.entete).toEqual(["Ligne A", "Ligne B"]);
+    expect(perso.rattachement).toContain("Section ESATIC");
+    const pied = piedDocument({ numero: "AEEMCI-ESATIC/BE/LET/2026/001", section: perso });
+    expect(pied).toContain("aeemci@exemple.ci · Tél. : 05 00 00 00 00");
+    expect(pied).toContain("N° AEEMCI-ESATIC/BE/LET/2026/001");
+    expect(pied).toContain('class="pageNumber"');
+    expect(piedDocument({ numero: null, section: ESATIC })).toContain("Projet non validé");
   });
 
   it("contrôle les champs requis et les dates d'un ordre de mission", () => {

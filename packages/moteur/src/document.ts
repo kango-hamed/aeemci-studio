@@ -42,6 +42,14 @@ export interface OptionsDocument {
   ressources?: Record<string, string>;
   /** Texte du pied de page, répété sur chaque page avec « page n / total ». */
   pied?: string;
+  /**
+   * Pied de page en HTML, à la place de `pied` (PDF seulement). Modèle Chromium : les éléments de classe
+   * `pageNumber` et `totalPages` reçoivent les numéros. Le modèle ne charge rien et ne voit pas les polices
+   * du document : il déclare les siennes (`@font-face` dans un `<style>`) avec `urlRessource(nom)`, que le moteur
+   * remplace par le fichier lui-même ; des noms de famille propres au pied évitent de toucher au document.
+   * Le HTML est celui de l'application : tout texte saisi y est déjà échappé.
+   */
+  piedHtml?: string;
   /** Marges en millimètres. */
   marges?: { haut: number; droite: number; bas: number; gauche: number };
   navigateur?: Browser;
@@ -72,20 +80,48 @@ async function avecPage<T>(o: OptionsDocument, f: (page: import("playwright").Pa
   }
 }
 
+/** Les `urlRessource(nom)` d'un modèle de pied deviennent des data URI : le modèle ne fait aucune requête. */
+function incorporerRessources(html: string, ressources: Record<string, string> = {}): string {
+  return html.replace(new RegExp(`${ORIGINE.replace(/\./g, "\\.")}/r/([^'")\\s]+)`, "g"), (url, nom: string) => {
+    const chemin = ressources[decodeURIComponent(nom)];
+    if (!chemin || !fs.existsSync(chemin)) return url;
+    const type = TYPES_MIME[path.extname(chemin).toLowerCase()] || "application/octet-stream";
+    return `data:${type};base64,${fs.readFileSync(chemin).toString("base64")}`;
+  });
+}
+
 /** PDF A4 multipage, pied de page et numéros de page compris. */
 export async function rendreDocumentPdf(o: OptionsDocument): Promise<Buffer> {
   const m = o.marges ?? MARGES;
   const pied = echapperHtml(o.pied ?? "");
-  return avecPage(o, (page) =>
-    page.pdf({
+  const piedHtml = o.piedHtml && incorporerRessources(o.piedHtml, o.ressources);
+  return avecPage(o, async (page) => {
+    if (piedHtml) {
+      // Chromium n'emploie dans le pied qu'une police déjà chargée par la page, à la même adresse :
+      // ses styles y sont ajoutés et ses polices chargées avant l'impression.
+      const styles = [...piedHtml.matchAll(/<style>([\s\S]*?)<\/style>/g)].map((x) => x[1]).join("\n");
+      if (styles) {
+        await page.addStyleTag({ content: styles });
+        await page.evaluate(() => {
+          const chargements: Promise<unknown>[] = [];
+          document.fonts.forEach((f) => {
+            if (f.status === "unloaded") chargements.push(f.load().catch(() => undefined));
+          });
+          return Promise.all(chargements);
+        });
+      }
+    }
+    return page.pdf({
       format: "A4",
       printBackground: true,
       margin: { top: `${m.haut}mm`, right: `${m.droite}mm`, bottom: `${m.bas}mm`, left: `${m.gauche}mm` },
       displayHeaderFooter: true,
       headerTemplate: "<span></span>",
-      footerTemplate: `<div style="width:100%;margin:0 ${m.gauche}mm;font-family:sans-serif;font-size:8px;color:#5a635b;display:flex;justify-content:space-between;border-top:0.5px solid #daddd2;padding-top:4px"><span>${pied}</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`,
-    }),
-  );
+      footerTemplate:
+        piedHtml ||
+        `<div style="width:100%;margin:0 ${m.gauche}mm;font-family:sans-serif;font-size:8px;color:#5a635b;display:flex;justify-content:space-between;border-top:0.5px solid #daddd2;padding-top:4px"><span>${pied}</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`,
+    });
+  });
 }
 
 /** Aperçu de la première page (miniature), à la largeur demandée. */

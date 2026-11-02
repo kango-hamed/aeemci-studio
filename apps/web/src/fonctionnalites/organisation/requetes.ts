@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, count, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 import { db, schema } from "@/serveur/db";
+import { identiteDe, type IdentiteSection, type SaisieIdentite } from "./identite";
 import type { Role } from "./roles";
 
 export interface AffectationCourante {
@@ -53,6 +54,17 @@ export async function mandatCourant(): Promise<MandatCourant | null> {
     .orderBy(sql`${schema.mandat.createdAt} desc`)
     .limit(1);
   return m ?? null;
+}
+
+/** Papier à en-tête de la section : ce qui est enregistré, et l'identité complète (valeurs par défaut comprises). */
+export async function identiteSection(sectionId: string): Promise<{ saisie: SaisieIdentite; identite: IdentiteSection }> {
+  const [s] = await db
+    .select({ nom: schema.section.nom, entete: schema.section.entete, rattachement: schema.section.rattachement, email: schema.section.email, telephones: schema.section.telephones })
+    .from(schema.section)
+    .where(eq(schema.section.id, sectionId));
+  if (!s) throw new Error(`Section inconnue : ${sectionId}`);
+  const { nom, ...saisie } = s;
+  return { saisie, identite: identiteDe(nom, saisie) };
 }
 
 export interface Delegation {

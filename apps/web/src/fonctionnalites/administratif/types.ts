@@ -14,6 +14,8 @@ export interface ChampAdministratif {
   requis?: boolean;
   aide?: string;
   exemple?: string;
+  /** Valeur de départ d'un nouveau document (modifiable, ou à vider). */
+  defaut?: string;
 }
 
 export interface DefinitionType {
@@ -32,10 +34,24 @@ export const TYPES_ADMINISTRATIFS: DefinitionType[] = [
     description: "Courrier officiel à une autorité, un partenaire, une autre section.",
     champTitre: "objet",
     champs: [
-      { nom: "destinataire", libelle: "Destinataire", genre: "texte", requis: true, aide: "Une ligne par ligne d'adresse.", exemple: "Monsieur le Directeur Général\nde l'ESATIC\nAbidjan" },
+      { nom: "destinataire", libelle: "Destinataire", genre: "texte", requis: true, aide: "Une ligne par ligne d'adresse.", exemple: "À l'attention du Professeur Adama KONATÉ,\nDirecteur Général de l'ESATIC" },
       { nom: "objet", libelle: "Objet", genre: "ligne", requis: true, exemple: "Demande de salle pour la conférence du 14 novembre" },
+      {
+        nom: "salutation",
+        libelle: "Salutation",
+        genre: "texte",
+        aide: "Centrée sous l'objet : la formule en gras, puis sa traduction. Vide pour ne pas en mettre.",
+        defaut: "As Salamou Aleykoum Wa Rahmatoulah Wa Barakatouhou\n(Que la paix, la miséricorde et les bénédictions d'Allah soient sur vous)",
+      },
       { nom: "appel", libelle: "Formule d'appel", genre: "ligne", requis: true, exemple: "Monsieur le Directeur Général," },
-      { nom: "corps", libelle: "Texte de la lettre", genre: "texte", requis: true, aide: "Vouvoiement de rigueur. Termine par la formule de politesse.", exemple: "Nous avons l'honneur de solliciter…\n\nDans l'attente d'une suite favorable, nous vous prions d'agréer, Monsieur le Directeur Général, l'expression de notre haute considération." },
+      {
+        nom: "corps",
+        libelle: "Texte de la lettre",
+        genre: "texte",
+        requis: true,
+        aide: "Vouvoiement de rigueur. Termine par la formule de politesse. Une citation (verset, hadith) : un paragraphe qui commence par « ; elle est mise en valeur.",
+        exemple: "Nous avons l'honneur de solliciter…\n\nDans l'attente d'une suite favorable, nous vous prions d'agréer, Monsieur le Directeur Général, l'expression de notre haute considération.",
+      },
       { nom: "pieces", libelle: "Pièces jointes", genre: "texte", aide: "Une pièce par ligne." },
     ],
   },
@@ -119,6 +135,11 @@ export const LIBELLES_ETATS: Record<EtatValidation, string> = {
 
 export function definitionType(code: string): DefinitionType | undefined {
   return TYPES_ADMINISTRATIFS.find((t) => t.code === code);
+}
+
+/** Contenu de départ d'un nouveau document : les valeurs par défaut de ses champs. */
+export function contenuParDefaut(t: DefinitionType): Record<string, string> {
+  return Object.fromEntries(t.champs.filter((c) => c.defaut).map((c) => [c.nom, c.defaut!]));
 }
 
 export const LONGUEUR_MAX_CHAMP = { ligne: 300, texte: 8000, date: 10, heure: 5 } as const;

@@ -122,6 +122,21 @@ describe.skipIf(!url)("organisation (Postgres)", () => {
     await m.gestion.archiverDelegation(president, culture, false);
   });
 
+  it("le papier à en-tête : valeurs par défaut, saisie contrôlée, réservé au bureau", async () => {
+    const sectionId = (await m.requetes.mandatCourant())!.sectionId;
+    const vide = { entete: null, rattachement: null, email: null, telephones: null };
+    expect((await m.requetes.identiteSection(sectionId)).identite.entete).toEqual(["Secrétariat Régional Abidjan Sud", "Sous-Comité de Treichville"]);
+    await m.gestion.modifierIdentite(president, { ...vide, entete: " Ligne A \n\nLigne B", email: " aeemci@esatic.ci ", telephones: "05  44 95 53 78" });
+    const { saisie, identite } = await m.requetes.identiteSection(sectionId);
+    expect(identite.entete).toEqual(["Ligne A", "Ligne B"]);
+    expect(saisie).toEqual({ entete: "Ligne A\nLigne B", rattachement: null, email: "aeemci@esatic.ci", telephones: "05 44 95 53 78" });
+    expect(identite.rattachement).toMatch(/Section ESATIC\)$/);
+    await expect(m.gestion.modifierIdentite(president, { ...vide, email: "pas-une-adresse" })).rejects.toThrow(/e-mail valide/);
+    await expect(m.gestion.modifierIdentite(president, { ...vide, entete: "1\n2\n3\n4\n5" })).rejects.toThrow(/4 lignes/);
+    const moussa = await acteur((await m.requetes.membresDuMandat(mandatId)).find((x) => x.email === "moussa@esatic.edu.ci")!.userId);
+    await expect(m.gestion.modifierIdentite(moussa, vide)).rejects.toThrow(/bureau/);
+  });
+
   it("retiré du mandat, un membre garde son compte mais perd son rôle", async () => {
     const r = await m.gestion.ajouterMembre(president, { nom: "Ibrahim Coulibaly", email: "ibrahim@esatic.edu.ci", role: "membre", delegationId: culture });
     const aff = (await m.requetes.membresDuMandat(mandatId)).find((x) => x.userId === r.userId)!;

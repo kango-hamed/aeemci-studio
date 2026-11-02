@@ -3,12 +3,14 @@ import { randomUUID } from "node:crypto";
 import { and, count, eq, ne } from "drizzle-orm";
 import { db, schema } from "@/serveur/db";
 import { peutGererOrganisation, peutToucherAuPresident, type Acteur } from "./droits";
+import { LIMITES_IDENTITE, lignesEntete, type SaisieIdentite } from "./identite";
 import { nouveauLien } from "./invitations";
 import { mandatCourant, type MandatCourant } from "./requetes";
 import { estRoleBureau, type Role } from "./roles";
 
 /**
- * Gestion de l'organisation par le bureau exécutif : comptes, rôles du mandat en cours, délégations.
+ * Gestion de l'organisation par le bureau exécutif : comptes, rôles du mandat en cours, délégations,
+ * papier à en-tête des documents officiels.
  * Chaque opération vérifie elle-même les droits de l'acteur ; les actions serveur ne font que valider
  * la saisie et rafraîchir l'écran.
  */
@@ -204,6 +206,31 @@ export async function renommerDelegation(acteur: Acteur, id: string, nom: string
     if (estDoublon(e)) throw new ErreurOrganisation(messageDoublon(e));
     throw e;
   }
+}
+
+/** Papier à en-tête des documents officiels ; un champ vide reprend la valeur par défaut. N'affecte que les rendus suivants. */
+export async function modifierIdentite(acteur: Acteur, s: SaisieIdentite): Promise<void> {
+  const m = await contexte(acteur);
+  const L = LIMITES_IDENTITE;
+  const entete = lignesEntete(s.entete);
+  if (entete.length > L.lignesEntete) throw new ErreurOrganisation(`L'en-tête compte ${L.lignesEntete} lignes au plus.`);
+  if (entete.some((l) => l.length > L.ligne)) throw new ErreurOrganisation(`Chaque ligne de l'en-tête fait ${L.ligne} caractères au plus.`);
+  const propre = (v: string | null, max: number, libelle: string) => {
+    const t = (v ?? "").trim().replace(/\s+/g, " ");
+    if (t.length > max) throw new ErreurOrganisation(`${libelle} : ${max} caractères au plus.`);
+    return t || null;
+  };
+  const email = propre(s.email, L.email, "E-mail");
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new ErreurOrganisation("Saisis une adresse e-mail valide, ou laisse le champ vide.");
+  await db
+    .update(schema.section)
+    .set({
+      entete: entete.length ? entete.join("\n") : null,
+      rattachement: propre(s.rattachement, L.rattachement, "Ligne du pied de page"),
+      email,
+      telephones: propre(s.telephones, L.telephones, "Téléphones"),
+    })
+    .where(eq(schema.section.id, m.sectionId));
 }
 
 /** Archive (ou ressort) une délégation. On n'archive qu'une délégation sans membre dans le mandat en cours. */

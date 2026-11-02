@@ -10,9 +10,10 @@ import { catalogue, cheminDeTeleversement, rendrePageA4, rendrePdfA4 } from "@/f
 import { activitePourDepot } from "@/fonctionnalites/activites/gestion";
 import { ErreurSaisie, visibiliteEffective } from "@/fonctionnalites/documents/creer";
 import { peutCreerDocuments, peutModifierDocument, peutValider, type Acteur, type Visibilite } from "@/fonctionnalites/organisation/droits";
-import { mandatCourant, type MandatCourant } from "@/fonctionnalites/organisation/requetes";
+import type { IdentiteSection } from "@/fonctionnalites/organisation/identite";
+import { identiteSection, mandatCourant, type MandatCourant } from "@/fonctionnalites/organisation/requetes";
 import { controlerEnvoi, lettrePour, suffixeLettre, type Destinataire } from "./envois";
-import { htmlDocument, htmlLettres, piedDocument, RESSOURCE_CACHET, type BlocSignature, type DonneesMiseEnPage } from "./mise-en-page";
+import { htmlDocument, htmlLettres, MARGES_OFFICIELLES, piedDocument, RESSOURCE_CACHET, type BlocSignature, type DonneesMiseEnPage } from "./mise-en-page";
 import { controlerContenu, definitionType, LONGUEUR_MAX_CHAMP, titreParDefaut, type DefinitionType, type TypeAdministratif } from "./types";
 import { notifierDecision, notifierPublication, notifierSoumission } from "@/fonctionnalites/notifications/evenements";
 
@@ -118,13 +119,13 @@ interface Rendu {
 }
 
 /** Projet (filigrane, sans numéro ni signature), pour la rédaction et la relecture. */
-async function rendreProjet(t: DefinitionType, contenu: Record<string, string>, auteurId: string, section: string, destinataires: Destinataire[] | null): Promise<Rendu> {
+async function rendreProjet(t: DefinitionType, contenu: Record<string, string>, auteurId: string, section: IdentiteSection, destinataires: Destinataire[] | null): Promise<Rendu> {
   const signatures: BlocSignature[] = [{ titre: TITRES.president, nom: "" }];
   if (t.code === "PV") signatures.unshift({ titre: TITRES.secretaire_seance, nom: await nomDe(auteurId) });
   const page = (c: Record<string, string>): DonneesMiseEnPage => ({ type: t, contenu: c, numero: null, date: new Date(), section, signatures, projet: true });
   // Envoi : toutes les lettres à la suite ; tant que la liste manque, la lettre type avec ses variables.
   const lettres = destinataires?.length ? destinataires.map((d) => page(lettrePour(contenu, d))) : [page(contenu)];
-  return rendrePageA4({ html: htmlLettres(lettres), ressources: ressourcesFixes(), pied: piedDocument(lettres[0]!) }, LARGEUR_MINIATURE);
+  return rendrePageA4({ html: htmlLettres(lettres), ressources: ressourcesFixes(), piedHtml: piedDocument(lettres[0]!), marges: MARGES_OFFICIELLES }, LARGEUR_MINIATURE);
 }
 
 /** Champs manquants ou invalides ; pour un envoi, la liste et les variables, puis la première lettre. */
@@ -244,7 +245,8 @@ export async function enregistrerRedaction(u: Acteur, r: Redaction, rattachement
   const contenu = nettoyer(t, r.contenu);
   const titre = (r.titre?.trim() || titreParDefaut(t, contenu, envoi)).slice(0, 200);
   const id = existant?.id ?? randomUUID();
-  const rendu = await rendreProjet(t, contenu, existant?.auteurId ?? u.id, m.section, destinataires);
+  const { identite } = await identiteSection(m.sectionId);
+  const rendu = await rendreProjet(t, contenu, existant?.auteurId ?? u.id, identite, destinataires);
   const cles = await ecrireRendu(id, "projet", rendu);
   const commun = { titre, contenu, destinataires, fichier: cles.fichier, miniature: cles.miniature, taille: rendu.pdf.length, nomFichier: nomPdf(titre) };
 
@@ -369,6 +371,7 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
   const signatureAuteur = t.code === "PV" ? await signatureDe(d.auteurId) : null;
   if (t.code === "PV" && !signatureAuteur) throw new ErreurSaisie("Le secrétaire de séance n'a pas de signature enregistrée.");
   const code = await codeDuDocument(d);
+  const { identite } = await identiteSection(m.sectionId);
 
   const role: "president" | "interim" = u.affectation?.role === "president" ? "president" : "interim";
   const signataires: schema.Signataire[] = [{ role, userId: u.id, nom: await nomDe(u.id) }];
@@ -396,7 +399,7 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
       })
       .returning({ dernier: schema.compteur.dernier });
     const numero = formaterNumero(m.section, code, t.code, annee, c!.dernier);
-    const donnees: DonneesMiseEnPage = { type: t, contenu: d.contenu ?? {}, numero, date: maintenant, section: m.section, signatures: blocs, projet: false };
+    const donnees: DonneesMiseEnPage = { type: t, contenu: d.contenu ?? {}, numero, date: maintenant, section: identite, signatures: blocs, projet: false };
     let rendu: Rendu;
     if (d.destinataires) {
       // Une lettre par destinataire, numérotée et rendue seule (pied et pages propres), puis réunies.
@@ -405,7 +408,7 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
       for (const [i, dest] of d.destinataires.entries()) {
         const suffixe = suffixeLettre(i + 1, d.destinataires.length);
         const lettre = { ...donnees, contenu: lettrePour(donnees.contenu, dest), numero: `${numero}-${suffixe}` };
-        const o = { html: htmlDocument(lettre), ressources, pied: piedDocument(lettre) };
+        const o = { html: htmlDocument(lettre), ressources, piedHtml: piedDocument(lettre), marges: MARGES_OFFICIELLES };
         let pdf: Buffer;
         if (i === 0) ({ pdf, miniature } = await rendrePageA4(o, LARGEUR_MINIATURE));
         else pdf = await rendrePdfA4(o);
@@ -414,7 +417,7 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
       }
       rendu = { pdf: await fusionnerPdf(pdfs), miniature: miniature! };
     } else {
-      rendu = await rendrePageA4({ html: htmlDocument(donnees), ressources, pied: piedDocument(donnees) }, LARGEUR_MINIATURE);
+      rendu = await rendrePageA4({ html: htmlDocument(donnees), ressources, piedHtml: piedDocument(donnees), marges: MARGES_OFFICIELLES }, LARGEUR_MINIATURE);
     }
     const cles = await ecrireRendu(id, "valide", rendu);
     await tx

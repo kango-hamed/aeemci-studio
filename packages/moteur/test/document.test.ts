@@ -27,6 +27,12 @@ describe("mode document", () => {
     expect(pages(long)).toBeGreaterThan(2);
   });
 
+  it("le pied HTML emploie les polices qu'il déclare par urlRessource", async () => {
+    const piedHtml = `<style>@font-face{font-family:PiedTexte;src:url('${urlRessource("outfit")}')}</style><div style="font-family:PiedTexte;font-size:9px;width:100%;text-align:center">Pied <span class="pageNumber"></span></div>`;
+    const pdf = await rendreDocumentPdf({ html: "<!doctype html><p>Corps sans police propre.</p>", navigateur, piedHtml, ressources: { outfit: path.join(POLICES, "outfit-latin-400-normal.woff2") } });
+    expect(pdf.toString("latin1")).toMatch(/\/BaseFont\s*\/[A-Z]{6}\+Outfit/);
+  });
+
   it("sert ses ressources et ne charge rien d'autre", async () => {
     const html = page(`<img id="a" src="${urlRessource("logo")}"><img id="b" src="https://exemple.com/pistage.png">`);
     const png = await rendreApercuDocument({ html, navigateur, largeur: 397, format: "png", ressources: { logo: path.resolve(import.meta.dirname, "../exemples/membre-retenu/photo-test.jpg") } });

@@ -6,7 +6,8 @@ import { ErreurSaisie } from "@/fonctionnalites/documents/creer";
 import { filtreLecture } from "@/fonctionnalites/documents/requetes";
 import { filtreLectureActivite } from "@/fonctionnalites/activites/requetes";
 import { ressourcesFixes } from "@/fonctionnalites/administratif/circuit";
-import { dateLongue, dateSaisie, DEVISE, enteteOfficiel, paragraphes, rubrique, STYLE_PAGE } from "@/fonctionnalites/administratif/mise-en-page";
+import { dateLongue, dateSaisie, enteteOfficiel, MARGES_OFFICIELLES, paragraphes, piedOfficiel, rubrique, STYLE_PAGE } from "@/fonctionnalites/administratif/mise-en-page";
+import { identiteDe, type IdentiteSection } from "@/fonctionnalites/organisation/identite";
 import { LIBELLES_ETATS } from "@/fonctionnalites/administratif/types";
 import { rendrePdfA4 } from "@/fonctionnalites/generation/rendu";
 import { peutEcrirePassation, peutLirePassation, type Acteur } from "@/fonctionnalites/organisation/droits";
@@ -71,7 +72,7 @@ export async function ecrireNote(u: Acteur, cle: string, texte: string): Promise
 }
 
 export interface DossierPassation {
-  section: string;
+  section: IdentiteSection;
   mandat: string;
   clos: boolean;
   volet: string;
@@ -89,7 +90,15 @@ export async function dossierPassation(u: Acteur, mandatId: string, cle: string)
   const volet = (await voletsDuMandat(u, mandatId)).find((v) => v.cle === cle);
   if (!volet) return null;
   const [m] = await db
-    .select({ libelle: schema.mandat.libelle, statut: schema.mandat.statut, section: schema.section.nom })
+    .select({
+      libelle: schema.mandat.libelle,
+      statut: schema.mandat.statut,
+      section: schema.section.nom,
+      entete: schema.section.entete,
+      rattachement: schema.section.rattachement,
+      email: schema.section.email,
+      telephones: schema.section.telephones,
+    })
     .from(schema.mandat)
     .innerJoin(schema.section, eq(schema.mandat.sectionId, schema.section.id))
     .where(eq(schema.mandat.id, mandatId));
@@ -118,7 +127,7 @@ export async function dossierPassation(u: Acteur, mandatId: string, cle: string)
     .orderBy(asc(d.createdAt));
 
   return {
-    section: m!.section,
+    section: identiteDe(m!.section, m!),
     mandat: m!.libelle,
     clos: m!.statut === "clos",
     volet: volet.nom,
@@ -180,10 +189,9 @@ ${rubrique(
     : `<p class="vide">Aucun.</p>`,
 )}
 ${rubrique("Points en suspens", suspens || '<p class="vide">Aucun point signalé.</p>')}
-<p class="devise">${e(DEVISE)}</p>
 </body></html>`;
 }
 
 export async function pdfPassation(p: DossierPassation): Promise<Buffer> {
-  return rendrePdfA4({ html: htmlPassation(p), ressources: ressourcesFixes(), pied: `AEEMCI Section ${p.section} · Passation ${p.mandat} · ${p.volet}` });
+  return rendrePdfA4({ html: htmlPassation(p), ressources: ressourcesFixes(), piedHtml: piedOfficiel(p.section, `Passation ${p.mandat} · ${p.volet}`), marges: MARGES_OFFICIELLES });
 }

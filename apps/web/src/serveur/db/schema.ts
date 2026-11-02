@@ -88,6 +88,15 @@ export const section = pgTable("section", {
   nom: text("nom").notNull().unique(),
   /** Image du cachet de la section (stockage privé), apposée à la validation des documents administratifs. */
   cachet: text("cachet"),
+  /**
+   * Papier à en-tête des documents officiels (Organisation) ; vide : valeurs par défaut (`organisation/identite.ts`).
+   * `entete` : lignes entre le nom de l'association et celui de la section, une par ligne.
+   * `rattachement` : première ligne du pied de page. `email`, `telephones` : coordonnées du pied.
+   */
+  entete: text("entete"),
+  rattachement: text("rattachement"),
+  email: text("email"),
+  telephones: text("telephones"),
   ...horodatage,
 });
 

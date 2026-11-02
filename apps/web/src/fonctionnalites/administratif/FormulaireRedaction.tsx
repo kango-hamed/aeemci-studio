@@ -5,7 +5,7 @@ import { AlertTriangle, Download, Loader2, Save, Send } from "lucide-react";
 import type { Visibilite } from "@/fonctionnalites/organisation/droits";
 import { visibilitesPour } from "@/fonctionnalites/documents/partage";
 import { enregistrerRedaction, type EtatCircuit } from "./actions";
-import { definitionType, LONGUEUR_MAX_CHAMP, type TypeAdministratif } from "./types";
+import { contenuParDefaut, definitionType, LONGUEUR_MAX_CHAMP, type TypeAdministratif } from "./types";
 import { colonnesDe, COLONNES_ADRESSE, MAX_DESTINATAIRES, MODELE_CSV, type Destinataire } from "./envois";
 
 const champ = "w-full rounded-s border border-trait-champ bg-surface-relevee px-3 text-base text-encre aria-invalid:border-danger";
@@ -30,7 +30,8 @@ export function FormulaireRedaction(p: {
 }) {
   const t = definitionType(p.type)!;
   const [etat, envoyer, enCours] = useActionState<EtatCircuit, FormData>(enregistrerRedaction, p.refus ? { erreur: p.refus } : {});
-  const [contenu, setContenu] = useState<Record<string, string>>(p.contenu ?? {});
+  // Nouveau document : les valeurs par défaut (salutation…), sous le texte de départ éventuel (activité).
+  const [contenu, setContenu] = useState<Record<string, string>>(p.id ? (p.contenu ?? {}) : { ...contenuParDefaut(t), ...p.contenu });
   const [titre, setTitre] = useState(p.titre ?? "");
   const [visibilite, setVisibilite] = useState<Visibilite>(p.visibilite ?? (p.aUneDelegation ? "delegation" : "bureau"));
   const erreurDe = (nom: string) => etat.erreurs?.find((x) => x.champ === nom)?.message;

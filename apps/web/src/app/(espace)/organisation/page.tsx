@@ -5,7 +5,8 @@ import { peutGererOrganisation } from "@/fonctionnalites/organisation/droits";
 import { FormulaireMembre } from "@/fonctionnalites/organisation/FormulaireMembre";
 import { GestionDelegations } from "@/fonctionnalites/organisation/GestionDelegations";
 import { LigneMembre } from "@/fonctionnalites/organisation/LigneMembre";
-import { anciensMembres, delegationsDe, mandatCourant, membresDuMandat } from "@/fonctionnalites/organisation/requetes";
+import { PapierEnTete } from "@/fonctionnalites/organisation/PapierEnTete";
+import { anciensMembres, delegationsDe, identiteSection, mandatCourant, membresDuMandat } from "@/fonctionnalites/organisation/requetes";
 
 export const metadata: Metadata = { title: "Organisation" };
 
@@ -25,7 +26,12 @@ export default async function PageOrganisation() {
       </>
     );
 
-  const [membres, delegations, anciens] = await Promise.all([membresDuMandat(mandat.id), delegationsDe(mandat.sectionId, mandat.id), anciensMembres(mandat.id)]);
+  const [membres, delegations, anciens, papier] = await Promise.all([
+    membresDuMandat(mandat.id),
+    delegationsDe(mandat.sectionId, mandat.id),
+    anciensMembres(mandat.id),
+    identiteSection(mandat.sectionId),
+  ]);
   const actives = delegations.filter((d) => !d.archivee).map(({ id, nom }) => ({ id, nom }));
 
   return (
@@ -58,6 +64,16 @@ export default async function PageOrganisation() {
           Délégations
         </h2>
         <GestionDelegations delegations={delegations} />
+      </section>
+
+      <section className="flex flex-col gap-4" aria-labelledby="titre-papier">
+        <div className="flex flex-col gap-1">
+          <h2 id="titre-papier" className="titre-2 m-0">
+            Papier à en-tête
+          </h2>
+          <p className="m-0 max-w-[720px] text-sm text-encre-douce">En-tête et pied de page des documents officiels : lettres, procès-verbaux, convocations, dossiers de passation.</p>
+        </div>
+        <PapierEnTete section={mandat.section} saisie={papier.saisie} />
       </section>
 
       {anciens.length > 0 && (

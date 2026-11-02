@@ -86,6 +86,12 @@ export async function renommerDelegation(_e: EtatAction, f: FormData): Promise<E
   return executer((acteur) => gestion.renommerDelegation(acteur, Id.parse(texte(f, "id")), texte(f, "nom"), f.has("code") ? texte(f, "code") : undefined));
 }
 
+export async function modifierIdentite(_e: EtatAction, f: FormData): Promise<EtatAction> {
+  return executer((acteur) =>
+    gestion.modifierIdentite(acteur, { entete: texte(f, "entete"), rattachement: texte(f, "rattachement"), email: texte(f, "email"), telephones: texte(f, "telephones") }),
+  );
+}
+
 export async function archiverDelegation(_e: EtatAction, f: FormData): Promise<EtatAction> {
   return executer((acteur) => gestion.archiverDelegation(acteur, Id.parse(texte(f, "id")), texte(f, "archivee") === "1"));
 }

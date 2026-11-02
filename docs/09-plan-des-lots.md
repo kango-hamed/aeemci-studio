@@ -21,6 +21,7 @@ Date : 30/10/2026. **Plan validé par Kango le 30/10/2026**, puis **révisé le 
 | **5** | Activités, archives, passation | Bilans, historique des mandats, dossier de passation automatique | M | 3 (4 pour les PDF signés) |
 | **6** | Outillage des gabarits dans la plateforme | L'équipe communication publie ses gabarits sans outil local | S | 1 (s'enrichit avec 2) |
 | **7** | Lettres en nombre (invitations, demandes de dons) | Une lettre personnalisée, numérotée et signée par destinataire, validée une seule fois | S | 4, 5 |
+| **9** | Papier à en-tête, modèles de texte, devis d'activité | Des lettres au format de la section ; un devis joint à chaque demande de dons | M | 4, 7 |
 
 Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le lot 1 est livré. Tailles relatives (S < M < L), sans durée : l'équipe et sa disponibilité ne sont pas encore connues.
 
@@ -128,6 +129,16 @@ Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le
 
 - 8a : barre d'onglets en bas et panneau « Plus », installation (manifeste, icônes, page hors connexion, invitation à installer), écrans repris pour le téléphone (création d'affiche, rédaction, validation, documents, activités, archives).
 - 8b : partage depuis la galerie du téléphone (photos d'une activité, photo d'une affiche, dépôt), notifications (document à valider, validé ou à corriger, nouveau document partagé, rappel la veille d'une activité) avec le choix de chacun ; mise en ligne : doc 10, section 7.
+
+---
+
+## Lot 9 · Papier à en-tête, modèles et devis
+
+D'après les lettres aux donateurs du Ramadan (lettre, puis devis, pour chaque destinataire). Décisions : doc 02.
+
+- 9a (fait le 02/11/2026) : en-tête et pied de page officiels réglables dans Organisation (coordonnées de la section, rattachement), pied répété sur chaque page avec numéro et pagination ; lettre enrichie (salutation, citations, pièces jointes).
+- 9b : modèles de texte par type de document, enregistrés et versionnés (une demande de dons, une invitation…), pour repartir d'un texte validé.
+- 9c : type « Devis » rattaché à une activité : lignes (désignation, quantité, prix unitaire), totaux calculés, versions ; joint en annexe à chaque lettre d'un envoi.
 
 ---
 
