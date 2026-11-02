@@ -4,7 +4,9 @@ import Link from "next/link";
 import { FormulaireActivation } from "@/fonctionnalites/authentification/FormulaireActivation";
 import { lienValide } from "@/fonctionnalites/organisation/invitations";
 
-export const metadata: Metadata = { title: "Activer mon compte", referrer: "no-referrer" };
+// « same-origin » : le jeton de l'adresse ne part jamais vers un autre site, mais le formulaire garde son
+// en-tête Origin. Avec « no-referrer », le navigateur envoie « Origin: null » et Next.js refuse l'action.
+export const metadata: Metadata = { title: "Activer mon compte", referrer: "same-origin" };
 
 /** Lien remis par le bureau : premier mot de passe d'un nouveau membre, ou réinitialisation. */
 export default async function PageActivation({ params }: { params: Promise<{ jeton: string }> }) {
