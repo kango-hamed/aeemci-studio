@@ -40,14 +40,14 @@ export interface MandatCourant {
   libelle: string;
   sectionId: string;
   section: string;
-  /** Intérim de la présidence : le vice-président valide les documents administratifs. */
-  interim: boolean;
+  /** Intérim de la présidence : le vice-président désigné (son identifiant), qui valide les documents administratifs. */
+  interimaire: string | null;
 }
 
 /** Mandat en cours de la section (une seule section pour l'instant : ESATIC). */
 export async function mandatCourant(): Promise<MandatCourant | null> {
   const [m] = await db
-    .select({ id: schema.mandat.id, libelle: schema.mandat.libelle, sectionId: schema.mandat.sectionId, section: schema.section.nom, interim: schema.mandat.interim })
+    .select({ id: schema.mandat.id, libelle: schema.mandat.libelle, sectionId: schema.mandat.sectionId, section: schema.section.nom, interimaire: schema.mandat.interimaireId })
     .from(schema.mandat)
     .innerJoin(schema.section, eq(schema.mandat.sectionId, schema.section.id))
     .where(eq(schema.mandat.statut, "en_cours"))

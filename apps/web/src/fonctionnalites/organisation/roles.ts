@@ -4,6 +4,7 @@ export const LIBELLES_ROLES = {
   vice_president: "Vice-président",
   secretaire_general: "Secrétaire général",
   responsable_delegation: "Responsable de délégation",
+  sous_responsable_delegation: "Sous-responsable de délégation",
   membre: "Membre",
 } as const;
 
@@ -16,4 +17,9 @@ export const ROLES_BUREAU: readonly Role[] = ["president", "vice_president", "se
 
 export function estRoleBureau(role: Role): boolean {
   return ROLES_BUREAU.includes(role);
+}
+
+/** Responsable ou sous-responsable : ils dirigent ensemble leur délégation (activités, points en suspens). */
+export function dirigeDelegation(role: Role | undefined): boolean {
+  return role === "responsable_delegation" || role === "sous_responsable_delegation";
 }

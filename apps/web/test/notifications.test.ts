@@ -102,11 +102,11 @@ describe.skipIf(!url)("notifications (Postgres)", () => {
     fs.rmSync(dossierStockage, { recursive: true, force: true });
   });
 
-  it("document soumis : au président, au vice-président aussi pendant l'intérim", async () => {
+  it("document soumis : au président, au vice-président intérimaire aussi pendant l'intérim", async () => {
     expect((await m.ev.valideurs()).sort()).toEqual([president.id]);
-    await m.signatures.changerInterim(president, true);
+    await m.signatures.changerInterim(president, vice.id);
     expect((await m.ev.valideurs()).sort()).toEqual([president.id, vice.id].sort());
-    await m.signatures.changerInterim(president, false);
+    await m.signatures.changerInterim(president, null);
   });
 
   it("document publié : aux membres visés par sa visibilité, jamais à l'auteur", async () => {

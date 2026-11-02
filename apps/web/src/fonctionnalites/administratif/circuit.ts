@@ -315,8 +315,14 @@ export async function soumettre(u: Acteur, id: string): Promise<void> {
 
 async function exigerValideur(u: Acteur): Promise<MandatCourant> {
   const m = await exigerMandat();
-  if (!peutValider(u, m.interim))
-    throw new ErreurSaisie(u.affectation?.role === "vice_president" ? "Le président n'a pas activé l'intérim : la validation lui revient." : "Seul le président valide les documents administratifs.");
+  if (!peutValider(u, m.interimaire))
+    throw new ErreurSaisie(
+      u.affectation?.role === "vice_president"
+        ? m.interimaire
+          ? "L'intérim est confié à un autre vice-président."
+          : "Le président n'a pas activé l'intérim : la validation lui revient."
+        : "Seul le président valide les documents administratifs.",
+    );
   return m;
 }
 

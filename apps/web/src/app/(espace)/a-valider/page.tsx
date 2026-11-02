@@ -27,7 +27,7 @@ function Grille({ documents, vide }: { documents: ResumeDocument[]; vide: string
 export default async function PageAValider() {
   const u = await exigerUtilisateur();
   const m = await mandatCourant();
-  const valideur = peutValider(u, m?.interim ?? false);
+  const valideur = peutValider(u, m?.interimaire ?? null);
   const [aValider, miens] = await Promise.all([
     valideur ? rechercherDocuments(u, { etats: ["soumis"] }) : Promise.resolve([]),
     rechercherDocuments(u, { portee: "miens", etats: ["redaction", "soumis", "a_corriger"] }),
@@ -40,7 +40,7 @@ export default async function PageAValider() {
           <h1 className="titre-1 m-0">{valideur ? "À valider" : "Documents officiels en cours"}</h1>
           <p className="m-0 max-w-[680px] text-encre-douce">
             {valideur
-              ? `Lettres, procès-verbaux, attestations… soumis à ta validation${m?.interim && u.affectation?.role === "vice_president" ? " pendant l'intérim" : ""}. Valider attribue le numéro et appose ta signature avec le cachet.`
+              ? `Lettres, procès-verbaux, attestations… soumis à ta validation${m?.interimaire === u.id && u.affectation?.role === "vice_president" ? " pendant l'intérim" : ""}. Valider attribue le numéro et appose ta signature avec le cachet.`
               : "Tes documents officiels pas encore validés : en rédaction, soumis au président, ou renvoyés en correction."}
           </p>
         </div>

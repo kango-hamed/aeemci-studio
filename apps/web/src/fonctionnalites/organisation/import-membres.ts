@@ -41,6 +41,14 @@ const ROLES_ECRITS: Record<string, Role> = {
   responsable_de_la_delegation: "responsable_delegation",
   chef_de_delegation: "responsable_delegation",
   chef_de_cellule: "responsable_delegation",
+  sous_responsable: "sous_responsable_delegation",
+  sous_responsable_de_delegation: "sous_responsable_delegation",
+  sous_responsable_delegation: "sous_responsable_delegation",
+  sous_responsable_de_la_delegation: "sous_responsable_delegation",
+  responsable_adjoint: "sous_responsable_delegation",
+  responsable_adjointe: "sous_responsable_delegation",
+  adjoint: "sous_responsable_delegation",
+  adjointe: "sous_responsable_delegation",
   membre: "membre",
 };
 
@@ -108,7 +116,7 @@ export function lireImport(octets: Uint8Array): LigneImport[] {
     else if (!EMAIL.test(email)) erreurs.push(`E-mail invalide : « ${email} ».`);
     else if (vus.has(email)) erreurs.push(`E-mail déjà à la ligne ${vus.get(email)}.`);
     else vus.set(email, i + 2);
-    if (!role) erreurs.push(`Rôle inconnu : « ${roleSaisi} » (Président, Vice-président, Secrétaire général, Responsable ou Membre).`);
+    if (!role) erreurs.push(`Rôle inconnu : « ${roleSaisi} » (Président, Vice-président, Secrétaire général, Responsable, Sous-responsable ou Membre).`);
     else if (!estRoleBureau(role) && !delegation) erreurs.push("Délégation manquante (seuls les rôles du bureau exécutif n'en ont pas).");
     if (!OUI.includes(designerSaisi) && !NON.includes(designerSaisi)) erreurs.push("Designer : « oui » ou vide.");
 

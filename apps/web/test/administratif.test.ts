@@ -195,15 +195,18 @@ describe.skipIf(!url)("documents administratifs (Postgres + Chromium)", () => {
     expect(h[1]).toMatchObject({ commentaire: "Préciser la nouvelle date.", acteur: "Awa Koné" });
   });
 
-  it("intérim : le vice-président valide et signe à la place du président", async () => {
+  it("intérim : le vice-président désigné valide et signe à la place du président, lui seul", async () => {
     const id = await rediger(com1, "COM", { titre: "Intérim", corps: "Texte." });
     await m.circuit.soumettre(com1, id);
-    await expect(m.signatures.changerInterim(vice, true)).rejects.toThrow(/président/);
-    await m.signatures.changerInterim(president, true);
+    await expect(m.signatures.changerInterim(vice, vice.id)).rejects.toThrow(/président/);
+    await expect(m.signatures.changerInterim(president, secretaire.id)).rejects.toThrow(/vice-président/);
+    const vice2 = await acteur((await m.gestion.ajouterMembre(president, { nom: "vice2", email: "vice2@esatic.edu.ci", role: "vice_president" })).userId);
+    await m.signatures.changerInterim(president, vice.id);
+    await expect(m.circuit.valider(vice2, id)).rejects.toThrow(/autre vice-président/);
     await m.signatures.enregistrerSignature(vice, IMAGE);
     await m.circuit.valider(vice, id);
     expect((await lire(id))!.signataires).toEqual([expect.objectContaining({ role: "interim", userId: vice.id })]);
-    await m.signatures.changerInterim(president, false);
+    await m.signatures.changerInterim(president, null);
   });
 
   it("un document validé reste figé : sa correction est une nouvelle version qui refait le circuit", async () => {

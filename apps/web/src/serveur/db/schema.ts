@@ -128,14 +128,14 @@ export const mandat = pgTable(
     statut: statutMandat("statut").notNull().default("en_cours"),
     debut: timestamp("debut", { withTimezone: true }),
     fin: timestamp("fin", { withTimezone: true }),
-    /** Intérim activé par le président : le vice-président valide et signe à sa place. */
-    interim: boolean("interim").notNull().default(false),
+    /** Intérim de la présidence : le vice-président désigné par le président valide et signe à sa place. */
+    interimaireId: text("interimaire_id").references(() => user.id, { onDelete: "set null" }),
     ...horodatage,
   },
   (t) => [uniqueIndex("mandat_section_libelle_idx").on(t.sectionId, t.libelle)],
 );
 
-export const role = pgEnum("role", ["president", "vice_president", "secretaire_general", "responsable_delegation", "membre"]);
+export const role = pgEnum("role", ["president", "vice_president", "secretaire_general", "responsable_delegation", "sous_responsable_delegation", "membre"]);
 
 /** Un membre occupe un rôle pendant un mandat, éventuellement au sein d'une délégation. */
 export const affectation = pgTable(

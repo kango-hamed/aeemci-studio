@@ -48,7 +48,7 @@ export async function cloreMandat(u: Acteur, c: Cloture): Promise<{ mandatId: st
     // Seul le mandat lu plus haut se clôt : une double soumission ne clôt pas le suivant.
     const clos = await tx
       .update(schema.mandat)
-      .set({ statut: "clos", fin: maintenant, interim: false })
+      .set({ statut: "clos", fin: maintenant, interimaireId: null })
       .where(and(eq(schema.mandat.id, ancien.id), eq(schema.mandat.statut, "en_cours")))
       .returning({ id: schema.mandat.id });
     if (!clos.length) throw new ErreurSaisie("Ce mandat vient déjà d'être clos.");

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { cachetDeSection, signatureDe } from "@/fonctionnalites/administratif/circuit";
+import { vicePresidents } from "@/fonctionnalites/administratif/signatures";
 import { BasculeInterim } from "@/fonctionnalites/administratif/BasculeInterim";
 import { ImageSignature } from "@/fonctionnalites/administratif/ImageSignature";
 import { peutCreerDocuments, peutGererCachet } from "@/fonctionnalites/organisation/droits";
@@ -13,7 +14,11 @@ export default async function PageSignature() {
   const u = await exigerUtilisateur();
   const m = await mandatCourant();
   const president = peutGererCachet(u);
-  const [signature, cachet] = await Promise.all([signatureDe(u.id), president && m ? cachetDeSection(m.sectionId) : null]);
+  const [signature, cachet, vices] = await Promise.all([
+    signatureDe(u.id),
+    president && m ? cachetDeSection(m.sectionId) : null,
+    president && m ? vicePresidents(m.id) : [],
+  ]);
 
   return (
     <>
@@ -40,7 +45,7 @@ export default async function PageSignature() {
               actuelle={cachet ? `/api/signature?quoi=cachet&v=${encodeURIComponent(cachet)}` : null}
             />
           )}
-          {president && m && <BasculeInterim actif={m.interim} />}
+          {president && m && <BasculeInterim interimaire={m.interimaire} vicePresidents={vices} />}
         </div>
       ) : (
         <p className="m-0 rounded-l bg-creme p-6">{MESSAGE_SANS_ROLE}</p>

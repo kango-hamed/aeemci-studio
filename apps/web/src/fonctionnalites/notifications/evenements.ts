@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { db, schema } from "@/serveur/db";
 import { mandatCourant } from "@/fonctionnalites/organisation/requetes";
 import type { Visibilite } from "@/fonctionnalites/organisation/droits";
@@ -24,7 +24,12 @@ export async function valideurs(): Promise<string[]> {
   const lignes = await db
     .select({ id: a.userId })
     .from(a)
-    .where(and(eq(a.mandatId, m.id), m.interim ? inArray(a.role, ["president", "vice_president"]) : eq(a.role, "president")));
+    .where(
+      and(
+        eq(a.mandatId, m.id),
+        m.interimaire ? or(eq(a.role, "president"), and(eq(a.role, "vice_president"), eq(a.userId, m.interimaire))) : eq(a.role, "president"),
+      ),
+    );
   return lignes.map((l) => l.id);
 }
 

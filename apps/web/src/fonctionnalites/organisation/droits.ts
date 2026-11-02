@@ -10,17 +10,17 @@
  * - Sans rôle dans le mandat en cours : ne crée plus rien, garde la lecture de ses propres documents.
  * - Mandat clos : ses documents et ses activités sont en lecture seule, pour tout le monde. Le bureau du
  *   mandat en cours les lit tous ; les membres d'une délégation lisent ceux de leur délégation.
- * - Activités : tout membre avec un rôle en crée pour sa délégation ; l'auteur, le responsable de la
- *   délégation et le bureau les modifient. Elles se lisent selon leur visibilité, comme un document publié.
- * - Documents administratifs : le président valide et signe ; le vice-président aussi quand le président
- *   a activé l'intérim. Un administrateur de la plateforme ne valide pas : il n'est pas signataire.
+ * - Activités : tout membre avec un rôle en crée pour sa délégation ; l'auteur, le responsable et les
+ *   sous-responsables de la délégation et le bureau les modifient. Elles se lisent selon leur visibilité, comme un document publié.
+ * - Documents administratifs : le président valide et signe ; pendant l'intérim, le vice-président qu'il
+ *   a désigné aussi (un seul). Un administrateur de la plateforme ne valide pas : il n'est pas signataire.
  *
  * - Gabarits : les administrateurs et les designers du mandat (cellule communication) les importent, les
  *   règlent et les publient. Un gabarit réservé à des délégations ne sert qu'à leurs membres (et au bureau).
  *
  * `filtreLecture` (documents/requetes.ts) traduit `peutLireDocument` en SQL : les deux vont ensemble.
  */
-import { estRoleBureau, type Role } from "./roles";
+import { dirigeDelegation, estRoleBureau, type Role } from "./roles";
 
 export interface Acteur {
   id: string;
@@ -76,10 +76,13 @@ export function peutLireDocument(u: Acteur, d: RattachementDocument): boolean {
   return d.visibilite === "delegation" && d.delegationId !== null && u.affectation?.delegationId === d.delegationId;
 }
 
-/** Valider (ou renvoyer en correction) un document administratif. */
-export function peutValider(u: Acteur, interim: boolean): boolean {
+/**
+ * Valider (ou renvoyer en correction) un document administratif : le président, ou le vice-président
+ * qu'il a désigné pour l'intérim (`interimaire` : son identifiant, null hors intérim).
+ */
+export function peutValider(u: Acteur, interimaire: string | null): boolean {
   const role = u.affectation?.role;
-  return role === "president" || (role === "vice_president" && interim);
+  return role === "president" || (role === "vice_president" && interimaire === u.id);
 }
 
 /** Cachet de la section et intérim : le président et les administrateurs. */
@@ -99,11 +102,11 @@ export function peutLireActivite(u: Acteur, a: RattachementActivite): boolean {
   return peutLireDocument(u, { ...a, statut: "publie" });
 }
 
-/** Fiche, bilan, documents et photos d'une activité : l'auteur, le responsable de sa délégation, le bureau. */
+/** Fiche, bilan, documents et photos d'une activité : l'auteur, le responsable et les sous-responsables de sa délégation, le bureau. */
 export function peutModifierActivite(u: Acteur, a: Pick<RattachementActivite, "auteurId" | "delegationId" | "fige">): boolean {
   if (a.fige) return false;
   if (aLaMain(u, a)) return true;
-  return u.affectation?.role === "responsable_delegation" && a.delegationId !== null && u.affectation.delegationId === a.delegationId;
+  return dirigeDelegation(u.affectation?.role) && a.delegationId !== null && u.affectation!.delegationId === a.delegationId;
 }
 
 /** Clore le mandat et ouvrir le suivant : le président et les administrateurs. */
@@ -117,10 +120,10 @@ export function peutLirePassation(u: Acteur, delegationId: string | null): boole
   return delegationId !== null && u.affectation?.delegationId === delegationId;
 }
 
-/** Points en suspens d'une délégation : son responsable et le bureau. */
+/** Points en suspens d'une délégation : son responsable, ses sous-responsables et le bureau. */
 export function peutEcrirePassation(u: Acteur, delegationId: string | null): boolean {
   if (u.estAdministrateur || estBureau(u)) return true;
-  return delegationId !== null && u.affectation?.role === "responsable_delegation" && u.affectation.delegationId === delegationId;
+  return delegationId !== null && dirigeDelegation(u.affectation?.role) && u.affectation!.delegationId === delegationId;
 }
 
 /** Importer, régler et publier les gabarits. */

@@ -11,7 +11,7 @@
 
 - Quels documents exigent la signature, le cachet, ou les deux ?
 - Les PV sont-ils signés aussi par le secrétaire de séance (plusieurs signataires) ?
-- Intérim de validation : qui, et comment l'activer ?
+- ~~Intérim de validation : qui, et comment l'activer ?~~ Réglé le 02/11/2026 : le président le confie à l'un des vice-présidents (doc 02).
 - Numérotation : remise à 1 par année civile ou par mandat ? Liste des codes délégation et type de document ?
 
 ## Gabarits

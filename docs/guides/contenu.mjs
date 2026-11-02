@@ -233,6 +233,7 @@ export const GUIDES = [
         chemin: ["Organisation", "Membres"],
         etapes: [
           "Ajoute un membre seul avec le formulaire : nom, e-mail, rôle, délégation.",
+          "Un président et ses vice-présidents ; par délégation, un responsable et ses sous-responsables.",
           "Mot de passe oublié : « Lien de réinitialisation », à transmettre en privé.",
           "« Modifier » change le rôle ou la délégation ; « Retirer » sort le membre du mandat.",
           "« Designer » / « Retirer designer » donne ou reprend l'accès à l'atelier des gabarits.",
@@ -257,12 +258,12 @@ export const GUIDES = [
       },
       {
         titre: "Intérim",
-        points: ["Activer l'intérim", "Le VP valide et signe", "Lever l'intérim"],
+        points: ["Choisir le vice-président", "Validation et signature", "Lever l'intérim"],
         chemin: ["Signature et cachet", "Intérim de la présidence"],
         etapes: [
-          "Avant une absence, ouvre « Intérim de la présidence » et clique sur « Activer l'intérim ».",
-          "Le vice-président valide et signe les documents officiels, avec sa propre signature et le cachet.",
-          "Il doit avoir déposé sa signature au préalable.",
+          "Avant une absence, ouvre « Intérim de la présidence », choisis le vice-président, puis « Activer l'intérim ».",
+          "Ce vice-président seul valide et signe les documents officiels, avec sa propre signature et le cachet.",
+          "Sa signature doit être déposée au préalable.",
           "À ton retour, « Lever l'intérim » : la validation te revient.",
         ],
         astuce: "Préviens le bureau de l'intérim : les rédacteurs savent qui va valider.",

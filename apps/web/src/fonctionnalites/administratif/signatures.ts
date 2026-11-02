@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/serveur/db";
 import { stockage } from "@/serveur/stockage";
 import { ErreurSaisie } from "@/fonctionnalites/documents/creer";
@@ -46,10 +46,23 @@ export async function enregistrerCachet(u: Acteur, contenu: Buffer): Promise<voi
   if (ancien?.cle) await stockage().supprimer(ancien.cle);
 }
 
-/** Le président active ou lève l'intérim : le vice-président valide et signe à sa place. */
-export async function changerInterim(u: Acteur, actif: boolean): Promise<void> {
+/** Vice-présidents du mandat en cours, parmi lesquels le président choisit l'intérimaire. */
+export async function vicePresidents(mandatId: string): Promise<{ id: string; nom: string }[]> {
+  const a = schema.affectation;
+  return db
+    .select({ id: schema.user.id, nom: schema.user.name })
+    .from(a)
+    .innerJoin(schema.user, eq(schema.user.id, a.userId))
+    .where(and(eq(a.mandatId, mandatId), eq(a.role, "vice_president")))
+    .orderBy(schema.user.name);
+}
+
+/** Le président confie l'intérim à un vice-président (`null` : il le lève) ; lui seul valide et signe à sa place. */
+export async function changerInterim(u: Acteur, interimaire: string | null): Promise<void> {
   if (!peutGererCachet(u)) throw new ErreurSaisie("Seul le président active l'intérim.");
   const m = await mandatCourant();
   if (!m) throw new ErreurSaisie("Aucun mandat en cours.");
-  await db.update(schema.mandat).set({ interim: actif }).where(eq(schema.mandat.id, m.id));
+  if (interimaire && !(await vicePresidents(m.id)).some((v) => v.id === interimaire))
+    throw new ErreurSaisie("L'intérim se confie à un vice-président du mandat en cours.");
+  await db.update(schema.mandat).set({ interimaireId: interimaire }).where(eq(schema.mandat.id, m.id));
 }

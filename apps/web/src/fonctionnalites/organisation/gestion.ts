@@ -53,6 +53,21 @@ async function verifierPoste(acteur: Acteur, m: MandatCourant, p: Poste, affecta
     if (n > 0) throw new ErreurOrganisation("Le mandat a déjà un président : change d'abord son rôle.");
   }
   if (estRoleBureau(p.role)) return null;
+  if (p.role === "responsable_delegation" && p.delegationId) {
+    const [r] = await db
+      .select({ nom: schema.user.name })
+      .from(schema.affectation)
+      .innerJoin(schema.user, eq(schema.user.id, schema.affectation.userId))
+      .where(
+        and(
+          eq(schema.affectation.mandatId, m.id),
+          eq(schema.affectation.role, "responsable_delegation"),
+          eq(schema.affectation.delegationId, p.delegationId),
+          affectationIgnoree ? ne(schema.affectation.id, affectationIgnoree) : undefined,
+        ),
+      );
+    if (r) throw new ErreurOrganisation(`${r.nom} est déjà responsable de cette délégation : nomme ce membre sous-responsable, ou change d'abord le rôle de ${r.nom}.`);
+  }
   if (!p.delegationId) throw new ErreurOrganisation("Choisis la délégation du membre.");
   const [d] = await db
     .select()
@@ -283,9 +298,18 @@ async function analyser(acteur: Acteur, m: MandatCourant, lignes: LigneImport[])
   const emails = [...new Set(lignes.map((l) => l.email).filter(Boolean))];
   const comptes = emails.length ? await db.select({ id: schema.user.id, email: schema.user.email }).from(schema.user).where(inArray(schema.user.email, emails)) : [];
   const compteDe = new Map(comptes.map((c) => [c.email, c.id]));
-  const affectations = await db.select({ userId: schema.affectation.userId, role: schema.affectation.role }).from(schema.affectation).where(eq(schema.affectation.mandatId, m.id));
+  const affectations = await db
+    .select({ userId: schema.affectation.userId, role: schema.affectation.role, delegationId: schema.affectation.delegationId })
+    .from(schema.affectation)
+    .where(eq(schema.affectation.mandatId, m.id));
   const dansLeMandat = new Set(affectations.map((a) => a.userId));
   let president: number | null = affectations.some((a) => a.role === "president") ? 0 : null;
+  // Responsable de chaque délégation : 0 s'il est déjà dans le mandat, sinon la ligne du fichier qui le nomme.
+  const responsables = new Map<string, number>();
+  for (const a of affectations) {
+    const d = a.role === "responsable_delegation" && existantes.find((x) => x.id === a.delegationId);
+    if (d) responsables.set(cleDelegation(d.nom), 0);
+  }
 
   const prevues = new Map<string, DelegationPrevue>();
   const analysees = lignes.map((l): LigneAnalysee => {
@@ -303,6 +327,12 @@ async function analyser(acteur: Acteur, m: MandatCourant, lignes: LigneImport[])
     if (l.delegation) {
       const cle = cleDelegation(l.delegation);
       const existante = parCle.get(cle);
+      if (l.role === "responsable_delegation") {
+        const deja = responsables.get(cle);
+        if (deja === 0) erreurs.push("Cette délégation a déjà un responsable dans le mandat : nomme ce membre sous-responsable.");
+        else if (deja) erreurs.push(`Un seul responsable par délégation : déjà à la ligne ${deja}.`);
+        else responsables.set(cle, l.ligne);
+      }
       let code: string | null = null;
       try {
         if (!existante) nomDeDelegation(l.delegation);

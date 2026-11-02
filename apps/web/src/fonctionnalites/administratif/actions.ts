@@ -109,7 +109,7 @@ export async function nouvelleVersion(_e: EtatCircuit, f: FormData): Promise<Eta
 
 export async function changerInterim(_e: EtatCircuit, f: FormData): Promise<EtatCircuit> {
   const u = await exigerUtilisateur();
-  const echec = await executer(() => changerInterimMandat(u, lire(f, "actif") === "1"));
+  const echec = await executer(() => changerInterimMandat(u, lire(f, "interimaire") || null));
   if (echec) return echec;
   revalidatePath("/signature");
   revalidatePath("/a-valider");

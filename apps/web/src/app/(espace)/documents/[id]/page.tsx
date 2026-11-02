@@ -39,7 +39,7 @@ function taille(octets: number | null) {
 /** Panneau de validation d'un document officiel : ce que le membre peut faire, ce qui manque, l'historique. */
 async function circuitDe(l: DocumentLisible, u: Utilisateur, modifiable: boolean) {
   const m = await mandatCourant();
-  const valideur = peutValider(u, m?.interim ?? false);
+  const valideur = peutValider(u, m?.interimaire ?? null);
   const manque: string[] = [];
   if (valideur && l.d.etatValidation === "soumis") {
     if (!(await signatureDe(u.id))) manque.push("Ta signature n'est pas encore enregistrée.");

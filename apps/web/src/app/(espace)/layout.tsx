@@ -8,7 +8,7 @@ import { mandatCourant } from "@/fonctionnalites/organisation/requetes";
 /** Pages réservées aux membres connectés : en-tête commun, session vérifiée côté serveur. */
 export default async function LayoutEspace({ children }: { children: React.ReactNode }) {
   const utilisateur = await exigerUtilisateur();
-  const valideur = utilisateur.affectation ? peutValider(utilisateur, (await mandatCourant())?.interim ?? false) : false;
+  const valideur = utilisateur.affectation ? peutValider(utilisateur, (await mandatCourant())?.interimaire ?? null) : false;
   const aValider = valideur ? await nombreAValider() : null;
   return (
     <div className="flex min-h-dvh flex-col">

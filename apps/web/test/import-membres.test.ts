@@ -20,6 +20,8 @@ describe("import des membres", () => {
     expect(l).toMatchObject({ nom: "Awa Koné", email: "awa@esatic.edu.ci", role: "secretaire_general", delegation: "", erreurs: [] });
     expect(roleEcrit("Présidente")).toBe("president");
     expect(roleEcrit("chef de délégation")).toBe("responsable_delegation");
+    expect(roleEcrit("Sous-responsable")).toBe("sous_responsable_delegation");
+    expect(roleEcrit("Responsable adjointe")).toBe("sous_responsable_delegation");
     expect(roleEcrit("")).toBe("membre");
     expect(roleEcrit("trésorier")).toBeNull();
   });

@@ -153,6 +153,8 @@ describe.skipIf(!url)("organisation (Postgres)", () => {
     const erreurs = await m.gestion.analyserImport(president, fichier([...valides, "Autre Président;p3@esatic.edu.ci;Président;;;", "Code Pris;cp@esatic.edu.ci;Membre;Cellule théâtre;SPORT;"]));
     expect(erreurs.valide).toBe(false);
     expect(erreurs.lignes.map((l) => l.suite ?? l.erreurs[0])).toEqual(["deja", "nouveau", "nouveau", "nouveau", "Le mandat a déjà un président.", "Le code SPORT est déjà pris par une autre délégation."]);
+    const deuxResponsables = await m.gestion.analyserImport(president, fichier([...valides, "Awa Diallo;awa.d@esatic.edu.ci;Chef de délégation;cellule sport;;", "Kevin Yao;kevin@esatic.edu.ci;Adjoint;Cellule sport;;"]));
+    expect(deuxResponsables.lignes.slice(4).map((l) => l.suite ?? l.erreurs[0])).toEqual(["Un seul responsable par délégation : déjà à la ligne 4.", "nouveau"]);
     await expect(m.gestion.importerMembres(president, fichier([...valides, "Autre Président;p3@esatic.edu.ci;Président;;;"]))).rejects.toThrow(/erreurs/);
     expect(await nbDelegations()).toBe(avant);
 
@@ -190,6 +192,16 @@ describe.skipIf(!url)("organisation (Postgres)", () => {
     const retour = await m.gestion.ajouterMembre(president, { nom: "Ibrahim Coulibaly", email: "ibrahim@esatic.edu.ci", role: "responsable_delegation", delegationId: culture });
     expect(retour.userId).toBe(r.userId);
     expect(retour.jeton).toBeTruthy();
+    // Un seul responsable par délégation ; les sous-responsables, autant qu'il en faut.
+    await expect(m.gestion.ajouterMembre(president, { nom: "Second Responsable", email: "r2@esatic.edu.ci", role: "responsable_delegation", delegationId: culture })).rejects.toThrow(
+      /déjà responsable/,
+    );
+    const adjoint = await m.gestion.ajouterMembre(president, { nom: "Adjoint Culture", email: "adj@esatic.edu.ci", role: "sous_responsable_delegation", delegationId: culture });
+    const aAdjoint = (await m.requetes.membresDuMandat(mandatId)).find((x) => x.userId === adjoint.userId)!;
+    await expect(m.gestion.modifierPoste(president, aAdjoint.affectationId, { role: "responsable_delegation", delegationId: culture })).rejects.toThrow(/déjà responsable/);
+    const aIbrahim = (await m.requetes.membresDuMandat(mandatId)).find((x) => x.userId === r.userId)!;
+    // Le responsable garde son poste quand on le réenregistre.
+    await m.gestion.modifierPoste(president, aIbrahim.affectationId, { role: "responsable_delegation", delegationId: culture });
   });
 
   it("lecture des documents : sa délégation, pas celle des autres ; le bureau voit tout", async () => {

@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   peutCreerDocuments,
+  peutEcrirePassation,
   peutGererOrganisation,
   peutLireDocument,
+  peutModifierActivite,
   peutModifierDocument,
   peutToucherAuPresident,
   peutValider,
@@ -72,11 +74,22 @@ describe("droits", () => {
     expect(peutModifierDocument(membre(null, null, true), { auteurId: "autre" })).toBe(true);
   });
 
-  it("le président valide les documents officiels ; le vice-président seulement pendant l'intérim", () => {
-    expect(peutValider(membre("president"), false)).toBe(true);
-    expect(peutValider(membre("vice_president"), false)).toBe(false);
-    expect(peutValider(membre("vice_president"), true)).toBe(true);
-    expect(peutValider(membre("secretaire_general"), true)).toBe(false);
-    expect(peutValider(membre(null, null, true), true)).toBe(false);
+  it("le président valide les documents officiels ; un vice-président seulement s'il est l'intérimaire désigné", () => {
+    expect(peutValider(membre("president"), null)).toBe(true);
+    expect(peutValider(membre("vice_president"), null)).toBe(false);
+    expect(peutValider(membre("vice_president"), "moi")).toBe(true);
+    expect(peutValider(membre("vice_president"), "un-autre-vice-president")).toBe(false);
+    // Désigné, puis plus vice-président : il ne valide plus.
+    expect(peutValider(membre("secretaire_general"), "moi")).toBe(false);
+    expect(peutValider(membre(null, null, true), "moi")).toBe(false);
+  });
+
+  it("le sous-responsable dirige sa délégation avec le responsable", () => {
+    const activite = { auteurId: "autre", delegationId: "culture", visibilite: "delegation" as const };
+    expect(peutModifierActivite(membre("sous_responsable_delegation", "culture"), activite)).toBe(true);
+    expect(peutModifierActivite(membre("sous_responsable_delegation", "sport"), activite)).toBe(false);
+    expect(peutModifierActivite(membre("membre", "culture"), activite)).toBe(false);
+    expect(peutEcrirePassation(membre("sous_responsable_delegation", "culture"), "culture")).toBe(true);
+    expect(peutEcrirePassation(membre("sous_responsable_delegation", "culture"), null)).toBe(false);
   });
 });

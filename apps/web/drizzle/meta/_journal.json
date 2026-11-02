@@ -71,6 +71,20 @@
       "when": 1793584699817,
       "tag": "0009_papier_en_tete",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793630749700,
+      "tag": "0010_roles_delegation",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793630753375,
+      "tag": "0011_interim_designe",
+      "breakpoints": true
     }
   ]
 }
