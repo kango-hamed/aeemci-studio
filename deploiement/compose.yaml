@@ -4,7 +4,7 @@
 
 services:
   app:
-    # VERSION=<numéro de commit> pour revenir à une version précise.
+    # VERSION=<numéro de commit> dans .env pour rester sur une version précise (doc 10, section 5 F).
     image: ghcr.io/kango-hamed/aeemci-studio:${VERSION:-latest}
     restart: unless-stopped
     env_file: .env

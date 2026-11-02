@@ -44,7 +44,7 @@ npm run admin:creer -w @aeemci-studio/web -- --email prenom.nom@esatic.edu.ci --
 Remove-Item Env:DATABASE_URL
 ```
 
-À refaire (`db:migrer` seulement) **avant** de déployer une version qui ajoute une migration dans `apps/web/drizzle/`.
+Ensuite, plus rien à faire à la main : l'application applique elle-même les nouvelles migrations de `apps/web/drizzle/` à chaque démarrage (section 5 F).
 
 ## 3. Le stockage R2
 
@@ -117,7 +117,7 @@ Depuis ton ordinateur, à la racine du dépôt, envoyer les fichiers de [`deploi
 
 ```powershell
 ssh -i "$env:USERPROFILE\.ssh\aeemci-studio.pem" ubuntu@<IP> "mkdir -p ~/aeemci"
-scp -i "$env:USERPROFILE\.ssh\aeemci-studio.pem" deploiement\compose.yaml deploiement\Caddyfile ubuntu@<IP>:~/aeemci/
+scp -i "$env:USERPROFILE\.ssh\aeemci-studio.pem" deploiement\compose.yaml deploiement\Caddyfile deploiement\mise-a-jour.sh ubuntu@<IP>:~/aeemci/
 scp -i "$env:USERPROFILE\.ssh\aeemci-studio.pem" deploiement\.env.exemple ubuntu@<IP>:~/aeemci/.env
 ```
 
@@ -136,13 +136,18 @@ Attendre la ligne de Caddy indiquant que le certificat est obtenu (`certificate 
 
 ### F. Publier une nouvelle version
 
-Envoyer sur `main`, attendre que l'intégration continue soit verte (migration éventuelle d'abord, section 2), puis sur le serveur :
+**Automatique** : envoyer sur `main` suffit. L'intégration continue publie l'image ; dans les 5 minutes, le serveur la tire et redémarre l'application, qui applique les migrations éventuelles avant de démarrer. Une version dont la migration échoue ne démarre pas (`docker compose logs app`) : revenir à la précédente (ci-dessous) et corriger.
+
+Mise en place, une fois, sur le serveur (le script [`mise-a-jour.sh`](../deploiement/mise-a-jour.sh) envoyé à l'étape E) :
 
 ```bash
-cd ~/aeemci && docker compose pull && docker compose up -d && docker image prune -f
+chmod +x ~/aeemci/mise-a-jour.sh && ~/aeemci/mise-a-jour.sh
+(crontab -l 2>/dev/null | grep -v mise-a-jour; echo '*/5 * * * * flock -n /tmp/aeemci-maj.lock $HOME/aeemci/mise-a-jour.sh 2>&1 | logger -t aeemci') | crontab -
 ```
 
-Revenir à une version précise : `VERSION=<numéro du commit> docker compose up -d`. Le serveur redémarre seul l'application après un redémarrage de la machine (`restart: unless-stopped`).
+Le script ne fait rien tant que l'image n'a pas changé. Journal des mises à jour : `journalctl -t aeemci`. Il se sert de la connexion à ghcr.io de l'étape E : si le jeton GitHub expire, les mises à jour s'arrêtent (`journalctl -t aeemci` affiche `denied` ou `unauthorized`) ; refaire le `docker login` avec un nouveau jeton. Mise à jour immédiate, sans attendre : `~/aeemci/mise-a-jour.sh`.
+
+Revenir à une version précise : ajouter la ligne `VERSION=<numéro du commit>` à `~/aeemci/.env`, puis `~/aeemci/mise-a-jour.sh` (dans la commande seule, `VERSION=… docker compose up -d` serait défait par la mise à jour suivante). Retirer la ligne pour revenir aux mises à jour. Une migration déjà appliquée reste en place : l'ancienne version fonctionne avec tant que la migration ne fait qu'ajouter (tables, colonnes). Le serveur redémarre seul l'application après un redémarrage de la machine (`restart: unless-stopped`).
 
 ## 6. Publier le premier gabarit
 
