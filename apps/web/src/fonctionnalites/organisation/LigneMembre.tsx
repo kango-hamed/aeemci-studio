@@ -17,7 +17,8 @@ const LIBELLES_COMPTE: Record<EtatCompte, string> = {
 
 const bouton = "flex min-h-11 items-center gap-1.5 rounded-m border border-trait-champ px-3 text-sm font-semibold text-encre disabled:opacity-60";
 
-export function LigneMembre({ m, delegations, estMoi }: { m: MembreDuMandat; delegations: OptionDelegation[]; estMoi: boolean }) {
+/** `administrateur` : l'acteur peut changer son propre rôle (un membre du bureau, lui, demande à un autre). */
+export function LigneMembre({ m, delegations, estMoi, administrateur }: { m: MembreDuMandat; delegations: OptionDelegation[]; estMoi: boolean; administrateur: boolean }) {
   const [edition, setEdition] = useState(false);
   const [etatPoste, envoyerPoste, posteEnCours] = useActionState<EtatAction, FormData>(async (e, f) => {
     const r = await modifierPoste(e, f);
@@ -49,7 +50,7 @@ export function LigneMembre({ m, delegations, estMoi }: { m: MembreDuMandat; del
         </div>
         <span className={"text-sm " + (m.compte === "actif" ? "text-encre-douce" : "font-semibold text-orange-texte")}>{LIBELLES_COMPTE[m.compte]}</span>
         <div className="flex flex-wrap gap-2">
-          {!estMoi && (
+          {(!estMoi || administrateur) && (
             <button type="button" className={bouton} aria-expanded={edition} onClick={() => setEdition((v) => !v)}>
               <Pencil size={16} aria-hidden />
               Modifier

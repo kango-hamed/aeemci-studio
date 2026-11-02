@@ -56,7 +56,7 @@ export default async function PageOrganisation() {
         <ImportMembres />
         <ul className="m-0 list-none rounded-l border border-trait bg-surface-relevee px-5 py-1 shadow-carte">
           {membres.map((m) => (
-            <LigneMembre key={m.affectationId} m={m} delegations={actives} estMoi={m.userId === u.id} />
+            <LigneMembre key={m.affectationId} m={m} delegations={actives} estMoi={m.userId === u.id} administrateur={u.estAdministrateur} />
           ))}
         </ul>
       </section>
