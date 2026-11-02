@@ -5,8 +5,11 @@ import type { Champ, Gabarit, Zone } from "@aeemci-studio/moteur";
  * comportement d'un texte trop long). Tout le reste (géométrie, styles, fichiers) vient du plugin et
  * n'est jamais modifié par l'écran du gabarit.
  */
-const CHAMP = ["libelle", "aide", "obligatoire", "max_caracteres", "min", "max"] as const;
+const CHAMP = ["libelle", "aide", "obligatoire", "max_caracteres", "min", "max", "valeur_de", "objectif_de"] as const;
 const ZONE = ["debordement", "largeur_max", "format", "modele"] as const;
+
+/** Texte fixe valable : il cite la valeur, ou pour une jauge son pourcentage ou son objectif. */
+export const MARQUES = /\{(valeur|pourcentage|objectif)\}/;
 
 function copier<T extends object>(cible: T, source: T, cles: readonly (keyof T)[]): T {
   const r = { ...cible };
@@ -90,6 +93,9 @@ function normaliserChamp(c: Champ): Champ {
   r.max_caracteres = entier(c.max_caracteres);
   r.min = typeof c.min === "number" && Number.isFinite(c.min) ? c.min : undefined;
   r.max = typeof c.max === "number" && Number.isFinite(c.max) ? c.max : undefined;
+  // Jauge reliée à des champs nombre (montant, objectif) : les contrôles de publication vérifient ces champs.
+  r.valeur_de = c.type === "jauge" ? texte(c.valeur_de, 80) : undefined;
+  r.objectif_de = c.type === "jauge" ? texte(c.objectif_de, 80) : undefined;
   for (const k of CHAMP) if (r[k] === undefined) delete r[k];
   return r;
 }
@@ -103,7 +109,7 @@ function normaliserZone(z: Zone): Zone {
       : undefined;
   r.largeur_max = typeof z.largeur_max === "number" && z.largeur_max > 0 ? z.largeur_max : undefined;
   r.format = typeof z.format === "string" && z.format.trim() ? z.format.trim().slice(0, 60) : undefined;
-  r.modele = typeof z.modele === "string" && z.modele.includes("{valeur}") ? z.modele.slice(0, 120) : undefined;
+  r.modele = typeof z.modele === "string" && MARQUES.test(z.modele) ? z.modele.slice(0, 120) : undefined;
   for (const k of ZONE) if (r[k] === undefined) delete r[k];
   return r;
 }

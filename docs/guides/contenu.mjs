@@ -169,6 +169,7 @@ export const GUIDES = [
           "Sur la fiche, règle chaque champ : libellé, aide, « Obligatoire », nombre de caractères, ordre du formulaire.",
           "Pour chaque zone de texte trop long : réduire jusqu'à un pourcentage, couper avec « … » ou refuser la saisie.",
           "Choisis le format des dates (EEEE d MMMM yyyy → dimanche 15 novembre 2026) et le texte fixe autour.",
+          "Collecte : relie la jauge au montant et à l'objectif ; le texte fixe peut citer {pourcentage} et {objectif}.",
           "L'aperçu est rendu par le vrai moteur, avec trois jeux : exemple du PSD, texte le plus long, valeurs saisies.",
           "Corrige jusqu'à lire « Contrôles passés : le gabarit peut être publié. », puis « Enregistrer la fiche ».",
         ],

@@ -36,7 +36,7 @@ function PastilleFamille({ famille }: { famille: Famille }) {
 function consigne(c: ChampFormulaire): string {
   if (c.type === "date") return "Date : 15/11/2026, 2026-11-15 ou 15 novembre 2026. Mise en forme par le gabarit.";
   if (c.type === "nombre") return "Nombre : 166 000 ou 1500,50. Milliers et texte autour ajoutés par le gabarit.";
-  if (c.type === "jauge") return `Nombre de ${c.min ?? 0} à ${c.max ?? 100} : la jauge se remplit d'autant.`;
+  if (c.type === "jauge") return `Nombre : la jauge se remplit d'autant, jusqu'à ${c.max ?? 100}, et reste pleine au-delà.`;
   if (c.type === "image") return "Nom du fichier photo (photo-1.jpg), choisi avec le fichier CSV.";
   return `Texte tel quel${c.maxCaracteres ? `, ${c.maxCaracteres} caractères au plus` : ""}. Retour à la ligne : Alt+Entrée dans Excel.`;
 }

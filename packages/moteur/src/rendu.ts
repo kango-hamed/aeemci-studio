@@ -8,7 +8,7 @@ import path from "node:path";
 import { chromium, type Browser } from "playwright";
 import { CataloguePolices } from "./polices.ts";
 import { miseEnPage, type Consigne, type RapportZone } from "./mise-en-page.ts";
-import { lireNombre, texteDeZone, validerValeurs, type ErreurChamp } from "./valeurs.ts";
+import { etatJauge, texteDeZone, validerValeurs, type ErreurChamp } from "./valeurs.ts";
 import type { Couche, Gabarit, Plan, Valeurs, Zone } from "./types.ts";
 
 const ORIGINE = "https://rendu.aeemci.local";
@@ -87,15 +87,13 @@ export function consignesDuPlan(gabarit: Gabarit, plan: Plan, valeurs: Valeurs, 
     }
     if (champ.type === "jauge") {
       if (!z.cadre) continue;
-      const n = lireNombre(v) ?? 0;
-      const min = z.jauge?.min ?? champ.min ?? 0;
-      const max = z.jauge?.max ?? champ.max ?? 100;
-      consignes.push({ genre: "jauge", champ: z.champ, ...z.cadre, ratio: max === min ? 0 : (n - min) / (max - min), sens: z.jauge?.sens === "vertical" ? "vertical" : "horizontal", couleur: z.jauge?.couleur || "#1A6012" });
+      const { ratio } = etatJauge(champ, valeurs, z);
+      consignes.push({ genre: "jauge", champ: z.champ, ...z.cadre, ratio, sens: z.jauge?.sens === "vertical" ? "vertical" : "horizontal", couleur: z.jauge?.couleur || "#1A6012" });
       continue;
     }
     const st = z.texte;
     if (!st) continue;
-    const texte = texteDeZone(z, champ, v);
+    const texte = texteDeZone(z, champ, v, { gabarit, valeurs });
     if (!texte) continue;
     const box = z.forme === "box" && z.cadre;
     consignes.push({

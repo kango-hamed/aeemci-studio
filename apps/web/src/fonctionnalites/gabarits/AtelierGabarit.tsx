@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Loader2 } from "lucide-react";
 import type { Champ, Controles, Gabarit, RapportZone, Zone } from "@aeemci-studio/moteur";
 import { enregistrerReglages, publierGabarit, type EtatGabarit } from "./actions";
+import { MARQUES } from "./reglages";
 
 const champ = "min-h-11 w-full rounded-s border border-trait-champ bg-surface-relevee px-3 text-base text-encre";
 const TYPES: Record<string, string> = { texte: "Texte", date: "Date", nombre: "Nombre", image: "Image", jauge: "Jauge" };
@@ -168,10 +169,19 @@ export function AtelierGabarit({ gabaritId, initial, controlesInitiaux }: { gaba
                   </>
                 )}
               </div>
+              {c.type === "jauge" && <ReglageJauge c={c} nombres={g.champs.filter((x) => x.type === "nombre")} changer={(f) => changerChamp(c.nom, f)} />}
               {g.plans.flatMap((p, pi) =>
                 p.zones.map((z, zi) =>
                   z.champ === c.nom && z.texte ? (
-                    <ReglageZone key={`${p.plan}-${zi}`} id={`${c.nom}-${pi}-${zi}`} z={z} c={c} plan={g.plans.length > 1 ? p.plan : null} changer={(f) => changerZone(pi, zi, f)} />
+                    <ReglageZone
+                      key={`${p.plan}-${zi}`}
+                      id={`${c.nom}-${pi}-${zi}`}
+                      z={z}
+                      c={c}
+                      plan={g.plans.length > 1 ? p.plan : null}
+                      avecJauge={g.champs.some((x) => x.type === "jauge")}
+                      changer={(f) => changerZone(pi, zi, f)}
+                    />
                   ) : null,
                 ),
               )}
@@ -211,7 +221,7 @@ export function AtelierGabarit({ gabaritId, initial, controlesInitiaux }: { gaba
         {mode === "perso" && (
           <div className="flex flex-col gap-3 rounded-m bg-creme p-3">
             {g.champs
-              .filter((c) => c.type !== "image")
+              .filter((c) => c.type !== "image" && !c.valeur_de)
               .map((c) => (
                 <Saisie key={c.nom} id={`perso-${c.nom}`} libelle={c.libelle || c.nom}>
                   <input
@@ -299,7 +309,7 @@ function Saisie({ id, libelle, children }: { id: string; libelle: string; childr
   );
 }
 
-function ReglageZone({ id, z, c, plan, changer }: { id: string; z: Zone; c: Champ; plan: string | null; changer: (f: (z: Zone) => void) => void }) {
+function ReglageZone({ id, z, c, plan, avecJauge, changer }: { id: string; z: Zone; c: Champ; plan: string | null; avecJauge: boolean; changer: (f: (z: Zone) => void) => void }) {
   const taille = z.texte!.taille_px;
   const mode = z.debordement?.mode ?? "reduire";
   const pct = Math.round(((z.debordement?.taille_min_px ?? taille * 0.55) / taille) * 100);
@@ -338,18 +348,54 @@ function ReglageZone({ id, z, c, plan, changer }: { id: string; z: Zone; c: Cham
             <input id={`fmt-${id}`} value={z.format ?? "EEEE d MMMM yyyy"} onChange={(e) => changer((x) => (x.format = e.target.value || undefined))} className={champ} />
           </Saisie>
         ) : (
-          <Saisie id={`mod-${id}`} libelle="Texte fixe autour de la valeur, avec {valeur}">
+          <Saisie id={`mod-${id}`} libelle={avecJauge ? "Texte fixe : {valeur}, et pour la jauge {pourcentage} ou {objectif}" : "Texte fixe autour de la valeur, avec {valeur}"}>
             <input
               id={`mod-${id}`}
               defaultValue={z.modele ?? ""}
-              placeholder="Ex. : Collecté : {valeur} f CFA"
-              onChange={(e) => changer((x) => (x.modele = e.target.value.includes("{valeur}") ? e.target.value : undefined))}
+              placeholder={avecJauge ? "Ex. : Collecté : {valeur} sur {objectif} f CFA ({pourcentage})" : "Ex. : Collecté : {valeur} f CFA"}
+              onChange={(e) => changer((x) => (x.modele = MARQUES.test(e.target.value) ? e.target.value : undefined))}
               className={champ}
             />
           </Saisie>
         )}
       </div>
     </fieldset>
+  );
+}
+
+/** Jauge : valeur et objectif pris dans des champs nombre, pour une seule saisie du montant. */
+function ReglageJauge({ c, nombres, changer }: { c: Champ; nombres: Champ[]; changer: (f: (c: Champ) => void) => void }) {
+  if (!nombres.length)
+    return (
+      <p className="m-0 text-sm leading-5 text-encre-douce">
+        La jauge est saisie à part. Pour qu&apos;elle suive le montant affiché, marque dans le PSD le calque du montant comme champ nombre.
+      </p>
+    );
+  const option = (x: Champ) => (
+    <option key={x.nom} value={x.nom}>
+      {x.libelle || x.nom}
+    </option>
+  );
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <Saisie id={`source-${c.nom}`} libelle="Valeur de la jauge">
+        <select id={`source-${c.nom}`} value={c.valeur_de ?? ""} onChange={(e) => changer((x) => (x.valeur_de = e.target.value || undefined))} className={champ}>
+          <option value="">Saisie dans ce champ</option>
+          {nombres.map(option)}
+        </select>
+      </Saisie>
+      <Saisie id={`objectif-${c.nom}`} libelle="Objectif">
+        <select id={`objectif-${c.nom}`} value={c.objectif_de ?? ""} onChange={(e) => changer((x) => (x.objectif_de = e.target.value || undefined))} className={champ}>
+          <option value="">Fixe : le maximum ci-dessus</option>
+          {nombres.filter((x) => x.nom !== c.valeur_de).map(option)}
+        </select>
+      </Saisie>
+      <p className="m-0 text-sm leading-5 text-encre-douce sm:col-span-2">
+        {c.valeur_de ? "La jauge n'est plus demandée dans le formulaire : elle suit ce champ. " : ""}
+        {c.objectif_de ? "Champ objectif vide : le maximum ci-dessus s'applique. " : ""}
+        Au-delà de l&apos;objectif, la jauge est pleine.
+      </p>
+    </div>
   );
 }
 

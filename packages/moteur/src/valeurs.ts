@@ -46,14 +46,61 @@ export function calquerCasse(texte: string, exemple?: string): string {
   return texte;
 }
 
-/** Texte à afficher dans une zone pour la valeur saisie. */
-export function texteDeZone(zone: Zone, champ: Champ, valeur: unknown): string {
+const vide = (v: unknown) => v === null || v === undefined || (typeof v === "string" && !v.trim());
+
+export interface EtatJauge {
+  valeur: number | null;
+  min: number;
+  objectif: number;
+  /** Remplissage de 0 à 1 : une valeur au-delà de l'objectif donne une jauge pleine. */
+  ratio: number;
+  /** Part de l'objectif atteinte, sans plafond (1,12 au-delà de l'objectif). */
+  part: number;
+}
+
+/**
+ * Jauge : sa valeur (saisie, ou prise dans le champ `valeur_de`), ses bornes (réglages du champ, puis
+ * celles du calque) et l'objectif (champ `objectif_de` s'il est rempli, sinon le maximum).
+ */
+export function etatJauge(jauge: Champ, valeurs: Valeurs, zone?: Zone): EtatJauge {
+  const valeur = lireNombre(valeurs[jauge.valeur_de ?? jauge.nom]);
+  const min = jauge.min ?? zone?.jauge?.min ?? 0;
+  const saisi = jauge.objectif_de ? lireNombre(valeurs[jauge.objectif_de]) : null;
+  const objectif = saisi !== null && saisi > min ? saisi : jauge.max ?? zone?.jauge?.max ?? 100;
+  const part = objectif === min || valeur === null ? 0 : (valeur - min) / (objectif - min);
+  return { valeur, min, objectif, ratio: Math.max(0, Math.min(1, part)), part: Math.max(0, part) };
+}
+
+/** Jauge à laquelle se rapporte une zone de texte : la sienne, ou celle dont le champ donne la valeur ou l'objectif. */
+function jaugeDe(gabarit: Gabarit, champ: Champ): Champ | undefined {
+  if (champ.type === "jauge") return champ;
+  const jauges = gabarit.champs.filter((c) => c.type === "jauge");
+  return jauges.find((j) => j.valeur_de === champ.nom || j.objectif_de === champ.nom) ?? jauges[0];
+}
+
+/**
+ * Texte à afficher dans une zone pour la valeur saisie. Avec le gabarit et toutes les valeurs, le
+ * texte fixe peut aussi citer `{pourcentage}` et `{objectif}` de la jauge.
+ */
+export function texteDeZone(zone: Zone, champ: Champ, valeur: unknown, contexte?: { gabarit: Gabarit; valeurs: Valeurs }): string {
+  const j = contexte && zone.modele && /\{(pourcentage|objectif)\}/.test(zone.modele) ? jaugeDe(contexte.gabarit, champ) : undefined;
+  if (j) {
+    const e = etatJauge(j, contexte!.valeurs, contexte!.gabarit.plans.flatMap((p) => p.zones).find((z) => z.champ === j.nom && z.jauge));
+    if (champ.type === "jauge") valeur = e.valeur;
+    if (vide(valeur) && e.valeur === null) return "";
+    return zone.modele!
+      .replace("{valeur}", vide(valeur) ? "" : texteDeZone({ ...zone, modele: undefined }, champ, valeur))
+      .replace("{pourcentage}", `${Math.round(e.part * 100)}${ESPACE_INSECABLE}%`)
+      .replace("{objectif}", formaterNombre(e.objectif))
+      .replace(/ {2,}/g, " ")
+      .trim();
+  }
   let texte: string;
   if (valeur === null || valeur === undefined || valeur === "") texte = "";
   else if (champ.type === "date") {
     const d = lireDate(valeur);
     texte = d ? calquerCasse(formaterDate(d, zone.format || "EEEE d MMMM yyyy", { locale: fr }).replace(/\.$/, ""), zone.exemple) : String(valeur);
-  } else if (champ.type === "nombre") {
+  } else if (champ.type === "nombre" || champ.type === "jauge") {
     const n = lireNombre(valeur);
     texte = n === null ? String(valeur) : formaterNombre(n);
   } else texte = String(valeur).replace(/\r\n?/g, "\n");
@@ -67,18 +114,17 @@ export function validerValeurs(gabarit: Gabarit, valeurs: Valeurs): ErreurChamp[
   const zones = gabarit.plans.flatMap((p) => p.zones);
   for (const c of gabarit.champs) {
     const v = valeurs[c.nom];
-    const vide = v === null || v === undefined || (typeof v === "string" && !v.trim());
+    const estVide = vide(v);
     const nom = c.libelle || c.nom;
-    if (vide) {
+    // Jauge reliée à un autre champ : elle n'est pas demandée, ce champ est contrôlé pour elle.
+    if (c.type === "jauge" && c.valeur_de) continue;
+    if (estVide) {
       if (c.obligatoire !== false) erreurs.push({ champ: c.nom, message: `« ${nom} » est obligatoire.` });
       continue;
     }
     if (c.type === "nombre" || c.type === "jauge") {
-      const n = lireNombre(v);
-      if (n === null) erreurs.push({ champ: c.nom, message: `« ${nom} » doit être un nombre.` });
-      else if (c.type === "jauge" && c.min !== undefined && c.max !== undefined && (n < Math.min(c.min, c.max) || n > Math.max(c.min, c.max))) {
-        erreurs.push({ champ: c.nom, message: `« ${nom} » doit être compris entre ${formaterNombre(c.min)} et ${formaterNombre(c.max)}.` });
-      }
+      // Au-delà de l'objectif, la jauge est pleine : une collecte peut dépasser son objectif.
+      if (lireNombre(v) === null) erreurs.push({ champ: c.nom, message: `« ${nom} » doit être un nombre.` });
     } else if (c.type === "date" && !lireDate(v)) {
       erreurs.push({ champ: c.nom, message: `« ${nom} » : date attendue au format AAAA-MM-JJ.` });
     } else if (c.type === "texte" && c.max_caracteres && String(v).length > c.max_caracteres) {

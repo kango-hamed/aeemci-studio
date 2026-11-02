@@ -49,6 +49,25 @@ describe("réglages d'un gabarit", () => {
     expect(r.plans[0]!.zones[1]).not.toHaveProperty("modele");
   });
 
+  it("relie une jauge au montant et à l'objectif ; le texte fixe peut citer le pourcentage", () => {
+    const collecte = (): Gabarit => {
+      const g = gabarit();
+      g.champs.push({ nom: "montant", type: "nombre", libelle: "Montant" }, { nom: "barre", type: "jauge", libelle: "Jauge", min: 0, max: 100 });
+      g.plans[0]!.zones.push({ champ: "montant", forme: "point", ancre: { x: 10, ligne_de_base: 1100 }, texte: { taille_px: 30 } });
+      return g;
+    };
+    const recu = collecte();
+    Object.assign(recu.champs[4]!, { valeur_de: "montant", objectif_de: "  " });
+    Object.assign(recu.champs[3]!, { valeur_de: "montant" });
+    recu.plans[0]!.zones[3]!.modele = "{pourcentage} de l'objectif";
+    const r = appliquerReglages(collecte(), recu);
+    expect(r.champs[4]).toMatchObject({ valeur_de: "montant" });
+    expect(r.champs[4]).not.toHaveProperty("objectif_de");
+    // Seule une jauge se relie à un autre champ.
+    expect(r.champs[3]).not.toHaveProperty("valeur_de");
+    expect(r.plans[0]!.zones[3]!.modele).toBe("{pourcentage} de l'objectif");
+  });
+
   it("refuse des champs qui ne correspondent plus au gabarit", () => {
     const recu = gabarit();
     recu.champs.pop();

@@ -103,6 +103,10 @@ describe.skipIf(!url)("documents (Postgres + Chromium)", () => {
     expect((await m.stockage.stockage().lire(l.d.declinaisons[0]!.fichier))?.subarray(1, 4).toString()).toBe("PNG");
     const hd = await m.creer.fichierHauteDefinition(l.d, { id: l.revision!.id, prefixe: l.revision!.prefixe, contenu: l.revision!.contenu }, "story");
     expect(hd.subarray(0, 2)).toEqual(Buffer.from([0xff, 0xd8]));
+    // Un plan de travail nommé avec espaces et accents donne une clé de stockage valide.
+    expect(m.creer.fichierDuPlan("Post carré")).toBe("Post-carre");
+    expect(m.creer.fichierDuPlan("story")).toBe("story");
+    expect(m.creer.fichierDuPlan(" « Été » ")).toBe("Ete");
   });
 
   it("dépose un PDF et une image, reconnus par leur contenu ; refuse le reste", async () => {

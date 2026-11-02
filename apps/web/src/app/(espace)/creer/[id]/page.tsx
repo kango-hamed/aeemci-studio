@@ -18,7 +18,8 @@ export default async function PageCreer({ params, searchParams }: { params: Prom
   if (!g) notFound();
   const contenu = g.revision.contenu;
   const zones = contenu.plans.flatMap((p) => p.zones);
-  const champs: ChampFormulaire[] = contenu.champs.map((c) => ({
+  // Une jauge reliée au montant (valeur_de) n'est pas demandée : elle suit ce champ.
+  const champs: ChampFormulaire[] = contenu.champs.filter((c) => !(c.type === "jauge" && c.valeur_de)).map((c) => ({
     nom: c.nom,
     type: c.type,
     libelle: c.libelle?.trim() || c.nom,

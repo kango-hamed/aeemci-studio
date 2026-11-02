@@ -1,6 +1,6 @@
 export * from "./types.ts";
 export { CataloguePolices } from "./polices.ts";
-export { validerValeurs, texteDeZone, formaterNombre, lireNombre, lireDate } from "./valeurs.ts";
+export { validerValeurs, texteDeZone, formaterNombre, lireNombre, lireDate, etatJauge, type EtatJauge } from "./valeurs.ts";
 export { rendrePlan, rendreTout, consignesDuPlan, ErreurRendu, LANCEMENT_CHROMIUM } from "./rendu.ts";
 export type { RapportZone } from "./mise-en-page.ts";
 /** Navigateur partagé par un serveur (application, worker) entre plusieurs rendus. */

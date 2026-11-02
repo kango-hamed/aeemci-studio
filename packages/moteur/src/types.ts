@@ -16,6 +16,10 @@ export interface Champ {
   max_caracteres?: number;
   min?: number;
   max?: number;
+  /** Jauge : champ nombre qui donne sa valeur (le montant collecté). La jauge n'est alors pas demandée. */
+  valeur_de?: string;
+  /** Jauge : champ nombre qui donne l'objectif quand il est rempli ; sinon `max`. */
+  objectif_de?: string;
 }
 
 export interface Cadre {
@@ -51,6 +55,7 @@ export interface Zone {
   plages?: { debut: number; fin: number; nom_postscript?: string; taille_px?: number; couleur?: string }[];
   debordement?: { mode: "reduire" | "couper" | "refuser"; taille_min_px?: number };
   format?: string;
+  /** Texte fixe autour de la valeur : `{valeur}`, et pour une jauge `{pourcentage}` et `{objectif}`. */
   modele?: string;
   exemple?: string;
   image?: { ajustement?: "couvrir" | "contenir"; ecretage?: string; /** Coins arrondis en px : haut-gauche, haut-droit, bas-droit, bas-gauche. */ rayons?: [number, number, number, number];

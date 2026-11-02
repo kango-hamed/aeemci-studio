@@ -24,6 +24,7 @@ Fiche pour l'équipe communication. Un gabarit est un visuel dont certains élé
 | **Photo** : un objet dynamique **écrêté** sur une forme. Pour les coins arrondis, utilise l'outil Rectangle avec un rayon (forme modifiable). | Le cadre de la photo est celui de la forme ; ses coins arrondis sont repris. |
 | **Date découpée** (« SAM » / « 15 » / « NOVEMBRE ») : marque chaque calque avec le **même champ** `date` et un format différent (`EEE`, `d`, `MMMM`). Écris l'exemple dans la casse voulue (MAJUSCULES, Majuscule initiale…). | Une seule date saisie remplit tous les morceaux, avec la même casse que ton exemple. |
 | **Texte fixe + valeur dans le même calque** (« Collecté : 166 000 f CFA ») : indique un **modèle** `Collecté : {valeur} f CFA`. | Seule la partie variable est demandée dans le formulaire. |
+| **Jauge de collecte** : marque la barre comme jauge, le montant comme nombre et, si l'objectif change d'une campagne à l'autre, un calque texte « Objectif » comme nombre. Dans l'atelier, relie la jauge au montant (« Valeur de la jauge ») et à l'objectif. Le texte fixe peut citer `{pourcentage}` et `{objectif}` : `Collecté : {valeur} f CFA ({pourcentage})`. | Le membre saisit le montant une seule fois : il remplit le texte et la barre. Sans objectif saisi, le maximum de la jauge sert d'objectif. Au-delà de l'objectif, la barre reste pleine et le pourcentage dépasse 100 %. |
 | **Une déclinaison par plan de travail** (post, story…), avec les **mêmes noms de champ**. | Un seul formulaire produit toutes les déclinaisons. |
 
 ## Formats de date utiles

@@ -29,6 +29,13 @@ export function controlerGabarit(gabarit: Gabarit, polices: CataloguePolices, do
       remarques.push(`Champ « ${c.nom} » : le libellé « ${c.libelle} » ressemble à une valeur d'exemple ; écris plutôt la question posée (ex. « Nom du panéliste »).`);
     if (c.max_caracteres !== undefined && (!Number.isInteger(c.max_caracteres) || c.max_caracteres < 1)) bloquants.push(`Champ « ${c.libelle || c.nom} » : maximum de caractères invalide.`);
     if (c.type === "jauge" && (c.min === undefined || c.max === undefined || c.min === c.max)) bloquants.push(`Champ « ${c.libelle || c.nom} » : la jauge a besoin d'un minimum et d'un maximum différents.`);
+    for (const [cle, role] of [["valeur_de", "la valeur"], ["objectif_de", "l'objectif"]] as const) {
+      const ref = c[cle];
+      if (ref === undefined) continue;
+      const source = gabarit.champs.find((x) => x.nom === ref);
+      if (c.type !== "jauge" || !source || source.type !== "nombre" || ref === c.nom)
+        bloquants.push(`Champ « ${c.libelle || c.nom} » : ${role} doit venir d'un champ nombre du gabarit (« ${ref} » ne convient pas).`);
+    }
     const zones = gabarit.plans.flatMap((p) => p.zones.filter((z) => z.champ === c.nom));
     if (!zones.length) bloquants.push(`Champ « ${c.libelle || c.nom} » : aucune zone ne l'utilise.`);
   }

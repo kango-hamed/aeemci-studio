@@ -13,6 +13,13 @@ import { notifierPublication } from "@/fonctionnalites/notifications/evenements"
 export const LARGEUR_RESEAUX = 1080;
 const LARGEUR_MINIATURE = 360;
 
+/**
+ * Nom de fichier d'une déclinaison : le nom du plan de travail Photoshop (« Post carré ») ramené aux
+ * caractères permis dans une clé de stockage. Un nom déjà sûr reste tel quel (fichiers existants).
+ */
+export const fichierDuPlan = (plan: string) =>
+  plan.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^[^A-Za-z0-9]+|-+$/g, "") || "plan";
+
 export class ErreurSaisie extends Error {
   constructor(
     message: string,
@@ -68,14 +75,14 @@ export async function creerDocument(
   try {
     const principal = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: plan.plan, format: "png", largeurMax: LARGEUR_RESEAUX });
     const miniature = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: plan.plan, format: "jpeg", largeurMax: LARGEUR_MINIATURE });
-    const cle = `documents/${id}/${plan.plan}.png`;
+    const cle = `documents/${id}/${fichierDuPlan(plan.plan)}.png`;
     await stockage().ecrire(cle, principal.fichier, principal.type);
     await stockage().ecrire(`documents/${id}/miniature.jpg`, miniature.fichier, "image/jpeg");
     // Les autres déclinaisons (story à côté du post…), l'une après l'autre : Chromium est gourmand en mémoire.
     const declinaisons: schema.Declinaison[] = [];
     for (const autre of gabarit.plans.filter((p) => p.plan !== plan.plan)) {
       const r = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: autre.plan, format: "png", largeurMax: LARGEUR_RESEAUX });
-      const cleAutre = `documents/${id}/${autre.plan}.png`;
+      const cleAutre = `documents/${id}/${fichierDuPlan(autre.plan)}.png`;
       await stockage().ecrire(cleAutre, r.fichier, r.type);
       declinaisons.push({ plan: autre.plan, fichier: cleAutre, type: r.type, largeur: r.largeur, hauteur: r.hauteur });
     }
@@ -111,7 +118,7 @@ export async function fichierHauteDefinition(
   revision: { id: string; prefixe: string; contenu: Gabarit },
   plan: string,
 ): Promise<Buffer> {
-  const cle = `documents/${doc.id}/${plan}-hd.jpg`;
+  const cle = `documents/${doc.id}/${fichierDuPlan(plan)}-hd.jpg`;
   const deja = await stockage().lire(cle);
   if (deja) return deja;
   const valeurs = await preparerValeurs(revision.contenu, doc.valeurs, doc.auteurId);
