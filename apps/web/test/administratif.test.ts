@@ -22,12 +22,12 @@ const ESATIC = identiteDe("ESATIC", { entete: null, rattachement: null, email: n
 const PV = { reunion: "Réunion du bureau", date: "2026-10-10", debut: "15:00", lieu: "Salle B12", presents: "Awa\nMoussa", ordre: "Bilan\nProgramme", deroulement: "La séance est ouverte." };
 
 describe("mise en page", () => {
-  it("échappe la saisie, met le filigrane sur un projet, formate dates et heures", () => {
+  it("échappe la saisie, sans filigrane sur un projet, formate dates et heures", () => {
     const t = definitionType("COM")!;
-    const html = htmlDocument({ type: t, contenu: { titre: "<b>Report</b>", corps: "Ligne 1\nLigne 2\n\nParagraphe" }, numero: null, date: new Date("2026-11-01T10:00:00Z"), section: ESATIC, signatures: [{ titre: "Le Président", nom: "" }], projet: true });
+    const html = htmlDocument({ type: t, contenu: { titre: "<b>Report</b>", corps: "Ligne 1\nLigne 2\n\nParagraphe" }, numero: null, date: new Date("2026-11-01T10:00:00Z"), section: ESATIC, signatures: [{ titre: "Le Président", nom: "" }] });
     expect(html).toContain("&lt;b&gt;Report&lt;/b&gt;");
     expect(html).toContain("<p>Ligne 1<br>Ligne 2</p><p>Paragraphe</p>");
-    expect(html).toContain('class="filigrane"');
+    expect(html).not.toContain("filigrane");
     expect(html).toContain("Abidjan, le 1er novembre 2026");
     expect(html).toContain("attribué à la validation");
     expect(dateSaisie("2026-10-10")).toBe("samedi 10 octobre 2026");
@@ -43,7 +43,7 @@ describe("mise en page", () => {
       corps: "Nous avons l'honneur…\n\n« Et entraidez-vous dans l'accomplissement des bonnes œuvres. »\n> (Sourate 5, verset 2)\n\nVeuillez agréer…",
       pieces: "- Devis de l'activité",
     };
-    const html = htmlDocument({ type: t, contenu, numero: null, date: new Date("2026-11-01T10:00:00Z"), section: ESATIC, signatures: [], projet: true });
+    const html = htmlDocument({ type: t, contenu, numero: null, date: new Date("2026-11-01T10:00:00Z"), section: ESATIC, signatures: [] });
     expect(html).toContain('<div class="formule">As Salamou Aleykoum Wa Rahmatoulah Wa Barakatouhou</div>');
     expect(html).toContain('<blockquote class="citation">« Et entraidez-vous dans l&#39;accomplissement des bonnes œuvres. »<br>(Sourate 5, verset 2)</blockquote>');
     expect(html).toContain('<p class="pj"><span class="libelle">PJ :</span> Devis de l&#39;activité</p>');

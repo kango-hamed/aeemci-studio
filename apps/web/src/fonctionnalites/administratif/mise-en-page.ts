@@ -2,7 +2,7 @@
  * Mise en page des documents administratifs : HTML A4 rendu en PDF par le moteur (mode document).
  * En-tête officiel (sceau national à gauche, croissant de la section à droite), numéro et date,
  * corps propre au type, bloc de signatures avec cachet ; pied institutionnel (rattachement,
- * coordonnées, devise) sur chaque page. Avant validation : filigrane « PROJET ».
+ * coordonnées, devise) sur chaque page. Avant validation : pas de numéro ni de signature, sans filigrane.
  * En-tête et pied suivent le papier de la section (Organisation, `IdentiteSection`).
  *
  * Les ressources (polices, logos, signatures, cachet) sont désignées par leur nom ; l'appelant
@@ -33,7 +33,6 @@ export interface DonneesMiseEnPage {
   section: IdentiteSection;
   /** Un bloc (président) ; deux pour un procès-verbal (secrétaire de séance, président). */
   signatures: BlocSignature[];
-  projet: boolean;
 }
 
 export const RESSOURCES_FIXES = ["sceau", "croissant", "titre-400", "titre-700", "texte-400", "texte-600"] as const;
@@ -267,7 +266,6 @@ li{margin:0 0 1mm}
 .bloc .cachet{position:absolute;left:0;top:50%;width:31mm;height:31mm;object-fit:contain;transform:translateY(-50%) rotate(-9deg);opacity:.88;mix-blend-mode:multiply}
 .bloc .nom{font-family:Titre,sans-serif;font-weight:700}
 .bloc .attente{font-family:Texte,sans-serif;font-weight:400;font-style:italic;color:#5a635b}
-.filigrane{position:fixed;left:50%;top:48%;transform:translate(-50%,-50%) rotate(-35deg);font-family:Titre,sans-serif;font-weight:700;font-size:120pt;letter-spacing:.12em;color:rgba(180,35,24,.1);pointer-events:none;white-space:nowrap}
 `;
 
 /** « Association des Élèves… » avec les initiales du sigle en évidence. */
@@ -320,7 +318,7 @@ ${corps(d)}
 ${signatures(d)}`;
 }
 
-function enveloppe(titre: string, projet: boolean, contenu: string): string {
+function enveloppe(titre: string, contenu: string): string {
   return `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><title>${e(titre)}</title>
 <style>
@@ -329,18 +327,17 @@ ${STYLE_PAGE}
 .lettre:last-child{break-after:auto}
 </style></head>
 <body>
-${projet ? '<div class="filigrane" aria-hidden="true">PROJET</div>' : ""}
 ${contenu}
 </body></html>`;
 }
 
 export function htmlDocument(d: DonneesMiseEnPage): string {
-  return enveloppe(d.type.libelle, d.projet, pageDocument(d));
+  return enveloppe(d.type.libelle, pageDocument(d));
 }
 
 /** Plusieurs lettres dans un même PDF, chacune sur ses pages (projet d'un envoi). */
 export function htmlLettres(lettres: DonneesMiseEnPage[]): string {
-  return enveloppe("Lettres", lettres.some((l) => l.projet), lettres.map((l) => `<section class="lettre">${pageDocument(l)}</section>`).join("\n"));
+  return enveloppe("Lettres", lettres.map((l) => `<section class="lettre">${pageDocument(l)}</section>`).join("\n"));
 }
 
 /** Pied de page d'un document administratif (HTML pour le moteur), répété sur chaque page. */

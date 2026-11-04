@@ -24,7 +24,7 @@ import { notifierDecision, notifierPublication, notifierSoumission } from "@/fon
  *     ▲                       │
  *     └──── à corriger ◀──────┘ (demande de correction, avec un commentaire)
  *
- * - Jusqu'à la validation, le document est un brouillon (auteur et bureau) avec le filigrane « PROJET ».
+ * - Jusqu'à la validation, le document est un brouillon (auteur et bureau), sans numéro ni signature.
  * - Le numéro est pris dans le compteur pendant la transaction de validation : si le rendu échoue,
  *   le compteur revient en arrière et la séquence reste sans trou.
  * - Un document validé ne change plus : le corriger crée une nouvelle version, qui refait le circuit.
@@ -118,11 +118,11 @@ interface Rendu {
   miniature: Buffer;
 }
 
-/** Projet (filigrane, sans numéro ni signature), pour la rédaction et la relecture. */
+/** Projet (sans numéro ni signature), pour la rédaction et la relecture. */
 async function rendreProjet(t: DefinitionType, contenu: Record<string, string>, auteurId: string, section: IdentiteSection, destinataires: Destinataire[] | null): Promise<Rendu> {
   const signatures: BlocSignature[] = [{ titre: TITRES.president, nom: "" }];
   if (t.code === "PV") signatures.unshift({ titre: TITRES.secretaire_seance, nom: await nomDe(auteurId) });
-  const page = (c: Record<string, string>): DonneesMiseEnPage => ({ type: t, contenu: c, numero: null, date: new Date(), section, signatures, projet: true });
+  const page = (c: Record<string, string>): DonneesMiseEnPage => ({ type: t, contenu: c, numero: null, date: new Date(), section, signatures });
   // Envoi : toutes les lettres à la suite ; tant que la liste manque, la lettre type avec ses variables.
   const lettres = destinataires?.length ? destinataires.map((d) => page(lettrePour(contenu, d))) : [page(contenu)];
   return rendrePageA4({ html: htmlLettres(lettres), ressources: ressourcesFixes(), piedHtml: piedDocument(lettres[0]!), marges: MARGES_OFFICIELLES }, LARGEUR_MINIATURE);
@@ -405,7 +405,7 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
       })
       .returning({ dernier: schema.compteur.dernier });
     const numero = formaterNumero(m.section, code, t.code, annee, c!.dernier);
-    const donnees: DonneesMiseEnPage = { type: t, contenu: d.contenu ?? {}, numero, date: maintenant, section: identite, signatures: blocs, projet: false };
+    const donnees: DonneesMiseEnPage = { type: t, contenu: d.contenu ?? {}, numero, date: maintenant, section: identite, signatures: blocs };
     let rendu: Rendu;
     if (d.destinataires) {
       // Une lettre par destinataire, numérotée et rendue seule (pied et pages propres), puis réunies.
