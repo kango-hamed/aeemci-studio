@@ -1,4 +1,4 @@
-import { erreur, membreOuRefus } from "@/serveur/reponses";
+import { erreur, membreOuRefus, reponseOccupe } from "@/serveur/reponses";
 import { ErreurImport, importerGabarit, TAILLE_MAX_IMPORT } from "@/fonctionnalites/gabarits/importer";
 import { peutGererGabarits } from "@/fonctionnalites/organisation/droits";
 
@@ -29,6 +29,8 @@ export async function POST(request: Request) {
     return Response.json(await importerGabarit(fichiers, u.id, { gabaritId: typeof gabaritId === "string" && gabaritId ? gabaritId : undefined }));
   } catch (e) {
     if (e instanceof ErreurImport) return erreur(422, e.message, { details: e.details });
+    const occupe = reponseOccupe(e);
+    if (occupe) return occupe;
     throw e;
   }
 }

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { erreur, createurOuRefus } from "@/serveur/reponses";
+import { erreur, createurOuRefus, reponseOccupe } from "@/serveur/reponses";
 import { creerDocument, ErreurSaisie } from "@/fonctionnalites/documents/creer";
 import { gabaritACompleter } from "@/fonctionnalites/gabarits/requetes";
 
@@ -27,6 +27,8 @@ export async function POST(request: Request) {
     return Response.json(await creerDocument(d.data, u.id, { mandatId: u.affectation?.mandatId ?? null, delegationId: u.affectation?.delegationId ?? null, statut: d.data.statut, visibilite: d.data.visibilite }, { notifier: !d.data.silencieux }), { status: 201 });
   } catch (e) {
     if (e instanceof ErreurSaisie) return erreur(422, e.message, { erreurs: e.erreurs });
+    const occupe = reponseOccupe(e);
+    if (occupe) return occupe;
     throw e;
   }
 }

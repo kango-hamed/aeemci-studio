@@ -68,7 +68,7 @@ Le serveur ne garde aucun fichier : tout va dans R2, ce qui permet de changer d'
 Console AWS → **Facturation et gestion des coûts** → **Offre gratuite** (ou **Crédits**).
 
 - **Compte ouvert après le 15/07/2025** (« plan gratuit », 100 à 200 $ de crédits, 6 mois) : prendre une **t3.small** (2 vCPU, 2 Go), éligible au plan gratuit. C'est le cas prévu ci-dessous.
-- **Compte plus ancien** (offre de 12 mois, 750 h par mois) : seule la **t3.micro** (1 Go) est gratuite. Elle suffit pour la présentation avec 3 Go de swap (étape D) et `RENDUS_SIMULTANES=1` dans `.env`, au prix d'aperçus plus lents ; une t3.small serait facturée (environ 17 $ par mois).
+- **Compte plus ancien** (offre de 12 mois, 750 h par mois) : seule la **t3.micro** (1 Go) est gratuite. Elle suffit pour la présentation avec 3 Go de swap (étape D) et `RENDUS_SIMULTANES=1`, `MEMOIRE_APP=800m`, `MEMOIRE_APP_SWAP=3500m` dans `.env`, au prix d'aperçus plus lents ; une t3.small serait facturée (environ 17 $ par mois).
 
 Puis **Budgets** → **Créer un budget** → modèle **Budget de dépenses nulles** (« Zero spend budget »), avec ton e-mail : AWS prévient au premier centime facturé hors crédits.
 
@@ -176,11 +176,24 @@ Sans cette étape, les liens d'activation d'un import CSV s'affichent à l'écra
 
 Vérifier : importer un fichier d'une ligne avec ta propre adresse ; l'écran indique « 1 lien d'activation est parti par e-mail ». Un envoi raté est écrit dans le journal (`docker compose logs app | grep "E-mail non envoyé"`). Gmail limite à environ 500 e-mails par jour : bien assez pour un mandat. Quand la section aura son domaine, remplacer ces valeurs par celles de son adresse.
 
+## 9. Mettre à jour les fichiers du serveur
+
+La mise à jour automatique ne change que l'image de l'application. Quand `compose.yaml`, `Caddyfile` ou `mise-a-jour.sh` changent dans [`deploiement/`](../deploiement/compose.yaml) (garde-fous de charge du 04/11/2026, par exemple), les renvoyer depuis ton ordinateur, à la racine du dépôt :
+
+```powershell
+scp -i "$env:USERPROFILE\.ssh\aeemci-studio.pem" deploiement\compose.yaml deploiement\Caddyfile deploiement\mise-a-jour.sh ubuntu@13.39.112.125:~/aeemci/
+```
+
+Puis sur le serveur : `cd ~/aeemci && chmod +x mise-a-jour.sh && docker compose up -d && docker compose restart caddy`. Vérifier : `docker compose ps` affiche l'application `(healthy)` après une minute et demie.
+
 ## Réglages et coûts
 
 - **Toujours allumé** : pas d'attente à la première visite, contrairement à un service qui s'éteint au repos.
 - **Mémoire** : Chromium (moteur de rendu) a besoin de place. Mesuré sur le gabarit « panéliste » (fond de 5400 × 6414 px) : pic de 1,4 Go pour l'import, les aperçus, la création et la haute définition. Pour tenir, l'import prépare des fonds réduits (1620 px) pour l'aperçu et le fichier réseaux, la haute définition est plafonnée à 3600 px de large (impression A4 et A3 ; réglable par `LARGEUR_HD`) et rendue seule. Si l'application s'arrête faute de mémoire (`docker compose logs app`, ou `dmesg | grep -i kill`), ajouter `RENDUS_SIMULTANES=1` dans `.env`.
 - **Processeur** : sur la t3.small (2 vCPU, sans carte graphique), la haute définition du panéliste prend plus de 30 s ; elle a 3 minutes au plus, une seule fois par document (gardée ensuite). Le premier téléchargement HD fait donc patienter. Si elle échoue encore (`page.screenshot: Timeout` dans `docker compose logs app`), baisser `LARGEUR_HD` (par exemple 2480, A4 à 300 dpi) dans `.env`. Une t3 qui calcule longtemps au-dessus de son régime de base consomme un peu plus de crédits (mode « unlimited »).
+- **Beaucoup de monde en même temps** : les rendus (aperçus, créations, PDF, haute définition) passent par une file d'attente. Le serveur **refuse plutôt que de s'effondrer** : 20 demandes en attente au plus (`RENDUS_EN_ATTENTE`), une minute d'attente au plus (`RENDUS_DELAI_ATTENTE_MS`), puis « Beaucoup de demandes en ce moment : réessaie dans une minute ». Deux demandes par compte au plus ; un aperçu en cours de saisie remplace le précédent du même membre au lieu de s'y ajouter. La création par lot attend et reprend la ligne refusée. Essai en local (30 comptes, 90 aperçus lancés ensemble) : 24 rendus, 42 aperçus remplacés par un plus récent, 23 refusés « occupé », aucune erreur, et le reste du site a continué de répondre.
+- **Garde-fous du conteneur** (`compose.yaml`) : mémoire de l'application plafonnée à 1,6 Go (`MEMOIRE_APP`, swap compris `MEMOIRE_APP_SWAP`) ; si Chromium déborde, c'est lui qui est arrêté et relancé, pas Caddy ni la machine. Un contrôle de santé toutes les 30 s ; une application qui ne répond plus depuis 3 contrôles est redémarrée par `mise-a-jour.sh` (au plus 5 minutes). Pendant un redémarrage, Caddy patiente 15 s puis affiche une page « AEEMCI Studio redémarre » qui se recharge seule.
+- **Plus de capacité** : une t3.medium (4 Go, environ 34 $ par mois) avec `RENDUS_SIMULTANES=4` et `MEMOIRE_APP=3500m` double le débit des rendus sans changer le code. Au-delà, séparer les rendus dans un second conteneur.
 - **Consommation des crédits** (ordre de grandeur, Francfort) : t3.small environ 17 $ par mois, disque de 20 Gio environ 2 $, adresse IPv4 publique environ 4 $ : un peu plus de 20 $ par mois. À suivre dans **Facturation** → **Crédits**.
 - **Fin du plan gratuit** : au bout de 6 mois ou quand les crédits sont épuisés, AWS ferme le compte s'il n'est pas passé en payant. Avant cette date, déménager (« Après AWS ») : rien à copier, la base et les fichiers sont ailleurs.
 - **Sécurité** : la machine n'accepte que SSH (par clé, poussée par la console) et le web ; les secrets ne vivent que dans `~/aeemci/.env` (lisible par `ubuntu` seul). Mises à jour du système de temps en temps : `sudo apt update && sudo apt upgrade -y`.

@@ -67,8 +67,56 @@ const limite = Math.max(1, Number(process.env.RENDUS_SIMULTANES) || 2);
 export const LARGEUR_REDUITE = 1620;
 export const LARGEUR_HD = Math.max(LARGEUR_REDUITE, Number(process.env.LARGEUR_HD) || 3600);
 const DELAI_HD_MS = 180_000;
+/** Demandes en attente au plus : au-delà, le serveur répond « occupé » au lieu d'empiler sans fin. */
+const ATTENTE_MAX = Math.max(1, Number(process.env.RENDUS_EN_ATTENTE) || 20);
+/** Attente au plus avant de renoncer : le navigateur n'attend pas indéfiniment, le serveur non plus. */
+const DELAI_ATTENTE_MS = Math.max(1000, Number(process.env.RENDUS_DELAI_ATTENTE_MS) || 60_000);
+/** Demandes d'un même compte, en attente ou en cours : un seul membre ne prend pas toute la file. */
+const PAR_COMPTE = 2;
+
+/**
+ * Le serveur refuse une demande de rendu pour se protéger : `statut` 503 (file pleine, attente trop
+ * longue : réessayer bientôt), 429 (trop de demandes du même compte) ou 409 (aperçu remplacé par un plus récent).
+ */
+export class ServeurOccupe extends Error {
+  constructor(
+    message: string,
+    readonly statut: 409 | 429 | 503,
+  ) {
+    super(message);
+  }
+}
+const OCCUPE = "Beaucoup de demandes en ce moment : réessaie dans une minute.";
+
+interface EnAttente {
+  poids: number;
+  compte?: string;
+  remplacable: boolean;
+  ok: () => void;
+  refus: (e: ServeurOccupe) => void;
+}
+
 let enCours = 0;
-const attente: { poids: number; ok: () => void }[] = [];
+const attente: EnAttente[] = [];
+const parCompte = new Map<string, number>();
+
+function compter(compte: string | undefined, n: number) {
+  if (!compte) return;
+  const v = (parCompte.get(compte) ?? 0) + n;
+  if (v > 0) parCompte.set(compte, v);
+  else parCompte.delete(compte);
+}
+
+function retirer(a: EnAttente, e: ServeurOccupe) {
+  const i = attente.indexOf(a);
+  if (i < 0) return false;
+  attente.splice(i, 1);
+  // Décompté tout de suite : un aperçu remplacé libère sa place avant l'arrivée du suivant.
+  compter(a.compte, -1);
+  a.refus(e);
+  servirAttente();
+  return true;
+}
 
 function servirAttente() {
   // Dans l'ordre d'arrivée : un rendu lourd en tête bloque les suivants jusqu'à ce qu'il puisse passer.
@@ -79,17 +127,51 @@ function servirAttente() {
   }
 }
 
-/** File d'attente pondérée : un rendu ordinaire prend une place, un rendu lourd les prend toutes. */
-async function avecPlace<T>(f: () => Promise<T>, lourd = false): Promise<T> {
-  const poids = lourd ? limite : 1;
-  await new Promise<void>((ok) => {
-    attente.push({ poids, ok });
+export interface OptionsPlace {
+  /** Rendu lourd (haute définition, réduction d'image) : il prend toutes les places. */
+  lourd?: boolean;
+  /** Compte qui demande, pour la limite par compte. */
+  compte?: string;
+  /** Aperçu en cours de saisie : un aperçu plus récent du même compte prend sa place dans la file. */
+  remplacable?: boolean;
+}
+
+/**
+ * File d'attente pondérée et bornée : un rendu ordinaire prend une place, un rendu lourd les prend toutes.
+ * Refuse (`ServeurOccupe`) plutôt que d'empiler : file pleine, attente trop longue, compte trop demandeur.
+ */
+export async function avecPlace<T>(f: () => Promise<T>, o: OptionsPlace = {}): Promise<T> {
+  const poids = o.lourd ? limite : 1;
+  if (o.compte && o.remplacable) {
+    const ancien = attente.find((a) => a.compte === o.compte && a.remplacable);
+    if (ancien) retirer(ancien, new ServeurOccupe("Aperçu remplacé par un plus récent.", 409));
+  }
+  if (o.compte && (parCompte.get(o.compte) ?? 0) >= PAR_COMPTE) {
+    throw new ServeurOccupe("Tes demandes précédentes sont encore en cours : attends qu'elles se terminent.", 429);
+  }
+  if (attente.length >= ATTENTE_MAX) throw new ServeurOccupe(OCCUPE, 503);
+
+  // Une demande refusée en attente est décomptée par `retirer` ; une demande servie, à la fin de son rendu.
+  compter(o.compte, 1);
+  await new Promise<void>((ok, refus) => {
+    const a: EnAttente = { poids, compte: o.compte, remplacable: Boolean(o.remplacable), ok, refus };
+    const minuterie = setTimeout(() => retirer(a, new ServeurOccupe(OCCUPE, 503)), DELAI_ATTENTE_MS);
+    a.ok = () => {
+      clearTimeout(minuterie);
+      ok();
+    };
+    a.refus = (e) => {
+      clearTimeout(minuterie);
+      refus(e);
+    };
+    attente.push(a);
     servirAttente();
   });
   try {
     return await f();
   } finally {
     enCours -= poids;
+    compter(o.compte, -1);
     servirAttente();
   }
 }
@@ -124,7 +206,7 @@ export async function reduireImage(contenu: Buffer, type: string, largeurMax = L
     } finally {
       await page.close();
     }
-  }, true);
+  }, { lourd: true });
 }
 
 // ── Fichiers des révisions ─────────────────────────────────────────────────────
@@ -193,6 +275,9 @@ export interface DemandeRendu {
   largeurMax?: number;
   /** Haute définition : fonds originaux, largeur `LARGEUR_HD`, rendu seul. */
   hd?: boolean;
+  /** Compte qui demande (limite par compte) ; `remplacable` pour un aperçu en cours de saisie. */
+  compte?: string;
+  remplacable?: boolean;
 }
 
 export async function rendre(d: DemandeRendu): Promise<ResultatRendu> {
@@ -215,7 +300,7 @@ export async function rendre(d: DemandeRendu): Promise<ResultatRendu> {
       // Mesuré : plus de 30 s pour la HD du panéliste sur une t3.small (2 vCPU, sans GPU).
       delaiMs: d.hd ? DELAI_HD_MS : undefined,
     }),
-    d.hd,
+    { lourd: d.hd, compte: d.compte, remplacable: d.remplacable },
   );
 }
 

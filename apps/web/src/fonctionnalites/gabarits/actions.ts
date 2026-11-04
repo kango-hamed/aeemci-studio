@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import type { Controles, Gabarit } from "@aeemci-studio/moteur";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import * as atelier from "./atelier";
+import { ServeurOccupe } from "@/fonctionnalites/generation/rendu";
 
 export interface EtatGabarit {
   erreur?: string;
@@ -27,6 +28,7 @@ async function executer(gabaritId: string, op: (u: Awaited<ReturnType<typeof exi
     return { ok: true, ...(r ?? {}) };
   } catch (e) {
     if (e instanceof atelier.ErreurGabarit) return { erreur: e.message, details: e.details };
+    if (e instanceof ServeurOccupe) return { erreur: e.message };
     throw e;
   }
 }
@@ -37,7 +39,7 @@ export async function enregistrerReglages(gabaritId: string, contenu: Gabarit): 
   try {
     return { ok: true, controles: await atelier.enregistrerBrouillon(u, gabaritId, contenu) };
   } catch (e) {
-    if (e instanceof atelier.ErreurGabarit) return { erreur: e.message };
+    if (e instanceof atelier.ErreurGabarit || e instanceof ServeurOccupe) return { erreur: e.message };
     throw e;
   }
 }

@@ -7,6 +7,7 @@ import { ErreurSaisie } from "@/fonctionnalites/documents/creer";
 import { creerMandatPasse as creerMandat } from "./archives";
 import { cloreMandat as clore } from "./cloture";
 import { ecrireNote } from "./passation";
+import { ServeurOccupe } from "@/fonctionnalites/generation/rendu";
 
 export interface EtatMandat {
   erreur?: string;
@@ -25,7 +26,7 @@ async function executer(op: () => Promise<EtatMandat | void>): Promise<EtatManda
   try {
     return { ok: true, ...((await op()) ?? {}) };
   } catch (e) {
-    if (e instanceof ErreurSaisie) return { erreur: e.message };
+    if (e instanceof ErreurSaisie || e instanceof ServeurOccupe) return { erreur: e.message };
     throw e;
   }
 }

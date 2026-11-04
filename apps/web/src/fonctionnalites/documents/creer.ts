@@ -73,15 +73,15 @@ export async function creerDocument(
 
   const id = randomUUID();
   try {
-    const principal = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: plan.plan, format: "png", largeurMax: LARGEUR_RESEAUX });
-    const miniature = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: plan.plan, format: "jpeg", largeurMax: LARGEUR_MINIATURE });
+    const principal = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: plan.plan, format: "png", largeurMax: LARGEUR_RESEAUX, compte: userId });
+    const miniature = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: plan.plan, format: "jpeg", largeurMax: LARGEUR_MINIATURE, compte: userId });
     const cle = `documents/${id}/${fichierDuPlan(plan.plan)}.png`;
     await stockage().ecrire(cle, principal.fichier, principal.type);
     await stockage().ecrire(`documents/${id}/miniature.jpg`, miniature.fichier, "image/jpeg");
     // Les autres déclinaisons (story à côté du post…), l'une après l'autre : Chromium est gourmand en mémoire.
     const declinaisons: schema.Declinaison[] = [];
     for (const autre of gabarit.plans.filter((p) => p.plan !== plan.plan)) {
-      const r = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: autre.plan, format: "png", largeurMax: LARGEUR_RESEAUX });
+      const r = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: autre.plan, format: "png", largeurMax: LARGEUR_RESEAUX, compte: userId });
       const cleAutre = `documents/${id}/${fichierDuPlan(autre.plan)}.png`;
       await stockage().ecrire(cleAutre, r.fichier, r.type);
       declinaisons.push({ plan: autre.plan, fichier: cleAutre, type: r.type, largeur: r.largeur, hauteur: r.hauteur });
@@ -112,17 +112,29 @@ export async function creerDocument(
   return { id };
 }
 
+/** Rendus haute définition en cours : deux téléchargements simultanés du même fichier n'en font qu'un. */
+const hdEnCours = new Map<string, Promise<Buffer>>();
+
 /** Version haute définition (JPEG, `LARGEUR_HD` px au plus) d'une déclinaison, faite au premier téléchargement puis gardée. */
 export async function fichierHauteDefinition(
   doc: typeof schema.document.$inferSelect,
   revision: { id: string; prefixe: string; contenu: Gabarit },
   plan: string,
+  compte?: string,
 ): Promise<Buffer> {
   const cle = `documents/${doc.id}/${fichierDuPlan(plan)}-hd.jpg`;
   const deja = await stockage().lire(cle);
   if (deja) return deja;
-  const valeurs = await preparerValeurs(revision.contenu, doc.valeurs, doc.auteurId);
-  const r = await rendre({ revision, valeurs: valeurs.moteur, plan, format: "jpeg", hd: true });
-  await stockage().ecrire(cle, r.fichier, "image/jpeg");
-  return r.fichier;
+  let p = hdEnCours.get(cle);
+  if (!p) {
+    p = (async () => {
+      const valeurs = await preparerValeurs(revision.contenu, doc.valeurs, doc.auteurId);
+      const r = await rendre({ revision, valeurs: valeurs.moteur, plan, format: "jpeg", hd: true, compte });
+      await stockage().ecrire(cle, r.fichier, "image/jpeg");
+      return r.fichier;
+    })();
+    hdEnCours.set(cle, p);
+    void p.catch(() => undefined).finally(() => hdEnCours.delete(cle));
+  }
+  return p;
 }

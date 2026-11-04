@@ -16,7 +16,15 @@ nouvelle=$(docker image inspect --format '{{.Id}}' "$image")
 conteneur=$(docker compose ps --quiet app)
 actuelle=$([ -n "$conteneur" ] && docker inspect --format '{{.Image}}' "$conteneur" || true)
 
-[ "$nouvelle" = "$actuelle" ] && exit 0
+if [ "$nouvelle" = "$actuelle" ]; then
+  # Même image : relancer l'application si elle ne répond plus depuis 3 contrôles (bloquée sans être tombée ;
+  # un arrêt brutal est déjà relancé par Docker).
+  if [ "$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "$conteneur")" = "unhealthy" ]; then
+    echo "Application sans réponse : redémarrage."
+    docker compose restart app
+  fi
+  exit 0
+fi
 
 echo "Nouvelle image $image ($nouvelle) : redémarrage."
 docker compose up --detach --quiet-pull

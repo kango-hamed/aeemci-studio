@@ -43,6 +43,9 @@ function consigne(c: ChampFormulaire): string {
 
 const pluriel = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
 
+/** Reprises d'une ligne quand le serveur est occupé : environ 5 minutes d'attente au plus. */
+const REPRISES_SI_OCCUPE = 5;
+
 /**
  * Création par lot : un fichier CSV (une ligne par document) et les photos qu'il nomme, contrôle de
  * chaque ligne, aperçu ligne par ligne, puis création l'une après l'autre et archive ZIP du lot.
@@ -194,19 +197,21 @@ export function CreationParLot({
     for (const [i, l] of lot.lignes.entries()) {
       if (arret.current) break;
       try {
-        const r = await fetch("/api/documents", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            gabaritId,
-            revisionId,
-            valeurs: await valeursDe(i),
-            titre: l.titre || undefined,
-            visibilite: partage.get("visibilite") || undefined,
-            statut: partage.get("brouillon") ? "brouillon" : "publie",
-            silencieux: i < total - 1,
-          }),
+        const corps = JSON.stringify({
+          gabaritId,
+          revisionId,
+          valeurs: await valeursDe(i),
+          titre: l.titre || undefined,
+          visibilite: partage.get("visibilite") || undefined,
+          statut: partage.get("brouillon") ? "brouillon" : "publie",
+          silencieux: i < total - 1,
         });
+        // Serveur occupé (503, 429) : attendre et reprendre la même ligne, quelques fois, plutôt que l'abandonner.
+        let r = await fetch("/api/documents", { method: "POST", headers: { "content-type": "application/json" }, body: corps });
+        for (let essai = 1; (r.status === 503 || r.status === 429) && essai <= REPRISES_SI_OCCUPE && !arret.current; essai++) {
+          await new Promise((ok) => setTimeout(ok, 1000 * Math.min(60, Number(r.headers.get("retry-after")) || 10)));
+          r = await fetch("/api/documents", { method: "POST", headers: { "content-type": "application/json" }, body: corps });
+        }
         const json = await r.json();
         resultats.push(r.ok ? { ligne: l.ligne, id: json.id } : { ligne: l.ligne, message: json.message ?? "Création refusée." });
       } catch (err) {

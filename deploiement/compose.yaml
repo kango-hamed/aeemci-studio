@@ -9,6 +9,18 @@ services:
     restart: unless-stopped
     env_file: .env
     expose: ["8080"]
+    # Plafond de mémoire (t3.small : 2 Go, plus le swap) : si Chromium déborde, c'est lui qui est arrêté
+    # (puis relancé par l'application), et non Caddy ou le système. t3.micro : MEMOIRE_APP=800m dans .env.
+    mem_limit: ${MEMOIRE_APP:-1600m}
+    memswap_limit: ${MEMOIRE_APP_SWAP:-2600m}
+    # Vivant si le serveur répond en 10 s (même « base injoignable ») ; `mise-a-jour.sh` redémarre
+    # l'application restée « unhealthy » (bloquée sans être tombée).
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/sante',{signal:AbortSignal.timeout(10000)}).then(()=>process.exit(0),()=>process.exit(1))"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 90s
 
   caddy:
     image: caddy:2

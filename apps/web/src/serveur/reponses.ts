@@ -1,10 +1,17 @@
 import "server-only";
 import { utilisateurCourant, type Utilisateur } from "@/fonctionnalites/authentification/session";
 import { peutCreerDocuments } from "@/fonctionnalites/organisation/droits";
+import { ServeurOccupe } from "@/fonctionnalites/generation/rendu";
 
 /** Réponse d'erreur JSON homogène pour les routes d'API : `{ message, details? }`. */
 export function erreur(status: number, message: string, extra: Record<string, unknown> = {}) {
   return Response.json({ message, ...extra }, { status });
+}
+
+/** Rendu refusé pour protéger le serveur : 503 (réessayer dans 30 s), 429 ou 409 ; `null` pour toute autre erreur. */
+export function reponseOccupe(e: unknown): Response | null {
+  if (!(e instanceof ServeurOccupe)) return null;
+  return Response.json({ message: e.message }, { status: e.statut, headers: e.statut === 503 ? { "retry-after": "30" } : {} });
 }
 
 /** Membre connecté, ou réponse 401 à renvoyer telle quelle. */

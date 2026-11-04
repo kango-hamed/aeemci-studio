@@ -1,4 +1,4 @@
-import { erreur, fichier, membreOuRefus } from "@/serveur/reponses";
+import { erreur, fichier, membreOuRefus, reponseOccupe } from "@/serveur/reponses";
 import { stockage } from "@/serveur/stockage";
 import { documentLisible } from "@/fonctionnalites/documents/requetes";
 import { fichierHauteDefinition } from "@/fonctionnalites/documents/creer";
@@ -32,7 +32,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const plan = declinaison?.plan ?? l.d.plan!;
   const suffixe = declinaison ? `-${plan}` : "";
   if (url.searchParams.get("qualite") === "hd" && l.revision) {
-    const contenu = await fichierHauteDefinition(l.d, { id: l.revision.id, prefixe: l.revision.prefixe, contenu: l.revision.contenu }, plan);
+    let contenu: Buffer;
+    try {
+      contenu = await fichierHauteDefinition(l.d, { id: l.revision.id, prefixe: l.revision.prefixe, contenu: l.revision.contenu }, plan, u.id);
+    } catch (e) {
+      const occupe = reponseOccupe(e);
+      if (occupe) return occupe;
+      throw e;
+    }
     return fichier(contenu, "image/jpeg", nomDeFichier(l.d.titre + suffixe + "-HD", "jpg"), telecharger);
   }
   const contenu = await stockage().lire(declinaison?.fichier ?? l.d.fichier);

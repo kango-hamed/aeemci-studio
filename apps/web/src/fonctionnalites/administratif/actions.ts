@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { ErreurSaisie } from "@/fonctionnalites/documents/creer";
+import { ServeurOccupe } from "@/fonctionnalites/generation/rendu";
 import * as circuit from "./circuit";
 import { ErreurEnvoi, lireCsv, type Destinataire } from "./envois";
 import { changerInterim as changerInterimMandat } from "./signatures";
@@ -26,6 +27,7 @@ async function executer(op: () => Promise<void>): Promise<EtatCircuit | null> {
     if (e instanceof ErreurSaisie) return { erreur: e.message, erreurs: e.erreurs };
     if (e instanceof ErreurEnvoi) return { erreur: e.message, erreurs: [{ champ: "destinataires", message: e.message }] };
     if (e instanceof z.ZodError) return { erreur: "Saisie invalide." };
+    if (e instanceof ServeurOccupe) return { erreur: e.message };
     throw e;
   }
 }

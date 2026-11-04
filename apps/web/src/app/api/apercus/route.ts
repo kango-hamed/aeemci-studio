@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ErreurRendu } from "@aeemci-studio/moteur";
-import { erreur, createurOuRefus } from "@/serveur/reponses";
+import { erreur, createurOuRefus, reponseOccupe } from "@/serveur/reponses";
 import { rendre } from "@/fonctionnalites/generation/rendu";
 import { preparerValeurs } from "@/fonctionnalites/generation/valeurs";
 import { gabaritACompleter } from "@/fonctionnalites/gabarits/requetes";
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   if (!g) return erreur(404, "Ce gabarit n'est plus disponible.");
   try {
     const valeurs = await preparerValeurs(g.revision.contenu, d.data.valeurs, u.id, d.data.exemples !== false);
-    const r = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: d.data.plan, format: "jpeg", largeurMax: 720 });
+    const r = await rendre({ revision: g.revision, valeurs: valeurs.moteur, plan: d.data.plan, format: "jpeg", largeurMax: 720, compte: u.id, remplacable: true });
     return new Response(new Uint8Array(r.fichier), {
       headers: {
         "content-type": r.type,
@@ -34,6 +34,8 @@ export async function POST(request: Request) {
     });
   } catch (e) {
     if (e instanceof ErreurRendu) return erreur(422, e.message, { erreurs: e.erreurs });
+    const occupe = reponseOccupe(e);
+    if (occupe) return occupe;
     throw e;
   }
 }

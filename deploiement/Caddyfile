@@ -1,5 +1,23 @@
 # HTTPS automatique (Let's Encrypt) pour DOMAINE, puis tout vers l'application.
 {$DOMAINE} {
 	encode zstd gzip
-	reverse_proxy app:8080
+	reverse_proxy app:8080 {
+		# Application en train de redémarrer (mise à jour, mémoire dépassée) : réessayer quelques secondes.
+		lb_try_duration 15s
+	}
+
+	# Application injoignable : une page d'attente plutôt qu'une erreur brute.
+	# Les réponses « occupé » de l'application elle-même (503 en JSON) passent telles quelles.
+	handle_errors 502 503 504 {
+		header Content-Type "text/html; charset=utf-8"
+		header Retry-After 30
+		header Cache-Control no-store
+		respond `<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="30"><title>AEEMCI Studio redémarre</title>
+<style>body{font-family:system-ui,sans-serif;background:#f6f5f0;color:#1f2a1c;display:grid;place-items:center;min-height:100vh;margin:0;padding:24px;box-sizing:border-box}
+main{max-width:420px}h1{font-size:24px;color:#1a6012}p{line-height:1.5}</style></head>
+<body><main><h1>AEEMCI Studio redémarre</h1>
+<p>La plateforme revient dans un instant. Cette page se recharge seule toutes les 30 secondes ; ce que tu as enregistré est conservé.</p></main></body></html>` 503
+	}
 }
