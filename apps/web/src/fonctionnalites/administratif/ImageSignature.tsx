@@ -57,10 +57,14 @@ async function detourer(f: File): Promise<Blob> {
   return new Promise((ok, ko) => sortie.toBlob((b) => (b ? ok(b) : ko(new Error("Conversion impossible"))), "image/png"));
 }
 
-/** Choix, détourage et envoi d'une signature (ou du cachet de la section). */
-export function ImageSignature(p: { quoi: "signature" | "cachet"; titre: string; aide: string; actuelle: string | null }) {
+/**
+ * Choix, détourage et envoi d'une signature (ou du cachet de la section). `optionCachet` : propose de
+ * déclarer que l'image porte aussi le cachet (président, vice-présidents) ; `avecCachet` : l'état enregistré.
+ */
+export function ImageSignature(p: { quoi: "signature" | "cachet"; titre: string; aide: string; actuelle: string | null; optionCachet?: boolean; avecCachet?: boolean }) {
   const router = useRouter();
   const [image, setImage] = useState<{ blob: Blob; url: string } | null>(null);
+  const [avecCachet, setAvecCachet] = useState(Boolean(p.avecCachet));
   const [etat, setEtat] = useState<"" | "preparation" | "envoi" | "ok">("");
   const [erreur, setErreur] = useState("");
   const id = `fichier-${p.quoi}`;
@@ -87,6 +91,7 @@ export function ImageSignature(p: { quoi: "signature" | "cachet"; titre: string;
     const form = new FormData();
     form.set("quoi", p.quoi);
     form.set("image", image.blob, `${p.quoi}.png`);
+    if (p.optionCachet && avecCachet) form.set("avecCachet", "1");
     const r = await fetch("/api/signature", { method: "POST", body: form }).catch(() => null);
     if (!r?.ok) {
       setErreur((await r?.json().catch(() => null))?.message ?? "Envoi impossible : vérifie ta connexion.");
@@ -114,6 +119,18 @@ export function ImageSignature(p: { quoi: "signature" | "cachet"; titre: string;
           <span className="text-sm text-encre-douce">Aucune image enregistrée.</span>
         )}
       </div>
+      {p.optionCachet && (
+        <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
+          <input type="checkbox" checked={avecCachet} onChange={(e) => setAvecCachet(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-vert-esatic" />
+          <span>
+            <span className="font-semibold">Mon image porte aussi le cachet de la section</span>
+            <span className="block text-encre-douce">
+              Signature et cachet ensemble, sur la même feuille : l&apos;image est apposée seule, plus grande, sans second cachet.
+              {p.actuelle && !image && avecCachet !== Boolean(p.avecCachet) && " Choisis la photo, puis enregistre, pour appliquer ce changement."}
+            </span>
+          </span>
+        </label>
+      )}
       <div className="flex flex-wrap gap-2">
         <label
           htmlFor={id}

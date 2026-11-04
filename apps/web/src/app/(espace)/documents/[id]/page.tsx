@@ -11,7 +11,7 @@ import { documentLisible, type DocumentLisible } from "@/fonctionnalites/documen
 import { LARGEUR_HD } from "@/fonctionnalites/generation/rendu";
 import { peutModifierDocument, peutValider } from "@/fonctionnalites/organisation/droits";
 import { mandatCourant } from "@/fonctionnalites/organisation/requetes";
-import { cachetDeSection, historique, signatureDe, versionSuivante } from "@/fonctionnalites/administratif/circuit";
+import { cachetDeSection, historique, signatureComplete, versionSuivante } from "@/fonctionnalites/administratif/circuit";
 import { PanneauCircuit } from "@/fonctionnalites/administratif/PanneauCircuit";
 import { definitionType } from "@/fonctionnalites/administratif/types";
 import { blocDestinataire } from "@/fonctionnalites/administratif/envois";
@@ -42,8 +42,10 @@ async function circuitDe(l: DocumentLisible, u: Utilisateur, modifiable: boolean
   const valideur = peutValider(u, m?.interimaire ?? null);
   const manque: string[] = [];
   if (valideur && l.d.etatValidation === "soumis") {
-    if (!(await signatureDe(u.id))) manque.push("Ta signature n'est pas encore enregistrée.");
-    if (m && !(await cachetDeSection(m.sectionId))) manque.push("Le cachet de la section n'est pas encore enregistré.");
+    const signature = await signatureComplete(u.id);
+    if (!signature) manque.push("Ta signature n'est pas encore enregistrée.");
+    // Une signature qui porte déjà le cachet se passe du cachet de la section.
+    if (m && !signature?.avecCachet && !(await cachetDeSection(m.sectionId))) manque.push("Le cachet de la section n'est pas encore enregistré.");
   }
   return (
     <PanneauCircuit

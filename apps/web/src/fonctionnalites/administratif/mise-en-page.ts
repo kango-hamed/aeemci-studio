@@ -21,6 +21,8 @@ export interface BlocSignature {
   signature?: string;
   /** Cachet de la section posé sur ce bloc, une fois validé. */
   cachet?: boolean;
+  /** La signature porte déjà le cachet (une seule image, plus grande) : pas de cachet ajouté. */
+  combinee?: boolean;
 }
 
 export interface DonneesMiseEnPage {
@@ -252,7 +254,7 @@ function signatures(d: DonneesMiseEnPage): string {
         <div class="role">${e(s.titre)}</div>
         <div class="zone">
           ${s.cachet ? `<img class="cachet" src="${urlRessource(RESSOURCE_CACHET)}" alt="">` : ""}
-          ${s.signature ? `<img class="sig" src="${urlRessource(s.signature)}" alt="">` : ""}
+          ${s.signature ? `<img class="sig${s.combinee ? " combinee" : ""}" src="${urlRessource(s.signature)}" alt="">` : ""}
         </div>
         <div class="nom">${s.nom ? e(s.nom) : '<span class="attente">Signature à la validation</span>'}</div>
       </div>`,
@@ -309,8 +311,10 @@ li{margin:0 0 1mm}
 .bloc{width:72mm;text-align:center}
 .bloc .role{font-weight:600;text-decoration:underline}
 .bloc .zone{position:relative;height:20mm}
-.bloc .sig{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:58mm;max-height:24mm}
-.bloc .cachet{position:absolute;left:0;top:50%;width:27mm;height:27mm;object-fit:contain;transform:translateY(-50%) rotate(-9deg);opacity:.88;mix-blend-mode:multiply}
+/* Centrées par inset et marges automatiques, sans top:50% : la boîte avant translation dépassait la page et ajoutait une page blanche. */
+.bloc .sig{position:absolute;inset:0;margin:auto;max-width:58mm;max-height:24mm}
+.bloc .sig.combinee{max-width:66mm;max-height:30mm;mix-blend-mode:multiply}
+.bloc .cachet{position:absolute;left:0;top:0;bottom:0;margin:auto 0;width:27mm;height:27mm;object-fit:contain;transform:rotate(-9deg);opacity:.88;mix-blend-mode:multiply}
 .bloc .nom{font-family:Titre,sans-serif;font-weight:700}
 .bloc .attente{font-family:Texte,sans-serif;font-weight:400;font-style:italic;color:#5a635b}
 `;

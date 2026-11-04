@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
-import { cachetDeSection, signatureDe } from "@/fonctionnalites/administratif/circuit";
-import { vicePresidents } from "@/fonctionnalites/administratif/signatures";
+import { cachetDeSection, signatureComplete } from "@/fonctionnalites/administratif/circuit";
+import { peutSignerAvecCachet, vicePresidents } from "@/fonctionnalites/administratif/signatures";
 import { BasculeInterim } from "@/fonctionnalites/administratif/BasculeInterim";
 import { ImageSignature } from "@/fonctionnalites/administratif/ImageSignature";
 import { peutCreerDocuments, peutGererCachet } from "@/fonctionnalites/organisation/droits";
@@ -15,7 +15,7 @@ export default async function PageSignature() {
   const m = await mandatCourant();
   const president = peutGererCachet(u);
   const [signature, cachet, vices] = await Promise.all([
-    signatureDe(u.id),
+    signatureComplete(u.id),
     president && m ? cachetDeSection(m.sectionId) : null,
     president && m ? vicePresidents(m.id) : [],
   ]);
@@ -35,13 +35,19 @@ export default async function PageSignature() {
             quoi="signature"
             titre="Ma signature"
             aide="Signe sur une feuille blanche, au stylo noir ou bleu, puis prends-la en photo bien à plat. Le fond blanc est retiré automatiquement."
-            actuelle={signature ? `/api/signature?v=${encodeURIComponent(signature)}` : null}
+            actuelle={signature ? `/api/signature?v=${encodeURIComponent(signature.cle)}` : null}
+            optionCachet={peutSignerAvecCachet(u)}
+            avecCachet={signature?.avecCachet}
           />
           {president && (
             <ImageSignature
               quoi="cachet"
               titre="Cachet de la section"
-              aide="Tamponne le cachet sur une feuille blanche, puis prends-le en photo bien à plat. Il est apposé sur chaque document validé."
+              aide={
+                signature?.avecCachet
+                  ? "Ta signature porte déjà le cachet. Celui-ci reste utile au vice-président qui valide pendant un intérim avec sa signature seule."
+                  : "Tamponne le cachet sur une feuille blanche, puis prends-le en photo bien à plat. Il est apposé sur chaque document validé."
+              }
               actuelle={cachet ? `/api/signature?quoi=cachet&v=${encodeURIComponent(cachet)}` : null}
             />
           )}

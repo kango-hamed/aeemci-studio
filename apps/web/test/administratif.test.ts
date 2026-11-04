@@ -84,6 +84,17 @@ describe("mise en page", () => {
     expect(piedDocument({ numero: null, section: ESATIC })).toContain("Projet non validé");
   });
 
+  it("signature avec le cachet : une seule image, plus grande, sans cachet ajouté", () => {
+    const t = definitionType("LET")!;
+    const base = { type: t, contenu: { ...LETTRE }, numero: "N1", date: new Date("2026-11-01T10:00:00Z"), section: ESATIC };
+    const combinee = htmlDocument({ ...base, signatures: [{ titre: "Le Président", nom: "Awa Koné", signature: "signature-0", combinee: true }] });
+    expect(combinee).toContain('class="sig combinee"');
+    expect(combinee).not.toContain('class="cachet"');
+    const separes = htmlDocument({ ...base, signatures: [{ titre: "Le Président", nom: "Awa Koné", signature: "signature-0", cachet: true }] });
+    expect(separes).toContain('class="cachet"');
+    expect(separes).toContain('class="sig"');
+  });
+
   it("contrôle les champs requis et les dates d'un ordre de mission", () => {
     const om = definitionType("OM")!;
     const erreurs = controlerContenu(om, { missionnaire: "Awa", fonction: "SG", destination: "Bouaké", objet: "Congrès", depart: "2026-11-10", retour: "2026-11-08" });
@@ -173,6 +184,10 @@ describe.skipIf(!url)("documents administratifs (Postgres + Chromium)", () => {
     await expect(m.circuit.valider(vice, a)).rejects.toThrow(/intérim/);
     await expect(m.circuit.valider(com2, a)).rejects.toThrow(/Seul le président/);
     await expect(m.circuit.valider(president, a)).rejects.toThrow(/ta signature/);
+    // Signature qui porte le cachet : le cachet de la section n'est plus exigé. Réservé au président et aux vice-présidents.
+    await expect(m.signatures.enregistrerSignature(secretaire, IMAGE, true)).rejects.toThrow(/président/);
+    await m.signatures.enregistrerSignature(president, IMAGE, true);
+    await expect(m.circuit.valider(president, a)).rejects.toThrow(/n'a pas encore de code/);
     await m.signatures.enregistrerSignature(president, IMAGE);
     await expect(m.circuit.valider(president, a)).rejects.toThrow(/cachet/);
     await expect(m.signatures.enregistrerCachet(vice, IMAGE)).rejects.toThrow(/président/);

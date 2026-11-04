@@ -91,8 +91,13 @@ async function documentRedige(id: string): Promise<DocumentRedige> {
 const MESSAGE_FIGE = "Ce document appartient à un mandat clos : il est en lecture seule.";
 
 export async function signatureDe(userId: string): Promise<string | null> {
-  const [s] = await db.select({ cle: schema.signature.cle }).from(schema.signature).where(eq(schema.signature.userId, userId));
-  return s?.cle ?? null;
+  return (await signatureComplete(userId))?.cle ?? null;
+}
+
+/** Signature du membre et si elle porte déjà le cachet de la section. */
+export async function signatureComplete(userId: string): Promise<{ cle: string; avecCachet: boolean } | null> {
+  const [s] = await db.select({ cle: schema.signature.cle, avecCachet: schema.signature.avecCachet }).from(schema.signature).where(eq(schema.signature.userId, userId));
+  return s ?? null;
 }
 
 export async function cachetDeSection(sectionId: string): Promise<string | null> {
@@ -370,10 +375,12 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
   const erreurs = erreursDe(t, d.contenu ?? {}, d.destinataires);
   if (erreurs.length) throw new ErreurSaisie("Le document est incomplet.", erreurs);
 
-  const signatureValideur = await signatureDe(u.id);
-  if (!signatureValideur) throw new ErreurSaisie("Enregistre d'abord ta signature (page Signature) : elle est apposée à la validation.");
-  const cachet = await cachetDeSection(m.sectionId);
-  if (!cachet) throw new ErreurSaisie("Le cachet de la section n'est pas encore enregistré (page Signature, réservé au président).");
+  const valideur = await signatureComplete(u.id);
+  if (!valideur) throw new ErreurSaisie("Enregistre d'abord ta signature (page Signature) : elle est apposée à la validation.");
+  const signatureValideur = valideur.cle;
+  // Une signature qui porte déjà le cachet n'en reçoit pas un second.
+  const cachet = valideur.avecCachet ? null : await cachetDeSection(m.sectionId);
+  if (!valideur.avecCachet && !cachet) throw new ErreurSaisie("Le cachet de la section n'est pas encore enregistré (page Signature, réservé au président).");
   const signatureAuteur = t.code === "PV" ? await signatureDe(d.auteurId) : null;
   if (t.code === "PV" && !signatureAuteur) throw new ErreurSaisie("Le secrétaire de séance n'a pas de signature enregistrée.");
   const code = await codeDuDocument(d);
@@ -382,12 +389,13 @@ export async function valider(u: Acteur, id: string): Promise<{ numero: string }
   const role: "president" | "interim" = u.affectation?.role === "president" ? "president" : "interim";
   const signataires: schema.Signataire[] = [{ role, userId: u.id, nom: await nomDe(u.id) }];
   if (t.code === "PV") signataires.unshift({ role: "secretaire_seance", userId: d.auteurId, nom: await nomDe(d.auteurId) });
-  const ressources: Record<string, string> = { ...ressourcesFixes(), [RESSOURCE_CACHET]: await cheminDeTeleversement(cachet) };
+  const ressources: Record<string, string> = { ...ressourcesFixes(), ...(cachet ? { [RESSOURCE_CACHET]: await cheminDeTeleversement(cachet) } : {}) };
   const blocs: BlocSignature[] = [];
   for (const [i, s] of signataires.entries()) {
     const cle = s.role === "secretaire_seance" ? signatureAuteur! : signatureValideur;
     ressources[`signature-${i}`] = await cheminDeTeleversement(cle);
-    blocs.push({ titre: TITRES[s.role], nom: s.nom, signature: `signature-${i}`, cachet: s.role !== "secretaire_seance" });
+    const valideurSigne = s.role !== "secretaire_seance";
+    blocs.push({ titre: TITRES[s.role], nom: s.nom, signature: `signature-${i}`, cachet: valideurSigne && !valideur.avecCachet, combinee: valideurSigne && valideur.avecCachet });
   }
 
   const maintenant = new Date();

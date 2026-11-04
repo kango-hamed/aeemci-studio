@@ -159,6 +159,8 @@ export const signature = pgTable("signature", {
     .primaryKey()
     .references(() => user.id, { onDelete: "cascade" }),
   cle: text("cle").notNull(),
+  /** L'image porte déjà le cachet de la section (signature et cachet scannés ensemble) : pas de cachet ajouté. */
+  avecCachet: boolean("avec_cachet").notNull().default(false),
   ...horodatage,
 });
 

@@ -26,7 +26,10 @@ export async function GET(request: Request) {
   return fichier(contenu, reconnaitre(contenu)?.type ?? "application/octet-stream");
 }
 
-/** Remplace la signature du membre (`quoi=signature`) ou le cachet de la section (`quoi=cachet`), en `multipart/form-data`. */
+/**
+ * Remplace la signature du membre (`quoi=signature`, `avecCachet=1` si l'image porte aussi le cachet) ou le
+ * cachet de la section (`quoi=cachet`), en `multipart/form-data`.
+ */
 export async function POST(request: Request) {
   const u = await membreOuRefus();
   if (u instanceof Response) return u;
@@ -39,7 +42,7 @@ export async function POST(request: Request) {
   try {
     const contenu = Buffer.from(await image.arrayBuffer());
     if (quoi === "cachet") await enregistrerCachet(u, contenu);
-    else await enregistrerSignature(u, contenu);
+    else await enregistrerSignature(u, contenu, form.get("avecCachet") === "1");
   } catch (e) {
     if (e instanceof ErreurSaisie) return erreur(422, e.message);
     throw e;

@@ -1,0 +1,1 @@
+ALTER TABLE "signature" ADD COLUMN "avec_cachet" boolean DEFAULT false NOT NULL;

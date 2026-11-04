@@ -24,13 +24,24 @@ function verifierImage(contenu: Buffer): { type: string; ext: string } {
   return genre;
 }
 
-export async function enregistrerSignature(u: Acteur, contenu: Buffer): Promise<void> {
+/** Signer avec une image qui porte déjà le cachet : réservé à qui valide (président, vice-président pour l'intérim). */
+export const peutSignerAvecCachet = (u: Acteur) => u.affectation?.role === "president" || u.affectation?.role === "vice_president";
+
+/**
+ * Enregistre la signature du membre. `avecCachet` : l'image porte déjà le cachet de la section
+ * (signature et cachet scannés ensemble) ; à la validation, aucun cachet n'est ajouté.
+ */
+export async function enregistrerSignature(u: Acteur, contenu: Buffer, avecCachet = false): Promise<void> {
   if (!peutCreerDocuments(u)) throw new ErreurSaisie("Tu n'as pas de rôle dans le mandat en cours.");
+  if (avecCachet && !peutSignerAvecCachet(u)) throw new ErreurSaisie("Seuls le président et les vice-présidents signent avec le cachet.");
   const genre = verifierImage(contenu);
   const cle = `signatures/${u.id}/${randomUUID()}.${genre.ext}`;
   await stockage().ecrire(cle, contenu, genre.type);
   const [ancienne] = await db.select({ cle: schema.signature.cle }).from(schema.signature).where(eq(schema.signature.userId, u.id));
-  await db.insert(schema.signature).values({ userId: u.id, cle }).onConflictDoUpdate({ target: schema.signature.userId, set: { cle } });
+  await db
+    .insert(schema.signature)
+    .values({ userId: u.id, cle, avecCachet })
+    .onConflictDoUpdate({ target: schema.signature.userId, set: { cle, avecCachet } });
   if (ancienne) await stockage().supprimer(ancienne.cle);
 }
 
