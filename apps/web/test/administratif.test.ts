@@ -11,7 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrer } from "../scripts/migrer.ts";
 import { creerAdmin } from "../scripts/creer-admin.ts";
 import type { Acteur } from "@/fonctionnalites/organisation/droits";
-import { htmlDocument, heureSaisie, dateSaisie, piedDocument } from "@/fonctionnalites/administratif/mise-en-page";
+import { htmlDocument, heureSaisie, dateSaisie, paragraphes, piedDocument } from "@/fonctionnalites/administratif/mise-en-page";
 import { contenuParDefaut, controlerContenu, definitionType } from "@/fonctionnalites/administratif/types";
 import { identiteDe } from "@/fonctionnalites/organisation/identite";
 
@@ -33,6 +33,30 @@ describe("mise en page", () => {
     expect(dateSaisie("2026-10-10")).toBe("samedi 10 octobre 2026");
     expect(heureSaisie("15:00")).toBe("15 h");
     expect(heureSaisie("09:30")).toBe("9 h 30");
+  });
+
+  it("recolle un texte collé depuis un PDF, détache la citation et sa référence, met en gras", () => {
+    const colle = [
+      "Nous espérons que cette lettre vous parviendra dans la quiétude de la santé et de",
+      "l'esprit positif. L'Association des Élèves et Étudiants Musulmans de Côte d'Ivoire",
+      "(AEEMCI), sollicite votre soutien.",
+      "À l'approche du mois béni de **RAMADAN**, qui débutera en février.",
+      "Nous fondons notre démarche sur la parole d'Allah, qui",
+      "enseigne :",
+      "« (…) qu'ils accomplissent la salât et qu'ils dépensent dans le bien en secret et en public de",
+      "ce que nous leur avons attribué. »",
+      "(Sourate14/Ayat31)",
+      "Dans l'attente de votre réponse favorable, nous vous prions d'agréer nos salutations.",
+    ].join("\n");
+    expect(paragraphes(colle)).toBe(
+      "<p>Nous espérons que cette lettre vous parviendra dans la quiétude de la santé et de l&#39;esprit positif. L&#39;Association des Élèves et Étudiants Musulmans de Côte d&#39;Ivoire (AEEMCI), sollicite votre soutien.<br>" +
+        "À l&#39;approche du mois béni de <b>RAMADAN</b>, qui débutera en février.<br>Nous fondons notre démarche sur la parole d&#39;Allah, qui enseigne :</p>" +
+        "<blockquote class=\"citation\">« (…) qu&#39;ils accomplissent la salât et qu&#39;ils dépensent dans le bien en secret et en public de ce que nous leur avons attribué. »<br>(Sourate14/Ayat31)</blockquote>" +
+        "<p>Dans l&#39;attente de votre réponse favorable, nous vous prions d&#39;agréer nos salutations.</p>",
+    );
+    // Retours voulus gardés : lignes courtes, puces ; deux astérisques seuls ne font rien.
+    expect(paragraphes("Ligne 1\nLigne 2\n- un\n- deux")).toBe("<p>Ligne 1<br>Ligne 2<br>- un<br>- deux</p>");
+    expect(paragraphes("3 ** 4 et **")).toBe("<p>3 ** 4 et **</p>");
   });
 
   it("met en forme la lettre : salutation, citation, pièces jointes, en-tête et pied de la section", () => {

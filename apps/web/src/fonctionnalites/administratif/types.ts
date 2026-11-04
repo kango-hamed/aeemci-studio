@@ -49,7 +49,7 @@ export const TYPES_ADMINISTRATIFS: DefinitionType[] = [
         libelle: "Texte de la lettre",
         genre: "texte",
         requis: true,
-        aide: "Vouvoiement de rigueur. Termine par la formule de politesse. Une citation (verset, hadith) : un paragraphe qui commence par « ; elle est mise en valeur.",
+        aide: "Vouvoiement de rigueur. Termine par la formule de politesse. Une citation (verset, hadith) : une ligne qui commence par « ; elle est mise en valeur. **mot** pour le gras. Un texte collé depuis un PDF est remis en paragraphes.",
         exemple: "Nous avons l'honneur de solliciter…\n\nDans l'attente d'une suite favorable, nous vous prions d'agréer, Monsieur le Directeur Général, l'expression de notre haute considération.",
       },
       { nom: "pieces", libelle: "Pièces jointes", genre: "texte", aide: "Une pièce par ligne." },

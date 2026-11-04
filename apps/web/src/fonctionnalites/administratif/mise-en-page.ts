@@ -42,7 +42,7 @@ const VILLE = "Abidjan";
 export const DEVISE = "AEEMCI, pour une identité islamique !";
 
 /** Marges des documents officiels (mm) : le bas laisse la place au pied institutionnel. */
-export const MARGES_OFFICIELLES = { haut: 14, droite: 18, bas: 30, gauche: 18 };
+export const MARGES_OFFICIELLES = { haut: 14, droite: 18, bas: 26, gauche: 18 };
 
 /** « 31 octobre 2026 » (« 1er » pour le premier du mois), à l'heure d'Abidjan. */
 export function dateLongue(d: Date, jour = false): string {
@@ -63,9 +63,39 @@ export function heureSaisie(v: string | undefined): string {
   return `${Number(m[1])} h${m[2] === "00" ? "" : ` ${m[2]}`}`;
 }
 
+/** Texte saisi, échappé, avec le gras : `**mot**` → <b>mot</b>. */
+export function enrichi(t: string): string {
+  return e(t).replace(/\*\*(?=\S)([\s\S]*?\S)\*\*/g, "<b>$1</b>");
+}
+
+/** Fin de phrase ou de ligne voulue : après elle, un retour à la ligne est gardé. */
+const FIN_VOULUE = /[.!?:;…»"]$/;
+/** Début de ligne qu'on ne recolle jamais : puce, numéro, citation. */
+const DEBUT_A_PART = /^(?:[-•*>«]|\d+[.)])/;
+
 /**
- * Paragraphes séparés par une ligne vide, retours à la ligne conservés. Un paragraphe qui commence
- * par « ou par > est une citation (verset, hadith…), mise en valeur ; les > de début de ligne sont retirés.
+ * Recolle les lignes coupées par un copier-coller depuis un PDF ou un traitement de texte
+ * (« …dans la quiétude de la santé et de / l'esprit positif »). Une ligne est recollée à la précédente
+ * si celle-ci ne finit pas une phrase et si elle commence par une minuscule ou « ( », ou si la
+ * précédente est longue (coupure de mise en page). Les retours voulus (après un point, une puce…) restent.
+ */
+export function recoller(lignes: string[]): string[] {
+  const sortie: string[] = [];
+  for (const brute of lignes) {
+    const l = brute.trim();
+    const prec = sortie.at(-1);
+    if (prec !== undefined && l && !FIN_VOULUE.test(prec) && !DEBUT_A_PART.test(l) && (/^[\p{Ll}(]/u.test(l) || prec.length >= 50)) {
+      sortie[sortie.length - 1] = `${prec} ${l}`;
+    } else sortie.push(l);
+  }
+  return sortie;
+}
+
+/**
+ * Paragraphes séparés par une ligne vide, retours à la ligne voulus conservés, lignes coupées par un
+ * copier-coller recollées. Une ligne qui commence par « ou par > ouvre une citation (verset, hadith…),
+ * mise en valeur, avec sa référence entre parenthèses sur la ligne suivante ; les > sont retirés.
+ * `**texte**` met en gras.
  */
 export function paragraphes(t: string | undefined): string {
   return (t ?? "")
@@ -73,13 +103,30 @@ export function paragraphes(t: string | undefined): string {
     .split(/\n\s*\n/)
     .filter((p) => p.trim())
     .map((p) => {
-      const texte = p.trim();
-      if (!/^(>|«)/.test(texte)) return `<p>${e(texte).replace(/\n/g, "<br>")}</p>`;
-      const sansChevrons = texte
-        .split("\n")
-        .map((l) => l.replace(/^\s*>\s?/, ""))
-        .join("\n");
-      return `<blockquote class="citation">${e(sansChevrons.trim()).replace(/\n/g, "<br>")}</blockquote>`;
+      // Blocs successifs : texte ordinaire, ou citation.
+      const blocs: { citation: boolean; lignes: string[] }[] = [];
+      for (const l of recoller(p.split("\n"))) {
+        const dernier = blocs.at(-1);
+        const citation = /^(>|«)/.test(l);
+        let suite: boolean;
+        if (!dernier) suite = false;
+        else if (dernier.citation)
+          // Dans une citation : ses lignes en >, sa référence « (Sourate 14, verset 31) », ou tant que le » n'est pas fermé.
+          suite =
+            l.startsWith(">") ||
+            (/^\(.*\)\.?$/.test(l) && !/^\(.*\)\.?$/.test(dernier.lignes.at(-1)!)) ||
+            (!l.startsWith("«") && !dernier.lignes.some((x) => /»\s*$/.test(x)));
+        else suite = !citation;
+        if (suite) dernier!.lignes.push(l);
+        else blocs.push({ citation, lignes: [l] });
+      }
+      return blocs
+        .map((b) =>
+          b.citation
+            ? `<blockquote class="citation">${b.lignes.map((l) => enrichi(l.replace(/^>\s?/, ""))).join("<br>")}</blockquote>`
+            : `<p>${b.lignes.map(enrichi).join("<br>")}</p>`,
+        )
+        .join("");
     })
     .join("");
 }
@@ -134,9 +181,9 @@ function corps(d: DonneesMiseEnPage): string {
     case "LET":
       return `
         <div class="destinataire">${lignes(c.destinataire)}</div>
-        <p class="objet"><span class="libelle">Objet :</span> ${e(c.objet ?? "")}</p>
+        <p class="objet"><span class="libelle">Objet :</span> ${enrichi(c.objet ?? "")}</p>
         ${salutation(c.salutation)}
-        <p class="appel">${e(c.appel ?? "")}</p>
+        <p class="appel">${enrichi(c.appel ?? "")}</p>
         <div class="texte retrait">${paragraphes(c.corps)}</div>
         ${piecesJointes(c.pieces)}`;
     case "PV":
@@ -220,7 +267,7 @@ export const STYLE_PAGE = `@font-face{font-family:Titre;font-weight:400;src:url(
 @font-face{font-family:Texte;font-weight:600;src:url('${urlRessource("texte-600")}')}
 *{box-sizing:border-box}
 html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body{margin:0;font-family:Texte,sans-serif;font-size:11.5pt;line-height:1.5;color:#1f241f}
+body{margin:0;font-family:Texte,sans-serif;font-size:11.5pt;line-height:1.45;color:#1f241f}
 b{font-weight:600}
 .entete{display:flex;align-items:center;gap:4mm}
 .entete .sceau{width:24mm;height:24mm;object-fit:contain}
@@ -232,22 +279,22 @@ b{font-weight:600}
 .lignes .section{font-weight:700;font-size:10.5pt;color:#185431;letter-spacing:.04em}
 .filet{position:relative;margin-top:3mm;border-top:1.6pt solid #185431;border-bottom:1.4pt solid #ea9129;height:1.6pt}
 .filet::after{content:"";position:absolute;left:50%;top:50%;width:2.6mm;height:2.6mm;background:#ea9129;border:1.2pt solid #fff;transform:translate(-50%,-50%) rotate(45deg)}
-.references{display:flex;justify-content:space-between;gap:6mm;font-size:9.5pt;margin:4mm 0 9mm}
+.references{display:flex;justify-content:space-between;gap:6mm;font-size:9.5pt;margin:3mm 0 6mm}
 .references .numero{font-family:Titre,sans-serif;font-weight:700;color:#185431}
 .references .numero.projet{font-weight:400;color:#5a635b}
 h1{font-family:Titre,sans-serif;font-weight:700;font-size:15pt;letter-spacing:.08em;text-transform:uppercase;text-align:center;color:#185431;margin:0 0 2mm}
 .sous-titre{text-align:center;font-weight:600;font-size:12pt;margin:0 0 7mm}
 h1+.texte,h1+.destinataire,h1+table{margin-top:7mm}
-.destinataire{margin:0 0 8mm 50%;line-height:1.45;font-weight:600}
-.objet{margin:0 0 6mm}
+.destinataire{margin:0 0 6mm 50%;line-height:1.4;font-weight:600}
+.objet{margin:0 0 5mm}
 .objet .libelle,.pj .libelle{font-weight:600;text-decoration:underline}
-.salutation{text-align:center;font-style:italic;margin:0 0 6mm}
+.salutation{text-align:center;font-style:italic;margin:0 0 5mm}
 .salutation .formule{font-weight:600}
-.appel{margin:0 0 4mm;font-weight:600}
-.texte p{margin:0 0 3.5mm;text-align:justify}
+.appel{margin:0 0 3mm;font-weight:600}
+.texte p{margin:0 0 3mm;text-align:justify}
 .texte.retrait p{text-indent:8mm}
-blockquote.citation{margin:1mm 6mm 4mm;font-weight:600;font-style:italic;text-align:justify}
-.pj{margin:4mm 0 0}
+blockquote.citation{margin:1mm 6mm 3mm;font-weight:600;font-style:italic;text-align:justify}
+.pj{margin:3mm 0 0}
 .pj ul{margin-top:1mm}
 table.infos{border-collapse:collapse;width:100%;margin:0 0 6mm}
 table.infos th{width:34mm;text-align:left;vertical-align:top;font-weight:600;color:#5a635b;padding:1.6mm 4mm 1.6mm 0;border-bottom:.5pt solid #daddd2}
@@ -257,13 +304,13 @@ table.infos td{vertical-align:top;padding:1.6mm 0;border-bottom:.5pt solid #dadd
 .rubrique p{margin:0 0 3mm;text-align:justify}
 ul,ol{margin:0;padding-left:6mm}
 li{margin:0 0 1mm}
-.signatures{display:flex;justify-content:flex-end;margin-top:10mm;break-inside:avoid}
+.signatures{display:flex;justify-content:flex-end;margin-top:2mm;break-inside:avoid}
 .signatures.deux{justify-content:space-between}
 .bloc{width:72mm;text-align:center}
 .bloc .role{font-weight:600;text-decoration:underline}
-.bloc .zone{position:relative;height:32mm}
-.bloc .sig{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:58mm;max-height:26mm}
-.bloc .cachet{position:absolute;left:0;top:50%;width:31mm;height:31mm;object-fit:contain;transform:translateY(-50%) rotate(-9deg);opacity:.88;mix-blend-mode:multiply}
+.bloc .zone{position:relative;height:20mm}
+.bloc .sig{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:58mm;max-height:24mm}
+.bloc .cachet{position:absolute;left:0;top:50%;width:27mm;height:27mm;object-fit:contain;transform:translateY(-50%) rotate(-9deg);opacity:.88;mix-blend-mode:multiply}
 .bloc .nom{font-family:Titre,sans-serif;font-weight:700}
 .bloc .attente{font-family:Texte,sans-serif;font-weight:400;font-style:italic;color:#5a635b}
 `;
