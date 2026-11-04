@@ -166,6 +166,16 @@ Sans cette étape, la plateforme marche sans notifications (l'écran Notificatio
 
 Vérifier : **Actions** → « Rappels des activités » → **Run workflow** ; le job doit être vert et afficher `{"activites":…}`. GitHub peut retarder une tâche planifiée de quelques minutes, et la suspend après 60 jours sans activité sur le dépôt (un e-mail prévient ; la réactiver dans l'onglet Actions).
 
+## 8. E-mails d'activation (facultatif)
+
+Sans cette étape, les liens d'activation d'un import CSV s'affichent à l'écran, à transmettre un par un. Avec elle, chaque membre importé reçoit son lien par e-mail.
+
+1. Une adresse Gmail de la section, avec la **validation en deux étapes** activée (Compte Google → Sécurité).
+2. Compte Google → Sécurité → **Mots de passe des applications** : créer « AEEMCI Studio ». Google affiche 16 lettres une seule fois : les garder pour l'étape suivante, nulle part ailleurs.
+3. Sur le serveur, `nano ~/aeemci/.env` : décommenter et remplir `SMTP_HOTE=smtp.gmail.com`, `SMTP_UTILISATEUR` (l'adresse Gmail), `SMTP_MOT_DE_PASSE` (les 16 lettres, sans espaces) et, si on veut, `COURRIEL_EXPEDITEUR="AEEMCI ESATIC <adresse>"`. Puis `cd ~/aeemci && docker compose up -d`.
+
+Vérifier : importer un fichier d'une ligne avec ta propre adresse ; l'écran indique « 1 lien d'activation est parti par e-mail ». Un envoi raté est écrit dans le journal (`docker compose logs app | grep "E-mail non envoyé"`). Gmail limite à environ 500 e-mails par jour : bien assez pour un mandat. Quand la section aura son domaine, remplacer ces valeurs par celles de son adresse.
+
 ## Réglages et coûts
 
 - **Toujours allumé** : pas d'attente à la première visite, contrairement à un service qui s'éteint au repos.

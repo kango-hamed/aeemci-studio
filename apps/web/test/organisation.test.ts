@@ -3,10 +3,23 @@
  * délégations et lecture des documents par délégation. Base jetable dans TEST_DATABASE_URL.
  */
 import pg from "pg";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { migrer } from "../scripts/migrer.ts";
 import { creerAdmin } from "../scripts/creer-admin.ts";
 import type { Acteur } from "@/fonctionnalites/organisation/droits";
+
+// Serveur SMTP simulé : il garde les e-mails et refuse les adresses en « refuse@ ».
+const courriels = vi.hoisted(() => ({ liste: [] as { to: string; subject: string; text: string; html: string }[] }));
+vi.mock("nodemailer", () => ({
+  default: {
+    createTransport: () => ({
+      sendMail: async (c: { to: string; subject: string; text: string; html: string }) => {
+        if (c.to.startsWith("refuse@")) throw new Error("550 adresse inconnue");
+        courriels.liste.push(c);
+      },
+    }),
+  },
+}));
 
 const url = process.env.TEST_DATABASE_URL;
 
@@ -162,6 +175,9 @@ describe.skipIf(!url)("organisation (Postgres)", () => {
     expect(analyse.valide).toBe(true);
     expect(analyse.nouvellesDelegations).toEqual([{ nom: "Cellule sport", code: "SPORT" }]);
     const importes = await m.gestion.importerMembres(president, fichier(valides));
+    // Sans adresse d'envoi configurée, rien ne part : les liens restent à transmettre à la main.
+    expect(importes.some((x) => x.envoye)).toBe(false);
+    expect(courriels.liste).toHaveLength(0);
     expect(importes.map((x) => [x.email, x.suite, Boolean(x.jeton)])).toEqual([
       ["moussa@esatic.edu.ci", "deja", false],
       ["salif@esatic.edu.ci", "nouveau", true],
@@ -180,6 +196,32 @@ describe.skipIf(!url)("organisation (Postgres)", () => {
     expect((await m.gestion.importerMembres(president, fichier(valides))).every((x) => x.suite === "deja" && !x.jeton)).toBe(true);
     const moussa = await acteur(membres.find((x) => x.email === "moussa@esatic.edu.ci")!.userId);
     await expect(m.gestion.analyserImport(moussa, fichier(valides))).rejects.toThrow(/bureau/);
+  });
+
+  it("avec une adresse d'envoi, l'import envoie chaque lien par e-mail ; un envoi refusé reste à transmettre", async () => {
+    const { lireImport } = await import("@/fonctionnalites/organisation/import-membres");
+    const fichier = (lignes: string[]) => lireImport(new TextEncoder().encode(["nom;email;role;delegation", ...lignes].join("\n")));
+    Object.assign(process.env, { SMTP_HOTE: "smtp.exemple.ci", SMTP_UTILISATEUR: "bureau@exemple.ci", SMTP_MOT_DE_PASSE: "x" });
+    try {
+      const importes = await m.gestion.importerMembres(
+        president,
+        fichier(["Ali <b>Koné</b>;ali@esatic.edu.ci;Membre;Cellule sport", "Inès Diaby;refuse@esatic.edu.ci;Membre;Cellule sport"]),
+      );
+      expect(importes.map((x) => [x.email, Boolean(x.jeton), x.envoye])).toEqual([
+        ["ali@esatic.edu.ci", true, true],
+        ["refuse@esatic.edu.ci", true, false],
+      ]);
+      expect(courriels.liste).toHaveLength(1);
+      const c = courriels.liste[0]!;
+      expect(c.to).toBe("ali@esatic.edu.ci");
+      expect(c.subject).toBe("Ton accès à AEEMCI Studio");
+      expect(c.text).toContain(`http://localhost:3000/activer/${importes[0]!.jeton}`);
+      expect(c.html).toContain("Ali &lt;b&gt;Koné&lt;/b&gt;");
+      // Le lien envoyé est bien celui qui active le compte.
+      expect(await m.invitations.lienValide(importes[0]!.jeton!)).toMatchObject({ email: "ali@esatic.edu.ci", reinitialisation: false });
+    } finally {
+      for (const v of ["SMTP_HOTE", "SMTP_UTILISATEUR", "SMTP_MOT_DE_PASSE"]) delete process.env[v];
+    }
   });
 
   it("retiré du mandat, un membre garde son compte mais perd son rôle", async () => {

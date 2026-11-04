@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useState, type FormEvent } from "react";
-import { Check, Copy, Download, FileCheck2, MessageCircle, Upload } from "lucide-react";
+import { Check, Copy, Download, FileCheck2, MailCheck, MessageCircle, Upload } from "lucide-react";
 import { lienCsv } from "@/fonctionnalites/csv";
 import { importerMembres, type EtatImport } from "./actions";
 import { MessageErreur } from "./ChampsPoste";
@@ -151,10 +151,14 @@ function Controle({ lignes, nouvelles, valide }: { lignes: LigneAnalysee[]; nouv
   );
 }
 
-/** Liens d'activation des membres importés : affichés une seule fois, à transmettre en privé. */
+/**
+ * Liens d'activation des membres importés. Ceux partis par e-mail sont seulement signalés ; les autres
+ * (adresse d'envoi non configurée, envoi raté) sont affichés une seule fois, à transmettre en privé.
+ */
 function Resultat({ importes }: { importes: MembreImporte[] }) {
   const adresse = useAdresseActivation();
-  const avecLien = importes.filter((m) => m.jeton);
+  const envoyes = importes.filter((m) => m.jeton && m.envoye);
+  const avecLien = importes.filter((m) => m.jeton && !m.envoye);
   const csv = `nom;email;lien\n${avecLien.map((m) => [m.nom, m.email, adresse(m.jeton!)].map((v) => `"${v.replace(/"/g, '""')}"`).join(";")).join("\n")}\n`;
   const ajoutes = importes.filter((m) => m.suite !== "deja").length;
 
@@ -162,10 +166,33 @@ function Resultat({ importes }: { importes: MembreImporte[] }) {
     <div role="status" className="flex flex-col gap-3 rounded-m border border-vert-esatic bg-fond-succes p-4">
       <p className="m-0 text-sm leading-5">
         <strong>{pluriel(ajoutes, "membre")} ajouté{ajoutes > 1 ? "s" : ""} au mandat.</strong>{" "}
+        {envoyes.length > 0 &&
+          `${envoyes.length > 1 ? `${envoyes.length} liens d'activation sont partis` : "1 lien d'activation est parti"} par e-mail : chacun choisit son mot de passe depuis sa boîte (pense aux courriers indésirables). `}
         {avecLien.length > 0
-          ? "Transmets à chacun son lien, en privé : il sert une seule fois, pendant 7 jours, et ne sera plus affiché ici (tu pourras en générer un autre depuis la liste des membres). Ne partage pas ces liens dans un groupe."
-          : "Leurs comptes sont déjà actifs : ils se connectent avec leur mot de passe habituel."}
+          ? `${
+              envoyes.length === 0
+                ? "Transmets à chacun son lien"
+                : avecLien.length > 1
+                  ? `${avecLien.length} liens n'ont pas pu partir : transmets-les`
+                  : "1 lien n'a pas pu partir : transmets-le"
+            }, en privé : il sert une seule fois, pendant 7 jours, et ne sera plus affiché ici (tu pourras en générer un autre depuis la liste des membres). Ne partage pas ces liens dans un groupe.`
+          : envoyes.length === 0 && "Leurs comptes sont déjà actifs : ils se connectent avec leur mot de passe habituel."}
       </p>
+      {envoyes.length > 0 && (
+        <details className="text-sm">
+          <summary className="flex min-h-11 cursor-pointer items-center gap-2 font-semibold">
+            <MailCheck size={16} aria-hidden />
+            Envoyés par e-mail ({envoyes.length})
+          </summary>
+          <ul className="m-0 flex list-none flex-col gap-1 p-0 pl-6">
+            {envoyes.map((m) => (
+              <li key={m.email} className="break-all">
+                <span className="font-semibold">{m.nom}</span> <span className="text-encre-douce">{m.email}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
       {avecLien.length > 0 && (
         <>
           <ul className="m-0 flex list-none flex-col gap-2 p-0">

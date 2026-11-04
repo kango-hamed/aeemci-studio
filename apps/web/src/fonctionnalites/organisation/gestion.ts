@@ -5,7 +5,7 @@ import { db, schema } from "@/serveur/db";
 import { peutGererOrganisation, peutToucherAuPresident, type Acteur } from "./droits";
 import { cleDelegation, type LigneImport } from "./import-membres";
 import { LIMITES_IDENTITE, lignesEntete, type SaisieIdentite } from "./identite";
-import { nouveauLien } from "./invitations";
+import { envoyerLienParCourriel, nouveauLien } from "./invitations";
 import { mandatCourant, type MandatCourant } from "./requetes";
 import { estRoleBureau, type Role } from "./roles";
 
@@ -380,7 +380,12 @@ export interface MembreImporte {
   suite: SuiteImport;
   /** Lien d'activation à transmettre, si le compte n'a pas encore de mot de passe. */
   jeton: string | null;
+  /** Le lien est parti par e-mail (adresse d'envoi configurée) ; sinon le bureau le transmet. */
+  envoye: boolean;
 }
+
+/** Envois d'e-mails simultanés à l'import : assez pour 200 lignes en moins d'une minute, sans brusquer le serveur SMTP. */
+const ENVOIS_SIMULTANES = 4;
 
 /**
  * Importe le fichier en une fois : délégations manquantes, comptes, rôles du mandat en cours. Tout ou rien :
@@ -433,7 +438,16 @@ export async function importerMembres(acteur: Acteur, lignes: LigneImport[]): Pr
   const resultat: MembreImporte[] = [];
   for (const l of analysees) {
     const userId = comptes.get(l.email);
-    resultat.push({ nom: l.nom, email: l.email, suite: l.suite!, jeton: userId && !actifs.has(userId) ? await nouveauLien(userId, acteur.id) : null });
+    resultat.push({ nom: l.nom, email: l.email, suite: l.suite!, jeton: userId && !actifs.has(userId) ? await nouveauLien(userId, acteur.id) : null, envoye: false });
+  }
+  // Chaque lien part par e-mail ; un envoi raté reste affiché, à transmettre à la main.
+  const aEnvoyer = resultat.filter((r) => r.jeton);
+  for (let i = 0; i < aEnvoyer.length; i += ENVOIS_SIMULTANES) {
+    await Promise.all(
+      aEnvoyer.slice(i, i + ENVOIS_SIMULTANES).map(async (r) => {
+        r.envoye = await envoyerLienParCourriel(r.nom, r.email, r.jeton!);
+      }),
+    );
   }
   return resultat;
 }

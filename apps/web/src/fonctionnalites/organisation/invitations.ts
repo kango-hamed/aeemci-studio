@@ -2,6 +2,7 @@ import "server-only";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
+import { envoyerCourriel } from "@/serveur/courriel";
 import { db, schema } from "@/serveur/db";
 
 /** Durée de validité d'un lien d'activation ou de réinitialisation. */
@@ -25,6 +26,33 @@ export async function nouveauLien(userId: string, creeParId: string | null): Pro
     });
   });
   return jeton;
+}
+
+const echapper = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+
+/** Message d'activation envoyé par e-mail : le lien vers l'adresse publique (`BETTER_AUTH_URL`) de la plateforme. */
+export function courrielActivation(nom: string, email: string, jeton: string, section = "AEEMCI ESATIC") {
+  const adresse = `${(process.env.BETTER_AUTH_URL || "").replace(/\/+$/, "")}/activer/${jeton}`;
+  const texte = [
+    `Salam ${nom},`,
+    "",
+    `Le bureau de l'${section} t'a ouvert un compte sur AEEMCI Studio.`,
+    "Choisis ton mot de passe ici :",
+    adresse,
+    "",
+    `Ce lien sert une seule fois et reste valable ${VALIDITE_LIEN_JOURS} jours. Ne le transfère à personne.`,
+    "Si tu ne connais pas l'AEEMCI, ignore ce message.",
+  ].join("\n");
+  const html = `<p>Salam ${echapper(nom)},</p>
+<p>Le bureau de l'${echapper(section)} t'a ouvert un compte sur AEEMCI Studio.</p>
+<p><a href="${echapper(adresse)}" style="display:inline-block;padding:12px 20px;background:#1a6012;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">Choisir mon mot de passe</a></p>
+<p style="color:#555;font-size:14px">Ce lien sert une seule fois et reste valable ${VALIDITE_LIEN_JOURS} jours. Ne le transfère à personne.<br>Si tu ne connais pas l'AEEMCI, ignore ce message.</p>`;
+  return { a: email, sujet: "Ton accès à AEEMCI Studio", texte, html };
+}
+
+/** Envoie le lien d'activation par e-mail ; `false` s'il n'est pas parti (le bureau le transmet alors lui-même). */
+export function envoyerLienParCourriel(nom: string, email: string, jeton: string): Promise<boolean> {
+  return envoyerCourriel(courrielActivation(nom, email, jeton));
 }
 
 export interface LienValide {
