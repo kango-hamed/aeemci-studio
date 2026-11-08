@@ -126,6 +126,38 @@ export function peutEcrirePassation(u: Acteur, delegationId: string | null): boo
   return delegationId !== null && dirigeDelegation(u.affectation?.role) && u.affectation!.delegationId === delegationId;
 }
 
+/**
+ * Suppression définitive d'un document ou d'un gabarit : les administrateurs de la plateforme seulement.
+ * Les autres masquent (brouillon, visibilité « Bureau exécutif », gabarit non proposé aux membres).
+ */
+export function peutSupprimerDefinitivement(u: Acteur): boolean {
+  return u.estAdministrateur;
+}
+
+/** Mot à recopier pour confirmer une suppression définitive. */
+export const MOT_CONFIRMATION = "SUPPRIMER";
+
+/**
+ * Ce qui interdit de supprimer un document, même pour un administrateur (`null` : rien) : un document
+ * officiel validé est numéroté sans trou et archivé ; un mandat clos est en lecture seule.
+ */
+export function refusSuppressionDocument(d: { etatValidation: string | null; numero: string | null; fige?: boolean }): string | null {
+  if (d.etatValidation === "valide" || d.numero) return "Un document officiel validé est numéroté et archivé : il ne se supprime pas. Corrige-le (nouvelle version) ou masque-le.";
+  if (d.fige) return "Ce document appartient à un mandat clos, archivé en lecture seule.";
+  return null;
+}
+
+/**
+ * Ce qui interdit de supprimer un gabarit (`null` : rien) : il doit d'abord être retiré des membres, et
+ * aucun document ne doit en dépendre (chaque document se refait depuis la révision de son gabarit).
+ */
+export function refusSuppressionGabarit(g: { actif: boolean; publie: boolean; documents: number }): string | null {
+  if (g.documents > 0)
+    return `${g.documents} document${g.documents > 1 ? "s ont été faits" : " a été fait"} avec ce gabarit et en dépend${g.documents > 1 ? "ent" : ""} : supprime-les d'abord, ou retire simplement le gabarit des membres.`;
+  if (g.actif && g.publie) return "Retire d'abord le gabarit des membres (décoche « Proposé aux membres » dans la fiche).";
+  return null;
+}
+
 /** Importer, régler et publier les gabarits. */
 export function peutGererGabarits(u: Acteur): boolean {
   return u.estAdministrateur || Boolean(u.affectation?.designer);

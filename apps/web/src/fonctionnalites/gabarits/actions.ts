@@ -81,3 +81,17 @@ export async function retablirRevision(_e: EtatGabarit, f: FormData): Promise<Et
   const id = lire(f, "gabaritId");
   return executer(id, async (u) => ({ numero: await atelier.retablirRevision(u, id, lire(f, "revisionId")) }));
 }
+
+/** Suppression définitive (administrateurs) : retour à la liste des gabarits. */
+export async function supprimerGabaritAction(_e: EtatGabarit, f: FormData): Promise<EtatGabarit> {
+  const u = await exigerUtilisateur();
+  try {
+    await atelier.supprimerGabarit(u, lire(f, "id"), lire(f, "confirmation"));
+  } catch (e) {
+    if (e instanceof atelier.ErreurGabarit) return { erreur: e.message };
+    throw e;
+  }
+  revalidatePath("/gabarits");
+  revalidatePath("/gabarits/gerer");
+  redirect("/gabarits/gerer");
+}

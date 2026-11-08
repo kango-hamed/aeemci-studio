@@ -429,3 +429,21 @@ export const preferenceNotification = pgTable("preference_notification", {
   rappel: boolean("rappel").notNull().default(true),
   ...horodatage,
 });
+
+/**
+ * Trace des suppressions définitives (réservées aux administrateurs) : ce qui a été supprimé, par qui et
+ * quand. Instantané du nom et du titre : l'objet n'existe plus pour les retrouver.
+ */
+export const journalSuppression = pgTable(
+  "journal_suppression",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    quoi: text("quoi").$type<"document" | "gabarit">().notNull(),
+    objetId: uuid("objet_id").notNull(),
+    libelle: text("libelle").notNull(),
+    parId: text("par_id").references(() => user.id, { onDelete: "set null" }),
+    parNom: text("par_nom").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("journal_suppression_date_idx").on(t.createdAt)],
+);

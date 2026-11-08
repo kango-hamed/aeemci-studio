@@ -7,7 +7,10 @@ import {
   peutModifierActivite,
   peutModifierDocument,
   peutToucherAuPresident,
+  peutSupprimerDefinitivement,
   peutValider,
+  refusSuppressionDocument,
+  refusSuppressionGabarit,
   type Acteur,
   type StatutDocument,
   type Visibilite,
@@ -91,5 +94,18 @@ describe("droits", () => {
     expect(peutModifierActivite(membre("membre", "culture"), activite)).toBe(false);
     expect(peutEcrirePassation(membre("sous_responsable_delegation", "culture"), "culture")).toBe(true);
     expect(peutEcrirePassation(membre("sous_responsable_delegation", "culture"), null)).toBe(false);
+  });
+
+  it("suppression définitive : administrateurs seulement, jamais un officiel validé, un mandat clos ou un gabarit utilisé", () => {
+    expect(peutSupprimerDefinitivement(membre(null, null, true))).toBe(true);
+    expect(peutSupprimerDefinitivement(membre("president"))).toBe(false);
+    expect(refusSuppressionDocument({ etatValidation: null, numero: null })).toBeNull();
+    expect(refusSuppressionDocument({ etatValidation: "redaction", numero: null })).toBeNull();
+    expect(refusSuppressionDocument({ etatValidation: "valide", numero: "AEEMCI-ESATIC/BE/LET/2026/001" })).toMatch(/validé/);
+    expect(refusSuppressionDocument({ etatValidation: null, numero: null, fige: true })).toMatch(/mandat clos/);
+    expect(refusSuppressionGabarit({ actif: false, publie: true, documents: 0 })).toBeNull();
+    expect(refusSuppressionGabarit({ actif: true, publie: false, documents: 0 })).toBeNull();
+    expect(refusSuppressionGabarit({ actif: true, publie: true, documents: 0 })).toMatch(/Retire/);
+    expect(refusSuppressionGabarit({ actif: false, publie: true, documents: 3 })).toMatch(/3 documents/);
   });
 });

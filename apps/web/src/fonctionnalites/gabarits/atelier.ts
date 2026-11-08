@@ -1,11 +1,12 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { and, eq, inArray, isNotNull, isNull, max } from "drizzle-orm";
+import { and, count, eq, inArray, isNotNull, isNull, max } from "drizzle-orm";
 import { controlerGabarit, PHOTO_ESSAI, valeursEssai, type Controles, type Gabarit, type Valeurs } from "@aeemci-studio/moteur";
 import { db, schema } from "@/serveur/db";
 import { stockage } from "@/serveur/stockage";
 import { catalogue, dossierDeRevision, rendre } from "@/fonctionnalites/generation/rendu";
-import { peutGererGabarits, type Acteur } from "@/fonctionnalites/organisation/droits";
+import { MOT_CONFIRMATION, peutGererGabarits, peutSupprimerDefinitivement, refusSuppressionGabarit, type Acteur } from "@/fonctionnalites/organisation/droits";
+import { journaliserSuppression, supprimerFichiers } from "@/fonctionnalites/organisation/journal";
 import { appliquerReglages, ReglagesInvalides } from "./reglages";
 
 /**
@@ -87,6 +88,34 @@ export async function abandonnerBrouillon(u: Acteur, gabaritId: string): Promise
   await db.delete(schema.revisionGabarit).where(and(eq(schema.revisionGabarit.gabaritId, g.id), isNull(schema.revisionGabarit.publieeLe)));
   // Un gabarit importé puis abandonné avant toute publication n'a plus de raison d'exister.
   if (!g.revisionCouranteId) await db.delete(schema.gabarit).where(eq(schema.gabarit.id, g.id));
+}
+
+/** Documents faits avec l'une des révisions du gabarit : tant qu'il y en a, il ne se supprime pas. */
+export async function documentsDuGabarit(gabaritId: string): Promise<number> {
+  const [r] = await db
+    .select({ n: count() })
+    .from(schema.document)
+    .innerJoin(schema.revisionGabarit, eq(schema.document.revisionId, schema.revisionGabarit.id))
+    .where(eq(schema.revisionGabarit.gabaritId, gabaritId));
+  return r?.n ?? 0;
+}
+
+/**
+ * Suppression définitive d'un gabarit : administrateurs seulement, mot de confirmation recopié, gabarit
+ * retiré des membres et dont aucun document ne dépend. Ses révisions et ses réservations partent avec
+ * lui ; la suppression est inscrite au journal, puis ses fichiers (fonds, calques, vignettes) sont effacés.
+ */
+export async function supprimerGabarit(u: Acteur, gabaritId: string, confirmation: string): Promise<void> {
+  if (!peutSupprimerDefinitivement(u)) throw new ErreurGabarit("Seul un administrateur supprime un gabarit.");
+  const g = await gabaritExistant(gabaritId);
+  const refus = refusSuppressionGabarit({ actif: g.actif, publie: Boolean(g.revisionCouranteId), documents: await documentsDuGabarit(g.id) });
+  if (refus) throw new ErreurGabarit(refus);
+  if (confirmation.trim().toUpperCase() !== MOT_CONFIRMATION) throw new ErreurGabarit(`Écris ${MOT_CONFIRMATION} pour confirmer.`);
+  await db.transaction(async (tx) => {
+    await tx.delete(schema.gabarit).where(eq(schema.gabarit.id, g.id));
+    await journaliserSuppression(tx, "gabarit", g.id, g.nom, u.id);
+  });
+  await supprimerFichiers(`gabarits/${g.id}`);
 }
 
 /**

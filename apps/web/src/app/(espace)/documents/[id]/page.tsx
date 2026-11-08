@@ -9,7 +9,9 @@ import { libelleVisibilite } from "@/fonctionnalites/documents/partage";
 import { ReglagesDocument } from "@/fonctionnalites/documents/ReglagesDocument";
 import { documentLisible, type DocumentLisible } from "@/fonctionnalites/documents/requetes";
 import { LARGEUR_HD } from "@/fonctionnalites/generation/rendu";
-import { peutModifierDocument, peutValider } from "@/fonctionnalites/organisation/droits";
+import { peutModifierDocument, peutSupprimerDefinitivement, peutValider, refusSuppressionDocument } from "@/fonctionnalites/organisation/droits";
+import { SuppressionDefinitive } from "@/fonctionnalites/organisation/SuppressionDefinitive";
+import { supprimerDocumentAction } from "@/fonctionnalites/documents/actions";
 import { mandatCourant } from "@/fonctionnalites/organisation/requetes";
 import { cachetDeSection, historique, signatureComplete, versionSuivante } from "@/fonctionnalites/administratif/circuit";
 import { PanneauCircuit } from "@/fonctionnalites/administratif/PanneauCircuit";
@@ -186,6 +188,15 @@ export default async function PageDocument({ params, searchParams }: { params: P
               visibilite={l.d.visibilite}
               aUneDelegation={Boolean(l.d.delegationId)}
               publication={!officiel}
+            />
+          )}
+          {peutSupprimerDefinitivement(u) && (
+            <SuppressionDefinitive
+              id={l.d.id}
+              quoi="ce document"
+              consequences="Le document, ses fichiers et son historique de validation disparaissent pour tous les membres."
+              refus={refusSuppressionDocument(l.d)}
+              action={supprimerDocumentAction}
             />
           )}
           {genere && l.gabaritId && (

@@ -92,6 +92,13 @@
       "when": 1793832385336,
       "tag": "0012_signature_avec_cachet",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794163909625,
+      "tag": "0013_journal_suppression",
+      "breakpoints": true
     }
   ]
 }

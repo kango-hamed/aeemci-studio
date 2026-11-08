@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { ErreurSaisie } from "./creer";
 import { modifierDocument } from "./modifier";
+import { supprimerDocument } from "./supprimer";
 
 export interface EtatModification {
   erreur?: string;
@@ -32,4 +34,18 @@ export async function enregistrerDocument(_e: EtatModification, f: FormData): Pr
   }
   revalidatePath(`/documents/${m.data.id}`);
   return { ok: true };
+}
+
+/** Suppression définitive (administrateurs) : retour à la liste des documents. */
+export async function supprimerDocumentAction(_e: EtatModification, f: FormData): Promise<EtatModification> {
+  const u = await exigerUtilisateur();
+  const id = lire(f, "id") ?? "";
+  try {
+    await supprimerDocument(u, id, lire(f, "confirmation") ?? "");
+  } catch (e) {
+    if (e instanceof ErreurSaisie) return { erreur: e.message };
+    throw e;
+  }
+  revalidatePath("/documents");
+  redirect("/documents");
 }

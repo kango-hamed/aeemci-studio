@@ -7,7 +7,9 @@ import { controlesDe } from "@/fonctionnalites/gabarits/atelier";
 import { AtelierGabarit } from "@/fonctionnalites/gabarits/AtelierGabarit";
 import { AbandonnerBrouillon, FicheGabarit, OuvrirBrouillon, RetablirRevision } from "@/fonctionnalites/gabarits/GestionGabarit";
 import { ficheGabarit } from "@/fonctionnalites/gabarits/requetes";
-import { peutGererGabarits } from "@/fonctionnalites/organisation/droits";
+import { peutGererGabarits, peutSupprimerDefinitivement, refusSuppressionGabarit } from "@/fonctionnalites/organisation/droits";
+import { SuppressionDefinitive } from "@/fonctionnalites/organisation/SuppressionDefinitive";
+import { supprimerGabaritAction } from "@/fonctionnalites/gabarits/actions";
 import { delegationsDe, mandatCourant } from "@/fonctionnalites/organisation/requetes";
 
 export const metadata: Metadata = { title: "Gabarit" };
@@ -119,6 +121,15 @@ export default async function PageReglagesGabarit({ params }: { params: Promise<
           <p className="m-0 text-sm text-encre-douce">Chaque document garde la révision avec laquelle il a été fait, et se refait à l&apos;identique.</p>
         </section>
       </div>
+      {peutSupprimerDefinitivement(u) && (
+        <SuppressionDefinitive
+          id={g.id}
+          quoi="ce gabarit"
+          consequences="Le gabarit, toutes ses révisions et ses fichiers (fonds, calques, vignettes) disparaissent."
+          refus={refusSuppressionGabarit({ actif: g.actif, publie: Boolean(courante), documents: g.revisions.reduce((n, r) => n + r.documents, 0) })}
+          action={supprimerGabaritAction}
+        />
+      )}
     </>
   );
 }

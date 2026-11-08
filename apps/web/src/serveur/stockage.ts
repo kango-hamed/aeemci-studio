@@ -1,7 +1,7 @@
 import "server-only";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { DeleteObjectCommand, GetObjectCommand, NoSuchKey, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, DeleteObjectsCommand, GetObjectCommand, ListObjectsV2Command, NoSuchKey, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 /**
  * Stockage des fichiers (fonds et couches des gabarits, photos importées, documents générés).
@@ -20,6 +20,8 @@ export interface Stockage {
   /** `null` si la clé n'existe pas. */
   lire(cle: string): Promise<Buffer | null>;
   supprimer(cle: string): Promise<void>;
+  /** Supprime tout ce qui se trouve sous `dossier/` (fichiers d'un document, d'un gabarit). */
+  supprimerDossier(dossier: string): Promise<void>;
 }
 
 function verifierCle(cle: string): string {
@@ -48,6 +50,9 @@ export class StockageLocal implements Stockage {
   }
   async supprimer(cle: string): Promise<void> {
     await fs.rm(this.chemin(cle), { force: true });
+  }
+  async supprimerDossier(dossier: string): Promise<void> {
+    await fs.rm(this.chemin(dossier), { recursive: true, force: true });
   }
 }
 
@@ -80,6 +85,17 @@ export class StockageR2 implements Stockage {
   }
   async supprimer(cle: string): Promise<void> {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.seau, Key: verifierCle(cle) }));
+  }
+  async supprimerDossier(dossier: string): Promise<void> {
+    const prefixe = `${verifierCle(dossier).replace(/\/+$/, "")}/`;
+    // Par pages de 1 000 clés au plus (limite de l'API), jusqu'à vider le dossier.
+    for (;;) {
+      const r = await this.client.send(new ListObjectsV2Command({ Bucket: this.seau, Prefix: prefixe, MaxKeys: 1000 }));
+      const cles = (r.Contents ?? []).flatMap((o) => (o.Key ? [{ Key: o.Key }] : []));
+      if (!cles.length) return;
+      await this.client.send(new DeleteObjectsCommand({ Bucket: this.seau, Delete: { Objects: cles, Quiet: true } }));
+      if (!r.IsTruncated) return;
+    }
   }
 }
 

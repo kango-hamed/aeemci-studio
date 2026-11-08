@@ -15,11 +15,11 @@ const url = process.env.TEST_DATABASE_URL;
 const EX = path.resolve(import.meta.dirname, "../../../packages/moteur/exemples/membre-retenu");
 
 /** Gabarit d'exemple publié avec une seconde déclinaison (« story »), pour le formulaire unique. */
-function dossierPublie() {
+function dossierPublie(nom = "Membre retenu") {
   const manifest = JSON.parse(fs.readFileSync(path.join(EX, "manifest.json"), "utf8"));
   const gabarit = manifest.gabarit;
   gabarit.plans.push({ ...structuredClone(gabarit.plans[0]), plan: "story" });
-  const publication = { format: "aeemci-studio/gabarit-publie", revision: 1, publie_le: new Date().toISOString(), nom: "Membre retenu", source: { manifest: "manifest.json" }, gabarit };
+  const publication = { format: "aeemci-studio/gabarit-publie", revision: 1, publie_le: new Date().toISOString(), nom, source: { manifest: "manifest.json" }, gabarit };
   return new Map<string, Buffer>([
     ["membre-retenu/gabarit.publie.json", Buffer.from(JSON.stringify(publication))],
     ["membre-retenu/manifest.json", fs.readFileSync(path.join(EX, "manifest.json"))],
@@ -35,6 +35,8 @@ describe.skipIf(!url)("documents (Postgres + Chromium)", () => {
     creer: typeof import("@/fonctionnalites/documents/creer");
     deposer: typeof import("@/fonctionnalites/documents/deposer");
     modifier: typeof import("@/fonctionnalites/documents/modifier");
+    supprimer: typeof import("@/fonctionnalites/documents/supprimer");
+    atelier: typeof import("@/fonctionnalites/gabarits/atelier");
     docs: typeof import("@/fonctionnalites/documents/requetes");
     gestion: typeof import("@/fonctionnalites/organisation/gestion");
     requetes: typeof import("@/fonctionnalites/organisation/requetes");
@@ -68,6 +70,8 @@ describe.skipIf(!url)("documents (Postgres + Chromium)", () => {
       creer: await import("@/fonctionnalites/documents/creer"),
       deposer: await import("@/fonctionnalites/documents/deposer"),
       modifier: await import("@/fonctionnalites/documents/modifier"),
+      supprimer: await import("@/fonctionnalites/documents/supprimer"),
+      atelier: await import("@/fonctionnalites/gabarits/atelier"),
       docs: await import("@/fonctionnalites/documents/requetes"),
       gestion: await import("@/fonctionnalites/organisation/gestion"),
       requetes: await import("@/fonctionnalites/organisation/requetes"),
@@ -179,5 +183,42 @@ describe.skipIf(!url)("documents (Postgres + Chromium)", () => {
     const r = await rattachement(com2);
     await m.deposer.deposerDocument({ contenu: PDF, nomFichier: "e.pdf", titre: "Mon brouillon", statut: "brouillon" }, com2.id, r);
     expect(await titres(com2, { statut: "brouillon" })).toEqual(["Mon brouillon"]);
+  });
+
+  it("suppression définitive : administrateur, confirmation, gabarit retiré et sans document, journal et fichiers", async () => {
+    const { db, schema } = await import("@/serveur/db");
+    const { eq } = await import("drizzle-orm");
+    const admin: Acteur = { ...president, estAdministrateur: true };
+    const fichier = (cle: string) => fs.existsSync(path.join(dossierStockage, cle));
+
+    const { id } = await m.deposer.deposerDocument({ contenu: PDF, nomFichier: "a-supprimer.pdf", titre: "À supprimer" }, com1.id, await rattachement(com1));
+    const cle = (await m.docs.documentLisible(id, admin))!.d.fichier;
+    expect(fichier(cle)).toBe(true);
+    await expect(m.supprimer.supprimerDocument(president, id, "SUPPRIMER")).rejects.toThrow(/administrateur/);
+    await expect(m.supprimer.supprimerDocument(admin, id, "oui")).rejects.toThrow(/SUPPRIMER/);
+    await m.supprimer.supprimerDocument(admin, id, " supprimer ");
+    expect(await m.docs.documentLisible(id, admin)).toBeNull();
+    expect(fichier(cle)).toBe(false);
+
+    // Gabarit dont dépendent des documents : refusé, même retiré des membres.
+    const utilise = (await db.select().from(schema.gabarit).where(eq(schema.gabarit.slug, "membre-retenu")))[0]!;
+    await db.update(schema.gabarit).set({ actif: false }).where(eq(schema.gabarit.id, utilise.id));
+    await expect(m.atelier.supprimerGabarit(admin, utilise.id, "SUPPRIMER")).rejects.toThrow(/document/);
+
+    // Gabarit sans document : d'abord retiré des membres, puis supprimé avec ses fichiers.
+    const g = await m.importer.importerGabarit(dossierPublie("Gabarit jetable"), president.id, { publier: true });
+    expect(fs.existsSync(path.join(dossierStockage, "gabarits", g.gabaritId))).toBe(true);
+    await expect(m.atelier.supprimerGabarit(admin, g.gabaritId, "SUPPRIMER")).rejects.toThrow(/Retire/);
+    await db.update(schema.gabarit).set({ actif: false }).where(eq(schema.gabarit.id, g.gabaritId));
+    await expect(m.atelier.supprimerGabarit(president, g.gabaritId, "SUPPRIMER")).rejects.toThrow(/administrateur/);
+    await m.atelier.supprimerGabarit(admin, g.gabaritId, "SUPPRIMER");
+    expect(await db.select().from(schema.revisionGabarit).where(eq(schema.revisionGabarit.gabaritId, g.gabaritId))).toEqual([]);
+    expect(fs.existsSync(path.join(dossierStockage, "gabarits", g.gabaritId))).toBe(false);
+
+    const journal = await db.select().from(schema.journalSuppression);
+    expect(journal.map((j) => [j.quoi, j.libelle, j.parNom])).toEqual([
+      ["document", "À supprimer", "Awa Koné"],
+      ["gabarit", "Gabarit jetable", "Awa Koné"],
+    ]);
   });
 });
