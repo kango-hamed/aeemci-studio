@@ -1,21 +1,29 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { peutGererOrganisation } from "@/fonctionnalites/organisation/droits";
-import { FormulaireMembre } from "@/fonctionnalites/organisation/FormulaireMembre";
 import { GestionDelegations } from "@/fonctionnalites/organisation/GestionDelegations";
-import { ImportMembres } from "@/fonctionnalites/organisation/ImportMembres";
-import { LigneMembre } from "@/fonctionnalites/organisation/LigneMembre";
+import { OngletMembres } from "@/fonctionnalites/organisation/OngletMembres";
 import { PapierEnTete } from "@/fonctionnalites/organisation/PapierEnTete";
-import { coordonnee } from "@/fonctionnalites/organisation/telephone";
 import { anciensMembres, delegationsDe, identiteSection, mandatCourant, membresDuMandat } from "@/fonctionnalites/organisation/requetes";
 
 export const metadata: Metadata = { title: "Organisation" };
 
-/** Gestion par le bureau exécutif : membres et rôles du mandat en cours, délégations. */
-export default async function PageOrganisation() {
+const ONGLETS = [
+  { cle: "membres", libelle: "Membres" },
+  { cle: "delegations", libelle: "Délégations" },
+  { cle: "papier", libelle: "Papier à en-tête" },
+] as const;
+
+type Onglet = (typeof ONGLETS)[number]["cle"];
+
+/** Gestion par le bureau exécutif, un onglet par sujet : membres et rôles du mandat, délégations, papier à en-tête. */
+export default async function PageOrganisation({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const u = await exigerUtilisateur();
   if (!peutGererOrganisation(u)) notFound();
+  const demande = (await searchParams).onglet;
+  const onglet: Onglet = ONGLETS.find((o) => o.cle === demande)?.cle ?? "membres";
   const mandat = await mandatCourant();
 
   if (!mandat)
@@ -35,6 +43,7 @@ export default async function PageOrganisation() {
     identiteSection(mandat.sectionId),
   ]);
   const actives = delegations.filter((d) => !d.archivee).map(({ id, nom }) => ({ id, nom }));
+  const compteurs: Record<Onglet, number | null> = { membres: membres.length, delegations: actives.length, papier: null };
 
   return (
     <>
@@ -43,58 +52,47 @@ export default async function PageOrganisation() {
           Section {mandat.section} · Mandat {mandat.libelle}
         </span>
         <h1 className="titre-1 m-0">Organisation</h1>
-        <p className="m-0 max-w-[720px] text-encre-douce">
-          Les droits suivent le rôle dans le mandat : un membre lit les documents de sa délégation, le bureau exécutif voit tout. Un membre retiré du
-          mandat garde ses documents mais ne crée plus rien. Les designers (cellule communication) gèrent les gabarits.
+        <p className="m-0 max-w-[720px] text-sm leading-5 text-encre-douce">
+          Les droits suivent le rôle dans le mandat : un membre lit les documents de sa délégation, le bureau exécutif voit tout. Les designers gèrent
+          les gabarits.
         </p>
       </div>
 
-      <section className="flex flex-col gap-4" aria-labelledby="titre-membres">
-        <h2 id="titre-membres" className="titre-2 m-0">
-          Membres du mandat <span className="font-normal text-encre-douce">({membres.length})</span>
-        </h2>
-        <FormulaireMembre delegations={actives} />
-        <ImportMembres />
-        <ul className="m-0 list-none rounded-l border border-trait bg-surface-relevee px-5 py-1 shadow-carte">
-          {membres.map((m) => (
-            <LigneMembre key={m.affectationId} m={m} delegations={actives} estMoi={m.userId === u.id} administrateur={u.estAdministrateur} />
-          ))}
-        </ul>
-      </section>
-
-      <section className="flex flex-col gap-4" aria-labelledby="titre-delegations">
-        <h2 id="titre-delegations" className="titre-2 m-0">
-          Délégations
-        </h2>
-        <GestionDelegations delegations={delegations} />
-      </section>
-
-      <section className="flex flex-col gap-4" aria-labelledby="titre-papier">
-        <div className="flex flex-col gap-1">
-          <h2 id="titre-papier" className="titre-2 m-0">
-            Papier à en-tête
-          </h2>
-          <p className="m-0 max-w-[720px] text-sm text-encre-douce">En-tête et pied de page des documents officiels : lettres, procès-verbaux, convocations, dossiers de passation.</p>
-        </div>
-        <PapierEnTete section={mandat.section} saisie={papier.saisie} />
-      </section>
-
-      {anciens.length > 0 && (
-        <section className="flex flex-col gap-3" aria-labelledby="titre-anciens">
-          <h2 id="titre-anciens" className="titre-2 m-0">
-            Sans rôle dans ce mandat
-          </h2>
-          <p className="m-0 text-sm text-encre-douce">
-            Pour leur redonner un rôle, ajoute-les avec la même adresse e-mail : leur compte et leurs documents sont conservés.
-          </p>
-          <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3 p-0">
-            {anciens.map((a) => (
-              <li key={a.userId} className="flex flex-col rounded-m border border-trait bg-surface-relevee p-3">
-                <span className="font-semibold">{a.nom}</span>
-                <span className="text-sm break-all text-encre-douce">{coordonnee(a.email, a.telephone)}</span>
+      <nav aria-label="Rubriques de l'organisation" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <ul className="m-0 flex w-max min-w-full list-none gap-1 border-b border-trait p-0">
+          {ONGLETS.map((o) => {
+            const actif = o.cle === onglet;
+            return (
+              <li key={o.cle}>
+                <Link
+                  href={o.cle === "membres" ? "/organisation" : `/organisation?onglet=${o.cle}`}
+                  aria-current={actif ? "page" : undefined}
+                  scroll={false}
+                  className={`-mb-px flex min-h-11 items-center gap-2 border-b-2 px-4 font-semibold whitespace-nowrap no-underline ${
+                    actif ? "border-orange-croissant text-encre" : "border-transparent text-encre-douce hover:text-encre"
+                  }`}
+                >
+                  {o.libelle}
+                  {compteurs[o.cle] !== null && <span className="rounded-full bg-creme px-2 text-xs leading-5 font-semibold text-orange-texte">{compteurs[o.cle]}</span>}
+                </Link>
               </li>
-            ))}
-          </ul>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {onglet === "membres" && <OngletMembres membres={membres} anciens={anciens} delegations={actives} moi={u.id} administrateur={u.estAdministrateur} />}
+
+      {onglet === "delegations" && (
+        <section className="flex flex-col gap-4" aria-label="Délégations">
+          <GestionDelegations delegations={delegations} />
+        </section>
+      )}
+
+      {onglet === "papier" && (
+        <section className="flex flex-col gap-4" aria-label="Papier à en-tête">
+          <p className="m-0 max-w-[720px] text-sm text-encre-douce">En-tête et pied de page des documents officiels : lettres, procès-verbaux, convocations, dossiers de passation.</p>
+          <PapierEnTete section={mandat.section} saisie={papier.saisie} />
         </section>
       )}
     </>

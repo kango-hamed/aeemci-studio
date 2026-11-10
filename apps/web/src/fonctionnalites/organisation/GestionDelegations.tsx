@@ -104,11 +104,30 @@ export function GestionDelegations({ delegations }: { delegations: Delegation[] 
       </p>
       <MessageErreur id="erreur-delegation" erreur={etat.erreur} />
       {delegations.length ? (
-        <ul className="m-0 list-none p-0">
-          {delegations.map((d) => (
-            <LigneDelegation key={d.id} d={d} />
-          ))}
-        </ul>
+        <>
+          <ul className="m-0 list-none p-0">
+            {delegations
+              .filter((d) => !d.archivee)
+              .map((d) => (
+                <LigneDelegation key={d.id} d={d} />
+              ))}
+          </ul>
+          {/* Les archivées à part, repliées : elles ne servent qu'à être ressorties. */}
+          {delegations.some((d) => d.archivee) && (
+            <details className="group border-t border-trait pt-2">
+              <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-encre-douce">
+                Archivées ({delegations.filter((d) => d.archivee).length})
+              </summary>
+              <ul className="m-0 list-none p-0">
+                {delegations
+                  .filter((d) => d.archivee)
+                  .map((d) => (
+                    <LigneDelegation key={d.id} d={d} />
+                  ))}
+              </ul>
+            </details>
+          )}
+        </>
       ) : (
         <p className="m-0 text-sm text-encre-douce">Aucune délégation pour l&apos;instant. Les rôles du bureau exécutif n&apos;en ont pas besoin.</p>
       )}
