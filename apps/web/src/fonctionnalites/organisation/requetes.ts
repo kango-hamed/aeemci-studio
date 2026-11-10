@@ -99,6 +99,7 @@ export interface MembreDuMandat {
   userId: string;
   nom: string;
   email: string;
+  telephone: string | null;
   estAdministrateur: boolean;
   affectationId: string;
   role: Role;
@@ -112,6 +113,7 @@ export interface AncienMembre {
   userId: string;
   nom: string;
   email: string;
+  telephone: string | null;
 }
 
 /** État du compte : actif dès qu'un mot de passe existe ; sinon, selon le dernier lien remis. */
@@ -141,6 +143,7 @@ export async function membresDuMandat(mandatId: string): Promise<MembreDuMandat[
       userId: schema.user.id,
       nom: schema.user.name,
       email: schema.user.email,
+      telephone: schema.user.telephone,
       estAdministrateur: schema.user.estAdministrateur,
       affectationId: schema.affectation.id,
       role: schema.affectation.role,
@@ -161,7 +164,7 @@ export async function membresDuMandat(mandatId: string): Promise<MembreDuMandat[
 export async function anciensMembres(mandatId: string): Promise<AncienMembre[]> {
   const affectes = db.select({ id: schema.affectation.userId }).from(schema.affectation).where(eq(schema.affectation.mandatId, mandatId));
   return db
-    .select({ userId: schema.user.id, nom: schema.user.name, email: schema.user.email })
+    .select({ userId: schema.user.id, nom: schema.user.name, email: schema.user.email, telephone: schema.user.telephone })
     .from(schema.user)
     .where(and(notInArray(schema.user.id, affectes), eq(schema.user.estAdministrateur, false)))
     .orderBy(asc(schema.user.name));

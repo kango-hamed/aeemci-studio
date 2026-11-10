@@ -224,6 +224,37 @@ describe.skipIf(!url)("organisation (Postgres)", () => {
     }
   });
 
+  it("importe un membre sans e-mail avec son numéro : il donne son adresse en activant son compte", async () => {
+    const { lireImport } = await import("@/fonctionnalites/organisation/import-membres");
+    const fichier = lireImport(new TextEncoder().encode("nom;email;telephone;role;delegation\nSanata Kaboré;;07 69 97 57 06;Membre;Cellule sport\n"));
+    Object.assign(process.env, { SMTP_HOTE: "smtp.exemple.ci", SMTP_UTILISATEUR: "bureau@exemple.ci", SMTP_MOT_DE_PASSE: "x" });
+    const envoyes = courriels.liste.length;
+    let jeton: string;
+    try {
+      const [importe] = await m.gestion.importerMembres(president, fichier);
+      // Rien ne part par e-mail : le lien reste à transmettre, sur WhatsApp.
+      expect(importe).toMatchObject({ email: "", telephone: "2250769975706", suite: "nouveau", envoye: false });
+      expect(courriels.liste).toHaveLength(envoyes);
+      jeton = importe!.jeton!;
+    } finally {
+      for (const v of ["SMTP_HOTE", "SMTP_UTILISATEUR", "SMTP_MOT_DE_PASSE"]) delete process.env[v];
+    }
+    expect((await m.requetes.membresDuMandat(mandatId)).find((x) => x.nom === "Sanata Kaboré")).toMatchObject({ telephone: "2250769975706", compte: "lien_envoye" });
+    // Le même fichier : le compte est retrouvé par son numéro.
+    expect((await m.gestion.analyserImport(president, fichier)).lignes[0]!.suite).toBe("deja");
+
+    expect(await m.invitations.lienValide(jeton)).toMatchObject({ nom: "Sanata Kaboré", emailASaisir: true, reinitialisation: false });
+    // Sans adresse, ou avec celle d'un autre compte, le lien n'est pas consommé.
+    await expect(m.invitations.utiliserLien(jeton, "son-mot-de-passe")).rejects.toThrow(/adresse e-mail/);
+    await expect(m.invitations.utiliserLien(jeton, "son-mot-de-passe", "president@esatic.edu.ci")).rejects.toThrow(/déjà un compte/);
+    expect(await m.invitations.utiliserLien(jeton, "son-mot-de-passe", " Sanata@Esatic.edu.ci ")).toBe("sanata@esatic.edu.ci");
+    const session = await m.auth.api.signInEmail({ body: { email: "sanata@esatic.edu.ci", password: "son-mot-de-passe" } });
+    expect(session.user.email).toBe("sanata@esatic.edu.ci");
+    // Activé, le compte reste celui de ce numéro ; son e-mail le désigne aussi.
+    expect((await m.gestion.analyserImport(president, fichier)).lignes[0]!.suite).toBe("deja");
+    expect((await m.requetes.membresDuMandat(mandatId)).find((x) => x.nom === "Sanata Kaboré")).toMatchObject({ email: "sanata@esatic.edu.ci", compte: "actif" });
+  });
+
   it("retiré du mandat, un membre garde son compte mais perd son rôle", async () => {
     const r = await m.gestion.ajouterMembre(president, { nom: "Ibrahim Coulibaly", email: "ibrahim@esatic.edu.ci", role: "membre", delegationId: culture });
     const aff = (await m.requetes.membresDuMandat(mandatId)).find((x) => x.userId === r.userId)!;

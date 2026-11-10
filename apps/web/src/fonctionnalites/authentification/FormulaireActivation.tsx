@@ -6,7 +6,8 @@ import { activerCompte, type EtatActivation } from "./actions";
 const champ =
   "min-h-12 w-full rounded-s border border-trait-champ bg-surface-relevee px-3 text-base text-encre aria-invalid:border-danger";
 
-export function FormulaireActivation({ jeton, nom, email, reinitialisation }: { jeton: string; nom: string; email: string; reinitialisation: boolean }) {
+/** `email` absent : le compte a été créé avec un seul numéro de téléphone, le membre saisit son adresse ici. */
+export function FormulaireActivation({ jeton, nom, email, reinitialisation }: { jeton: string; nom: string; email?: string; reinitialisation: boolean }) {
   const [etat, envoyer, enCours] = useActionState<EtatActivation, FormData>(activerCompte, {});
   const erreur = etat.erreur;
   const decrit = erreur ? "erreur-activation" : "aide-mot-de-passe";
@@ -16,7 +17,8 @@ export function FormulaireActivation({ jeton, nom, email, reinitialisation }: { 
       <div className="flex flex-col gap-1.5">
         <h2 className="titre-1 m-0 text-[28px] leading-[34px]">{reinitialisation ? "Nouveau mot de passe" : "Activer ton compte"}</h2>
         <p className="m-0 text-encre-douce">
-          {nom} · {email}
+          {nom}
+          {email && ` · ${email}`}
         </p>
       </div>
 
@@ -27,8 +29,32 @@ export function FormulaireActivation({ jeton, nom, email, reinitialisation }: { 
       )}
 
       <input type="hidden" name="jeton" value={jeton} />
-      {/* Aide les gestionnaires de mots de passe à associer le mot de passe au bon compte. */}
-      <input type="email" name="email" value={email} autoComplete="username" readOnly hidden />
+      {email ? (
+        // Aide les gestionnaires de mots de passe à associer le mot de passe au bon compte.
+        <input type="email" name="email" value={email} autoComplete="username" readOnly hidden />
+      ) : (
+        <div className="flex flex-col gap-2">
+          <label htmlFor="email" className="font-semibold">
+            Ton adresse e-mail
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="username"
+            required
+            maxLength={120}
+            defaultValue={etat.email}
+            aria-invalid={erreur ? true : undefined}
+            aria-describedby="aide-email"
+            className={champ}
+          />
+          <p id="aide-email" className="m-0 text-sm text-encre-douce">
+            Elle te servira à te connecter : vérifie-la bien.
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <label htmlFor="motDePasse" className="font-semibold">

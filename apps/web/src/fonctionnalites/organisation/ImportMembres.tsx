@@ -9,6 +9,7 @@ import type { LigneAnalysee, MembreImporte, SuiteImport } from "./gestion";
 import { MAX_LIGNES_IMPORT, MODELE_IMPORT } from "./import-membres";
 import { messageActivation, useAdresseActivation } from "./LienActivation";
 import { LIBELLES_ROLES } from "./roles";
+import { coordonnee, lienWhatsApp } from "./telephone";
 
 const SUITES: Record<SuiteImport, string> = {
   nouveau: "Nouveau compte",
@@ -42,8 +43,8 @@ export function ImportMembres() {
       <div className="flex flex-col gap-1">
         <h3 className="titre-3 m-0">Importer depuis un fichier</h3>
         <p id="aide-import" className="m-0 text-sm leading-5 text-encre-douce">
-          Tout le bureau en une fois : un fichier CSV (Excel : Enregistrer sous › CSV), une ligne par membre, {MAX_LIGNES_IMPORT} au plus. Colonnes : nom, email,
-          role (Président, Vice-président, Secrétaire général, Responsable ou Membre ; vide : Membre), delegation (sauf bureau exécutif), code de la délégation et
+          Tout le bureau en une fois : un fichier CSV (Excel : Enregistrer sous › CSV), une ligne par membre, {MAX_LIGNES_IMPORT} au plus. Colonnes : nom, email
+          (à défaut telephone : le membre reçoit son lien sur WhatsApp et donne son e-mail en activant son compte), role (Président, Vice-président, Secrétaire général, Responsable ou Membre ; vide : Membre), delegation (sauf bureau exécutif), code de la délégation et
           designer (« oui ») facultatifs. Les délégations absentes sont créées.
         </p>
       </div>
@@ -127,7 +128,7 @@ function Controle({ lignes, nouvelles, valide }: { lignes: LigneAnalysee[]; nouv
             <div className="flex flex-wrap items-baseline gap-x-2">
               <span className="text-encre-douce">Ligne {l.ligne}</span>
               <span className="font-semibold">{l.nom || "—"}</span>
-              <span className="break-all text-encre-douce">{l.email}</span>
+              <span className="break-all text-encre-douce">{l.email || l.telephone ? coordonnee(l.email, l.telephone) : ""}</span>
             </div>
             <div className="text-encre-douce">
               {l.role ? LIBELLES_ROLES[l.role] : "Rôle ?"}
@@ -159,7 +160,7 @@ function Resultat({ importes }: { importes: MembreImporte[] }) {
   const adresse = useAdresseActivation();
   const envoyes = importes.filter((m) => m.jeton && m.envoye);
   const avecLien = importes.filter((m) => m.jeton && !m.envoye);
-  const csv = `nom;email;lien\n${avecLien.map((m) => [m.nom, m.email, adresse(m.jeton!)].map((v) => `"${v.replace(/"/g, '""')}"`).join(";")).join("\n")}\n`;
+  const csv = `nom;email;telephone;lien\n${avecLien.map((m) => [m.nom, m.email, m.telephone ?? "", adresse(m.jeton!)].map((v) => `"${v.replace(/"/g, '""')}"`).join(";")).join("\n")}\n`;
   const ajoutes = importes.filter((m) => m.suite !== "deja").length;
 
   return (
@@ -197,7 +198,7 @@ function Resultat({ importes }: { importes: MembreImporte[] }) {
         <>
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {avecLien.map((m) => (
-              <LigneLien key={m.email} membre={m} adresse={adresse(m.jeton!)} />
+              <LigneLien key={m.email || m.telephone} membre={m} adresse={adresse(m.jeton!)} />
             ))}
           </ul>
           <a href={lienCsv(csv)} download="liens-activation.csv" className="flex min-h-11 items-center gap-2 self-start text-sm font-semibold">
@@ -225,7 +226,7 @@ function LigneLien({ membre, adresse }: { membre: MembreImporte; adresse: string
     <li className="flex flex-wrap items-center justify-between gap-2 rounded-m bg-surface-relevee px-3 py-2">
       <div className="flex min-w-0 flex-col">
         <span className="font-semibold">{membre.nom}</span>
-        <span className="text-sm break-all text-encre-douce">{membre.email}</span>
+        <span className="text-sm break-all text-encre-douce">{coordonnee(membre.email, membre.telephone)}</span>
       </div>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={copier} className="flex min-h-11 items-center gap-2 rounded-m border border-trait-champ px-3 text-sm font-semibold text-encre">
@@ -233,7 +234,7 @@ function LigneLien({ membre, adresse }: { membre: MembreImporte; adresse: string
           {copie ? "Copié" : "Copier le message"}
         </button>
         <a
-          href={`https://wa.me/?text=${encodeURIComponent(message)}`}
+          href={lienWhatsApp(membre.telephone, message)}
           target="_blank"
           rel="noreferrer"
           aria-label={`Envoyer le lien de ${membre.nom} par WhatsApp`}

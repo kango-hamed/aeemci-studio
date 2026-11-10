@@ -19,7 +19,7 @@ export default async function PageActivation({ params }: { params: Promise<{ jet
         <Image src="/logo-aeemci-esatic.png" alt="Logo AEEMCI ESATIC" width={81} height={48} priority />
       </span>
       {lien ? (
-        <FormulaireActivation jeton={jeton} nom={lien.nom} email={lien.email} reinitialisation={lien.reinitialisation} />
+        <FormulaireActivation jeton={jeton} nom={lien.nom} email={lien.emailASaisir ? undefined : lien.email} reinitialisation={lien.reinitialisation} />
       ) : (
         <div className="flex w-full max-w-[380px] flex-col gap-4">
           <h1 className="titre-1 m-0 text-[28px] leading-[34px]">Lien expiré</h1>

@@ -7,6 +7,7 @@ import { ChampsPoste, MessageErreur, type OptionDelegation } from "./ChampsPoste
 import { LienActivation } from "./LienActivation";
 import type { EtatCompte, MembreDuMandat } from "./requetes";
 import { LIBELLES_ROLES } from "./roles";
+import { coordonnee } from "./telephone";
 
 const LIBELLES_COMPTE: Record<EtatCompte, string> = {
   actif: "Compte actif",
@@ -39,7 +40,7 @@ export function LigneMembre({ m, delegations, estMoi, administrateur }: { m: Mem
             {m.nom}
             {estMoi && <span className="font-normal text-encre-douce"> (toi)</span>}
           </span>
-          <span className="text-sm break-all text-encre-douce">{m.email}</span>
+          <span className="text-sm break-all text-encre-douce">{coordonnee(m.email, m.telephone)}</span>
         </div>
         <div className="flex min-w-[200px] flex-1 flex-col">
           <span>{LIBELLES_ROLES[m.role]}</span>
@@ -99,7 +100,7 @@ export function LigneMembre({ m, delegations, estMoi, administrateur }: { m: Mem
         </form>
       )}
       <MessageErreur id={idErreur} erreur={erreur} />
-      {etatLien.ok && etatLien.jeton && <LienActivation jeton={etatLien.jeton} pour={m.nom} />}
+      {etatLien.ok && etatLien.jeton && <LienActivation jeton={etatLien.jeton} pour={m.nom} telephone={m.telephone} />}
     </li>
   );
 }

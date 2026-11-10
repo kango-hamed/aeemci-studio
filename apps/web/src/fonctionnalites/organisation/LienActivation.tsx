@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { Check, Copy, MessageCircle } from "lucide-react";
+import { lienWhatsApp } from "./telephone";
 
 /** Adresse du lien d'activation, composée avec l'origine de la page (vide au rendu serveur). */
 export function useAdresseActivation(): (jeton: string) => string {
@@ -18,8 +19,11 @@ export function messageActivation(pour: string | undefined, adresse: string): st
   return `Salam ${pour ?? ""} ! Voici ton accès à AEEMCI Studio : choisis ton mot de passe ici (lien valable 7 jours, à usage unique) : ${adresse}`;
 }
 
-/** Lien d'activation à transmettre au membre : copie ou partage WhatsApp. Affiché une seule fois. */
-export function LienActivation({ jeton, pour }: { jeton: string; pour?: string }) {
+/**
+ * Lien d'activation à transmettre au membre : copie ou partage WhatsApp. Affiché une seule fois.
+ * `telephone` : le bouton WhatsApp ouvre directement la discussion avec le membre.
+ */
+export function LienActivation({ jeton, pour, telephone }: { jeton: string; pour?: string; telephone?: string | null }) {
   const adresse = useAdresseActivation()(jeton);
   const [copie, setCopie] = useState(false);
 
@@ -56,7 +60,7 @@ export function LienActivation({ jeton, pour }: { jeton: string; pour?: string }
           {copie ? "Copié" : "Copier le lien"}
         </button>
         <a
-          href={`https://wa.me/?text=${encodeURIComponent(message)}`}
+          href={lienWhatsApp(telephone, message)}
           target="_blank"
           rel="noreferrer"
           className="flex min-h-11 items-center gap-2 rounded-m border border-trait-champ px-4 font-semibold text-encre no-underline"

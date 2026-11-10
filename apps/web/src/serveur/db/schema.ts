@@ -30,6 +30,8 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
+  /** Chiffres seuls, indicatif compris : pour écrire au membre sur WhatsApp (lien d'activation). */
+  telephone: text("telephone"),
   /** Administrateur de la plateforme (technique), indépendant des mandats. */
   estAdministrateur: boolean("est_administrateur").notNull().default(false),
   ...horodatage,

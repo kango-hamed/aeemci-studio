@@ -4,6 +4,7 @@ import { hashPassword } from "better-auth/crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { envoyerCourriel } from "@/serveur/courriel";
 import { db, schema } from "@/serveur/db";
+import { estEmailProvisoire } from "./telephone";
 
 /** Durée de validité d'un lien d'activation ou de réinitialisation. */
 export const VALIDITE_LIEN_JOURS = 7;
@@ -62,7 +63,14 @@ export interface LienValide {
   email: string;
   /** Le compte a déjà un mot de passe : le lien sert à le remplacer. */
   reinitialisation: boolean;
+  /** Compte créé avec un seul numéro de téléphone : le membre donne son e-mail en l'activant. */
+  emailASaisir: boolean;
 }
+
+/** Saisie refusée à l'activation : le message se montre tel quel au membre, et le lien reste utilisable. */
+export class ErreurActivation extends Error {}
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Lien utilisable (ni expiré, ni déjà utilisé), ou `null`. */
 export async function lienValide(jeton: string): Promise<LienValide | null> {
@@ -77,17 +85,25 @@ export async function lienValide(jeton: string): Promise<LienValide | null> {
     .select({ id: schema.account.id })
     .from(schema.account)
     .where(and(eq(schema.account.userId, l.userId), eq(schema.account.providerId, "credential")));
-  return { ...l, reinitialisation: Boolean(compte) };
+  return { ...l, reinitialisation: Boolean(compte), emailASaisir: estEmailProvisoire(l.email) };
 }
 
 /**
  * Pose le mot de passe et consomme le lien. Les sessions ouvertes du compte sont fermées : un lien de
  * réinitialisation remis à la place d'un mot de passe perdu coupe aussi un éventuel accès volé.
  * Renvoie l'adresse e-mail, pour la connexion qui suit, ou `null` si le lien n'est plus valable.
+ * `emailSaisi` : l'adresse du membre, attendue quand son compte n'en a pas encore (`emailASaisir`).
  */
-export async function utiliserLien(jeton: string, motDePasse: string): Promise<string | null> {
+export async function utiliserLien(jeton: string, motDePasse: string, emailSaisi?: string): Promise<string | null> {
   const l = await lienValide(jeton);
   if (!l) return null;
+  let email = l.email;
+  if (l.emailASaisir) {
+    email = (emailSaisi ?? "").trim().toLowerCase();
+    if (!EMAIL.test(email) || email.length > 120 || estEmailProvisoire(email)) throw new ErreurActivation("Saisis ton adresse e-mail : elle te servira à te connecter.");
+    const [pris] = await db.select({ id: schema.user.id }).from(schema.user).where(eq(schema.user.email, email));
+    if (pris) throw new ErreurActivation("Cette adresse e-mail a déjà un compte. Donnes-en une autre, ou demande au bureau de vérifier.");
+  }
   const hash = await hashPassword(motDePasse);
   const consomme = await db.transaction(async (tx) => {
     const [maj] = await tx
@@ -102,9 +118,9 @@ export async function utiliserLien(jeton: string, motDePasse: string): Promise<s
       .where(and(eq(schema.account.userId, l.userId), eq(schema.account.providerId, "credential")));
     if (compte) await tx.update(schema.account).set({ password: hash }).where(eq(schema.account.id, compte.id));
     else await tx.insert(schema.account).values({ id: randomUUID(), userId: l.userId, accountId: l.userId, providerId: "credential", password: hash });
-    await tx.update(schema.user).set({ emailVerified: true }).where(eq(schema.user.id, l.userId));
+    await tx.update(schema.user).set({ email, emailVerified: true }).where(eq(schema.user.id, l.userId));
     await tx.delete(schema.session).where(eq(schema.session.userId, l.userId));
     return true;
   });
-  return consomme ? l.email : null;
+  return consomme ? email : null;
 }

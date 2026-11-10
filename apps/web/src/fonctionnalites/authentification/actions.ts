@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/serveur/auth";
-import { utiliserLien } from "@/fonctionnalites/organisation/invitations";
+import { ErreurActivation, utiliserLien } from "@/fonctionnalites/organisation/invitations";
 import { destinationSure } from "./destination";
 
 export interface EtatConnexion {
@@ -42,11 +42,14 @@ export async function seDeconnecter(): Promise<void> {
 
 export interface EtatActivation {
   erreur?: string;
+  /** E-mail saisi, rendu au formulaire après une erreur. */
+  email?: string;
 }
 
 const Activation = z
   .object({
     jeton: z.string().min(1),
+    email: z.string().max(200).optional(),
     motDePasse: z.string().min(10, "Le mot de passe doit faire 10 caractères au moins.").max(128, "Mot de passe trop long."),
     confirmation: z.string(),
   })
@@ -56,11 +59,18 @@ const Activation = z
 export async function activerCompte(_etat: EtatActivation, formulaire: FormData): Promise<EtatActivation> {
   const saisie = Activation.safeParse({
     jeton: formulaire.get("jeton"),
+    email: typeof formulaire.get("email") === "string" ? formulaire.get("email") : undefined,
     motDePasse: formulaire.get("motDePasse"),
     confirmation: formulaire.get("confirmation"),
   });
-  if (!saisie.success) return { erreur: saisie.error.issues[0]?.message };
-  const email = await utiliserLien(saisie.data.jeton, saisie.data.motDePasse);
+  if (!saisie.success) return { erreur: saisie.error.issues[0]?.message, email: typeof formulaire.get("email") === "string" ? String(formulaire.get("email")) : undefined };
+  let email: string | null;
+  try {
+    email = await utiliserLien(saisie.data.jeton, saisie.data.motDePasse, saisie.data.email);
+  } catch (e) {
+    if (e instanceof ErreurActivation) return { erreur: e.message, email: saisie.data.email };
+    throw e;
+  }
   if (!email) return { erreur: "Ce lien n'est plus valable. Demande-en un nouveau au bureau." };
   await auth.api.signInEmail({ body: { email, password: saisie.data.motDePasse }, headers: await headers() });
   redirect("/");

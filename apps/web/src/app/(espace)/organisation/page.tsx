@@ -7,6 +7,7 @@ import { GestionDelegations } from "@/fonctionnalites/organisation/GestionDelega
 import { ImportMembres } from "@/fonctionnalites/organisation/ImportMembres";
 import { LigneMembre } from "@/fonctionnalites/organisation/LigneMembre";
 import { PapierEnTete } from "@/fonctionnalites/organisation/PapierEnTete";
+import { coordonnee } from "@/fonctionnalites/organisation/telephone";
 import { anciensMembres, delegationsDe, identiteSection, mandatCourant, membresDuMandat } from "@/fonctionnalites/organisation/requetes";
 
 export const metadata: Metadata = { title: "Organisation" };
@@ -90,7 +91,7 @@ export default async function PageOrganisation() {
             {anciens.map((a) => (
               <li key={a.userId} className="flex flex-col rounded-m border border-trait bg-surface-relevee p-3">
                 <span className="font-semibold">{a.nom}</span>
-                <span className="text-sm break-all text-encre-douce">{a.email}</span>
+                <span className="text-sm break-all text-encre-douce">{coordonnee(a.email, a.telephone)}</span>
               </li>
             ))}
           </ul>

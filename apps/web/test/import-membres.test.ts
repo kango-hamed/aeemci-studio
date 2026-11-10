@@ -34,6 +34,37 @@ describe("import des membres", () => {
     expect(c!.erreurs).toEqual([expect.stringMatching(/déjà à la ligne 2/), expect.stringMatching(/Rôle inconnu/), expect.stringMatching(/Designer/)]);
   });
 
+  it("accepte un membre sans e-mail s'il a un numéro, écrit comme on veut", () => {
+    const csv = [
+      "nom;email;contact;role",
+      "Awa;;07 69 89 37 40;Vice-présidente",
+      "Moussa;moussa@esatic.edu.ci;+225 05 86 10 66 13;Vice-président",
+      "Fatou;;https://wa.me/2250143829046;Vice-présidente",
+      "Ali;;;Vice-président",
+      "Inès;;07037828419;Vice-présidente",
+      "Yao;;0769893740;Vice-président",
+      "Sita;sita@esatic.edu.ci;0769893740;Vice-présidente",
+    ].join("\n");
+    const lignes = lireImport(utf8(csv));
+    expect(lignes.map((l) => [l.email, l.telephone, l.erreurs])).toEqual([
+      ["", "2250769893740", []],
+      ["moussa@esatic.edu.ci", "2250586106613", []],
+      ["", "2250143829046", []],
+      ["", "", [expect.stringMatching(/E-mail manquant/)]],
+      ["", "", [expect.stringMatching(/Numéro invalide : « 07037828419 »/)]],
+      ["", "2250769893740", [expect.stringMatching(/Numéro déjà à la ligne 2/)]],
+      // Avec un e-mail, le numéro peut être partagé : c'est l'e-mail qui désigne le compte.
+      ["sita@esatic.edu.ci", "2250769893740", []],
+    ]);
+    // Un chiffre de trop se voit aussi dans une adresse wa.me ; un numéro étranger garde son indicatif.
+    expect(lireImport(utf8("nom;whatsapp;role\nInès;https://wa.me/22507037828419;Vice-présidente\nLéa;+33 6 12 34 56 78;Vice-présidente\n")).map((l) => [l.telephone, l.erreurs.length])).toEqual([
+      ["", 1],
+      ["33612345678", 0],
+    ]);
+    // Une colonne de numéros suffit, sans colonne d'e-mails.
+    expect(lireImport(utf8("nom;telephone\nAwa;0769893740\n"))[0]).toMatchObject({ email: "", telephone: "2250769893740", erreurs: [expect.stringMatching(/Délégation/)] });
+  });
+
   it("refuse un fichier sans les colonnes requises, vide ou trop long", () => {
     expect(() => lireImport(utf8("nom;role\nAwa;Membre\n"))).toThrow(/colonne « email »/);
     expect(() => lireImport(utf8(""))).toThrow(/vide/);
