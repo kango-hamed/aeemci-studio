@@ -6,13 +6,15 @@ import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { FormulaireActivite } from "@/fonctionnalites/activites/FormulaireActivite";
 import { DetacherDocument, RattacherDocument, SupprimerActivite } from "@/fonctionnalites/activites/GestionActivite";
 import { GestionComite } from "@/fonctionnalites/activites/GestionComite";
+import { Organigramme } from "@/fonctionnalites/activites/OrganigrammeActivite";
+import { nomsEquipesDuMandat, organigrammeDe } from "@/fonctionnalites/activites/organigramme";
 import { activiteLisible, candidatsComite, comiteDe } from "@/fonctionnalites/activites/requetes";
 import { dateSaisie, heureSaisie } from "@/fonctionnalites/administratif/mise-en-page";
 import { CarteDocument } from "@/fonctionnalites/documents/CarteDocument";
 import { ChoixFichiers } from "@/fonctionnalites/documents/ChoixFichiers";
 import { libelleVisibilite } from "@/fonctionnalites/documents/partage";
 import { rechercherDocuments } from "@/fonctionnalites/documents/requetes";
-import { estBureau, peutComposerComite, peutContribuerActivite, peutCreerDocuments, peutModifierActivite, peutNommerPco, peutSupprimerActivite } from "@/fonctionnalites/organisation/droits";
+import { estBureau, peutComposerComite, peutContribuerActivite, peutCreerDocuments, peutGererOrganigramme, peutModifierActivite, peutNommerPco, peutSupprimerActivite } from "@/fonctionnalites/organisation/droits";
 import { delegationsDe, mandatCourant } from "@/fonctionnalites/organisation/requetes";
 
 export const metadata: Metadata = { title: "Activité" };
@@ -26,6 +28,7 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
   const contribuable = peutContribuerActivite(u, a);
   const peutNommer = peutNommerPco(u, a);
   const peutComposer = peutComposerComite(u, a);
+  const gererOrganigramme = peutGererOrganigramme(u, a);
   const bureau = u.estAdministrateur || estBureau(u);
   const [documents, candidats, delegations, comite, membresDuMandat] = await Promise.all([
     rechercherDocuments(u, { activiteId: a.id }),
@@ -34,6 +37,8 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
     comiteDe(a.id, a.mandatId),
     peutNommer || peutComposer ? candidatsComite(a.mandatId) : [],
   ]);
+  const [organigramme, equipesDuMandat] = await Promise.all([organigrammeDe(u, a), gererOrganigramme ? nomsEquipesDuMandat(a.mandatId) : []]);
+  const equipesDisponibles = equipesDuMandat.filter((q) => !organigramme.equipes.some((x) => x.id === q.id));
 
   return (
     <>
@@ -82,6 +87,7 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
               {a.bilan ?? (a.date < new Date().toISOString().slice(0, 10) ? "Bilan à rédiger : il entre dans le dossier de passation." : "Le bilan se rédige après l'activité.")}
             </p>
           </section>
+          <Organigramme activiteId={a.id} o={organigramme} gerer={gererOrganigramme} equipesDisponibles={equipesDisponibles} />
           <section aria-labelledby="titre-documents" className="flex flex-col gap-4">
             <h2 id="titre-documents" className="titre-2 m-0">
               Documents et photos ({documents.length})

@@ -76,9 +76,16 @@ export default async function PageActivites({ searchParams }: { searchParams: Pr
       )}
       {mesComites.length > 0 && (
         <section aria-labelledby="titre-comites" className="flex flex-col gap-4">
-          <h2 id="titre-comites" className="titre-2 m-0">
-            Mes comités
-          </h2>
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 id="titre-comites" className="titre-2 m-0">
+              Mes comités
+            </h2>
+            {mesComites.some((a) => a.monRole === "pco" || a.monRole === "adjoint") && (
+              <Link href="/activites/equipes" className="flex min-h-11 items-center font-semibold">
+                Équipes du mandat
+              </Link>
+            )}
+          </div>
           <Grille activites={mesComites} passees={false} vide="" />
         </section>
       )}

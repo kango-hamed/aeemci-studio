@@ -142,6 +142,16 @@ export function peutComposerComite(u: Acteur, a: Pick<RattachementActivite, "fig
   return !a.fige && (a.comite === "pco" || u.estAdministrateur || estBureau(u));
 }
 
+/** Organigramme (lot 10b) : le PCO et son adjoint importent les commissions et reprennent les équipes du mandat. */
+export function peutGererOrganigramme(_u: Acteur, a: Pick<RattachementActivite, "fige" | "comite">): boolean {
+  return !a.fige && (a.comite === "pco" || a.comite === "adjoint");
+}
+
+/** Numéros des commissions et liste PDF avec les contacts : le seul comité de l'activité. */
+export function peutVoirContacts(_u: Acteur, a: Pick<RattachementActivite, "comite">): boolean {
+  return Boolean(a.comite);
+}
+
 /** Clore le mandat et ouvrir le suivant : le président et les administrateurs. */
 export function peutCloreMandat(u: Acteur): boolean {
   return u.estAdministrateur || u.affectation?.role === "president";

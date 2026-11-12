@@ -148,6 +148,7 @@ D'après les lettres aux donateurs du Ramadan (lettre, puis devis, pour chaque d
 Une activité est portée par un comité d'organisation, pas seulement par une délégation. Décisions : doc 02 (12/11/2026).
 
 - **10a · Comité d'organisation** : PCO et PCO adjoint nommés par le bureau, comité choisi par le PCO parmi les membres du mandat, toutes délégations ; le PCO et son adjoint gèrent l'activité, le comité y contribue (documents, photos, lettres) ; « Mes comités » dans la liste des activités.
+- **10a bis · Organigramme** : commissions de l'activité (responsable, adjoint, membres sans compte) importées en CSV par le PCO, équipes du mandat réutilisables d'une activité à l'autre, organigramme sur la fiche, liste PDF avec les contacts pour le seul comité.
 - 10b · Préparation : tâches avec responsable et échéance, avancement sur la fiche, rappels.
 - 10c · Budget et dons : devis rattaché à l'activité (reprend 9c), suivi des réponses aux lettres et des dons reçus.
 - Écarté : envoi des lettres par e-mail depuis la plateforme.

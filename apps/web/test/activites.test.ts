@@ -19,6 +19,8 @@ const PDF = Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
 describe.skipIf(!url)("activités, passation et archives (Postgres + Chromium)", () => {
   let m: {
     activites: typeof import("@/fonctionnalites/activites/gestion");
+    organigramme: typeof import("@/fonctionnalites/activites/organigramme");
+    pdfComite: typeof import("@/fonctionnalites/activites/organigramme-pdf");
     reqActivites: typeof import("@/fonctionnalites/activites/requetes");
     deposer: typeof import("@/fonctionnalites/documents/deposer");
     modifier: typeof import("@/fonctionnalites/documents/modifier");
@@ -35,6 +37,7 @@ describe.skipIf(!url)("activités, passation et archives (Postgres + Chromium)",
   let responsableCom: Acteur;
   let com: Acteur;
   let culture: Acteur;
+  let sport: Acteur;
   let communication: string;
   let delegationCulture: string;
 
@@ -56,6 +59,8 @@ describe.skipIf(!url)("activités, passation et archives (Postgres + Chromium)",
     process.env.STOCKAGE_DOSSIER = dossierStockage;
     m = {
       activites: await import("@/fonctionnalites/activites/gestion"),
+      organigramme: await import("@/fonctionnalites/activites/organigramme"),
+      pdfComite: await import("@/fonctionnalites/activites/organigramme-pdf"),
       reqActivites: await import("@/fonctionnalites/activites/requetes"),
       deposer: await import("@/fonctionnalites/documents/deposer"),
       modifier: await import("@/fonctionnalites/documents/modifier"),
@@ -121,7 +126,7 @@ describe.skipIf(!url)("activités, passation et archives (Postgres + Chromium)",
   it("comité : le bureau nomme le PCO et l'adjoint, le PCO compose, le comité contribue", async () => {
     const [r] = await m.reqActivites.rechercherActivites(president, { texte: "réunion interne" });
     const id = r!.id;
-    const sport = await acteur((await m.gestion.ajouterMembre(president, { nom: "sport", email: "sport@esatic.edu.ci", role: "membre", delegationId: delegationCulture })).userId);
+    sport = await acteur((await m.gestion.ajouterMembre(president, { nom: "sport", email: "sport@esatic.edu.ci", role: "membre", delegationId: delegationCulture })).userId);
     const roles = async () => (await m.reqActivites.comiteDe(id, (await m.requetes.mandatCourant())!.id)).map((c) => `${c.nom}:${c.role}`);
 
     // Seul le bureau nomme ; le PCO peut venir d'une autre délégation.
@@ -161,6 +166,71 @@ describe.skipIf(!url)("activités, passation et archives (Postgres + Chromium)",
       ["Réunion interne com", "pco", "sport"],
     ]);
     await expect(m.activites.nommerAuComite(president, id, "pco", "inconnu")).rejects.toThrow(/mandat/);
+  });
+
+  it("organigramme : commissions importées par le PCO, équipes du mandat, numéros pour le seul comité", async () => {
+    const { lireOrganigramme } = await import("@/fonctionnalites/activites/organigramme-csv");
+    const csv = (t: string) => lireOrganigramme(new TextEncoder().encode(t));
+    const [r] = await m.reqActivites.rechercherActivites(president, { texte: "réunion interne" });
+    const id = r!.id;
+    const mandatId = (await m.requetes.mandatCourant())!.id;
+    const lire = async (u: Acteur) => m.organigramme.organigrammeDe(u, (await m.reqActivites.activiteLisible(id, u))!.a);
+
+    // Le PCO (sport) importe ; un simple membre du comité (culture) ne le peut pas ; un fichier fautif n'importe rien.
+    const fichier = "commission;role;nom;telephone\nLogistique;Responsable;Awa;0700000001\nLogistique;;Ali;\nAccueil;Responsable;Binta;0500000002\n";
+    await expect(m.organigramme.importerCommissions(culture, id, csv(fichier))).rejects.toThrow(/PCO/);
+    await expect(m.organigramme.importerCommissions(sport, id, csv("commission;nom;telephone\nAccueil;Awa;12\n"))).rejects.toThrow(/Ligne 2/);
+    expect(await m.organigramme.importerCommissions(sport, id, csv(fichier))).toEqual({ commissions: 2, personnes: 3 });
+
+    const vu = await lire(culture);
+    expect(vu).toMatchObject({ pco: "sport", adjoint: "vice", contacts: true });
+    expect(vu.equipes.map((q) => [q.nom, q.membres.map((p) => `${p.role}:${p.nom}:${p.telephone ?? "-"}`)])).toEqual([
+      ["Logistique", ["responsable:Awa:2250700000001", "membre:Ali:-"]],
+      ["Accueil", ["responsable:Binta:2250500000002"]],
+    ]);
+    // Le bureau voit l'organigramme, sans les numéros ni la liste PDF.
+    const bureau = await lire(president);
+    expect(bureau.contacts).toBe(false);
+    expect(bureau.equipes.flatMap((q) => q.membres).every((p) => p.telephone === null)).toBe(true);
+    expect(await m.pdfComite.dossierComite(president, id)).toBeNull();
+    const dossier = (await m.pdfComite.dossierComite(culture, id))!;
+    expect(m.pdfComite.htmlComite(dossier)).toContain("+225 07 00 00 00 01");
+    // Une fiche par commission : la sienne seulement ; un zip les réunit.
+    const accueil = m.pdfComite.htmlComite(dossier, vu.equipes[1]!.id)!;
+    expect(accueil).toContain("<h1>Accueil</h1>");
+    expect(accueil).toContain("+225 05 00 00 00 02");
+    expect(accueil).not.toContain("Awa");
+    expect(m.pdfComite.htmlComite(dossier, "00000000-0000-0000-0000-000000000000")).toBeNull();
+    const zip = (await m.pdfComite.zipFichesCommissions(dossier))!;
+    expect(zip.subarray(0, 2).toString()).toBe("PK");
+    expect(zip.toString("latin1")).toMatch(/01-Logistique\.pdf[\s\S]*02-Accueil\.pdf/);
+
+    // Un nouveau responsable remplace l'ancien, qui reste membre ; réimporter remplace les commissions.
+    const logistique = vu.equipes[0]!.id;
+    await m.organigramme.ajouterPersonne(sport, logistique, { nom: "Kader", role: "responsable", telephone: "" });
+    expect((await lire(sport)).equipes[0]!.membres.map((p) => `${p.role}:${p.nom}`)).toEqual(["responsable:Kader", "membre:Awa", "membre:Ali"]);
+    await m.organigramme.importerCommissions(sport, id, csv("commission;nom\nSécurité;Issa\n"));
+    expect((await lire(sport)).equipes.map((q) => q.nom)).toEqual(["Sécurité"]);
+
+    // Équipes du mandat : gérées par les PCO, reprises dans plusieurs activités, partagées.
+    await expect(m.organigramme.importerEquipesDuMandat(culture, mandatId, csv("commission;nom\nCommunication;Zoé\n"))).rejects.toThrow(/PCO/);
+    await m.organigramme.importerEquipesDuMandat(sport, mandatId, csv("commission;role;nom\nCommunication;Responsable;Zoé\n"));
+    const [communication] = await m.organigramme.nomsEquipesDuMandat(mandatId);
+    const [atelier] = await m.reqActivites.rechercherActivites(president, { texte: "atelier" });
+    await m.organigramme.reprendreEquipe(sport, id, communication!.id);
+    await m.organigramme.reprendreEquipe(sport, atelier!.id, communication!.id);
+    await m.organigramme.importerEquipesDuMandat(sport, mandatId, csv("commission;role;nom\ncommunication;Responsable;Yao\n"));
+    const equipes = await m.organigramme.equipesDuMandat(sport, mandatId);
+    expect(equipes.map((q) => [q.nom, q.membres.map((p) => p.nom), q.activites.length])).toEqual([["Communication", ["Yao"], 2]]);
+    expect(await m.organigramme.equipesDuMandat(culture, mandatId)).toEqual([]);
+    expect((await lire(sport)).equipes.map((q) => [q.nom, q.partagee])).toEqual([
+      ["Sécurité", false],
+      ["Communication", true],
+    ]);
+    // Retirée de l'activité, l'équipe reste dans le mandat.
+    await m.organigramme.retirerEquipe(sport, id, communication!.id);
+    expect((await lire(sport)).equipes.map((q) => q.nom)).toEqual(["Sécurité"]);
+    expect((await m.organigramme.equipesDuMandat(sport, mandatId))[0]!.activites.map((a) => a.titre)).toEqual(["Atelier affiches"]);
   });
 
   it("passation : points en suspens par le responsable, dossiers selon les droits, PDF", async () => {

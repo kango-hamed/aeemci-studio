@@ -6,10 +6,15 @@ import { z } from "zod";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { ErreurSaisie } from "@/fonctionnalites/documents/creer";
 import * as gestion from "./gestion";
+import * as organigramme from "./organigramme";
+import { ErreurOrganigramme, lireOrganigramme } from "./organigramme-csv";
+import { mandatCourant } from "@/fonctionnalites/organisation/requetes";
 
 export interface EtatActivite {
   erreur?: string;
   ok?: boolean;
+  /** Compte rendu d'un import. */
+  message?: string;
 }
 
 const lire = (f: FormData, nom: string) => (typeof f.get(nom) === "string" ? String(f.get(nom)) : "");
@@ -93,5 +98,57 @@ export async function rattacherDocument(_e: EtatActivite, f: FormData): Promise<
   if (activiteId) revalidatePath(`/activites/${activiteId}`);
   const precedente = lire(f, "precedente");
   if (precedente) revalidatePath(`/activites/${precedente}`);
+  return { ok: true };
+}
+
+const pluriel = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+
+/** Import CSV de l'organigramme : commissions de l'activité (`activiteId`), ou équipes du mandat en cours (sans). */
+export async function importerOrganigramme(_e: EtatActivite, f: FormData): Promise<EtatActivite> {
+  const u = await exigerUtilisateur();
+  const activiteId = lire(f, "activiteId");
+  const fichier = f.get("fichier");
+  if (!(fichier instanceof File) || fichier.size === 0) return { erreur: "Choisis le fichier CSV." };
+  let bilan = { commissions: 0, personnes: 0 };
+  const echec = await executer(async () => {
+    let lignes;
+    try {
+      lignes = lireOrganigramme(new Uint8Array(await fichier.arrayBuffer()));
+    } catch (e) {
+      if (e instanceof ErreurOrganigramme) throw new ErreurSaisie(e.message);
+      throw e;
+    }
+    if (activiteId) bilan = await organigramme.importerCommissions(u, Id.parse(activiteId), lignes);
+    else {
+      const m = await mandatCourant();
+      if (!m) throw new ErreurSaisie("Aucun mandat en cours.");
+      bilan = await organigramme.importerEquipesDuMandat(u, m.id, lignes);
+    }
+  });
+  if (echec) return echec;
+  revalidatePath(activiteId ? `/activites/${activiteId}` : "/activites/equipes");
+  const quoi = pluriel(bilan.commissions, activiteId ? "commission" : "équipe");
+  return { ok: true, message: `Import réussi : ${quoi}, ${pluriel(bilan.personnes, "personne")}.` };
+}
+
+/** Retouches de l'organigramme : `operation` = creer, retirer-equipe, reprendre, ajouter-personne, retirer-personne, supprimer-equipe. */
+export async function modifierOrganigramme(_e: EtatActivite, f: FormData): Promise<EtatActivite> {
+  const u = await exigerUtilisateur();
+  const activiteId = lire(f, "activiteId");
+  const operation = lire(f, "operation");
+  const echec = await executer(async () => {
+    const equipeId = () => Id.parse(lire(f, "equipeId"));
+    const activite = () => Id.parse(activiteId);
+    if (operation === "creer") await organigramme.creerCommission(u, activite(), lire(f, "nom"));
+    else if (operation === "retirer-equipe") await organigramme.retirerEquipe(u, activite(), equipeId());
+    else if (operation === "reprendre") await organigramme.reprendreEquipe(u, activite(), equipeId());
+    else if (operation === "ajouter-personne") await organigramme.ajouterPersonne(u, equipeId(), { nom: lire(f, "nom"), role: lire(f, "role"), telephone: lire(f, "telephone") });
+    else if (operation === "retirer-personne") await organigramme.retirerPersonne(u, Id.parse(lire(f, "personneId")));
+    else if (operation === "supprimer-equipe") await organigramme.supprimerEquipeDuMandat(u, equipeId());
+    else throw new ErreurSaisie("Action inconnue.");
+  });
+  if (echec) return echec;
+  if (activiteId) revalidatePath(`/activites/${activiteId}`);
+  revalidatePath("/activites/equipes");
   return { ok: true };
 }

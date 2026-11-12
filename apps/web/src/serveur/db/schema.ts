@@ -413,6 +413,60 @@ export const membreComite = pgTable(
   ],
 );
 
+export const roleEquipe = pgEnum("role_equipe", ["responsable", "adjoint", "membre"]);
+
+/**
+ * Commission ou équipe de l'organigramme d'une activité (lot 10b). Avec `activiteId` : commission propre
+ * à l'activité, importée par son PCO. Sans : équipe du mandat (« Communication »…), gérée par les PCO et
+ * reprise dans plusieurs activités par `activite_equipe`. Ses membres sont de simples fiches, sans compte.
+ */
+export const equipe = pgTable(
+  "equipe",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    mandatId: uuid("mandat_id").notNull().references(() => mandat.id),
+    activiteId: uuid("activite_id").references(() => activite.id, { onDelete: "cascade" }),
+    nom: text("nom").notNull(),
+    /** Ordre du fichier importé. */
+    ordre: integer("ordre").notNull().default(0),
+    creePar: text("cree_par").references(() => user.id, { onDelete: "set null" }),
+    ...horodatage,
+  },
+  (t) => [index("equipe_mandat_idx").on(t.mandatId), index("equipe_activite_idx").on(t.activiteId)],
+);
+
+export const membreEquipe = pgTable(
+  "membre_equipe",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    equipeId: uuid("equipe_id")
+      .notNull()
+      .references(() => equipe.id, { onDelete: "cascade" }),
+    role: roleEquipe("role").notNull().default("membre"),
+    nom: text("nom").notNull(),
+    /** Chiffres seuls, indicatif compris (lien WhatsApp) ; visible du seul comité de l'activité. */
+    telephone: text("telephone"),
+    /** Ordre du fichier importé. */
+    ordre: integer("ordre").notNull().default(0),
+  },
+  (t) => [index("membre_equipe_equipe_idx").on(t.equipeId)],
+);
+
+/** Équipes du mandat reprises dans l'organigramme d'une activité. */
+export const activiteEquipe = pgTable(
+  "activite_equipe",
+  {
+    activiteId: uuid("activite_id")
+      .notNull()
+      .references(() => activite.id, { onDelete: "cascade" }),
+    equipeId: uuid("equipe_id")
+      .notNull()
+      .references(() => equipe.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.activiteId, t.equipeId] })],
+);
+
 /** Points en suspens laissés au mandat suivant, par délégation (`cle` : identifiant de la délégation, ou « bureau »). */
 export const notePassation = pgTable(
   "note_passation",

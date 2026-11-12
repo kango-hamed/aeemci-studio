@@ -3,6 +3,8 @@ import {
   peutComposerComite,
   peutContribuerActivite,
   peutCreerDocuments,
+  peutGererOrganigramme,
+  peutVoirContacts,
   peutLireActivite,
   peutNommerPco,
   peutSupprimerActivite,
@@ -124,6 +126,12 @@ describe("droits", () => {
     // Mandat clos : tout est figé.
     expect(peutModifierActivite(sport, { ...avec("pco"), fige: true })).toBe(false);
     expect(peutNommerPco(membre("president"), { ...avec(null), fige: true })).toBe(false);
+    // Organigramme : le PCO et l'adjoint le gèrent ; seul le comité voit les numéros, pas même le bureau.
+    expect(peutGererOrganigramme(sport, avec("adjoint"))).toBe(true);
+    expect(peutGererOrganigramme(sport, avec("membre"))).toBe(false);
+    expect(peutGererOrganigramme(membre("president"), avec(null))).toBe(false);
+    expect(peutVoirContacts(sport, avec("membre"))).toBe(true);
+    expect(peutVoirContacts(membre("president"), avec(null))).toBe(false);
   });
 
   it("suppression définitive : administrateurs seulement, jamais un officiel validé, un mandat clos ou un gabarit utilisé", () => {
