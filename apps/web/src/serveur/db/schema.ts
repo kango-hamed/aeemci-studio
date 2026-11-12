@@ -15,6 +15,7 @@
  * du premier administrateur) comme par l'application.
  */
 import type { Gabarit } from "@aeemci-studio/moteur";
+import { sql } from "drizzle-orm";
 import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 const horodatage = {
@@ -386,6 +387,30 @@ export const activite = pgTable(
     ...horodatage,
   },
   (t) => [index("activite_mandat_idx").on(t.mandatId, t.date), index("activite_delegation_idx").on(t.delegationId, t.date)],
+);
+
+/** Place dans le comité d'organisation d'une activité : `pco` et `adjoint` nommés par le bureau, `membre` choisi par le PCO. */
+export const roleComite = pgEnum("role_comite", ["pco", "adjoint", "membre"]);
+
+/**
+ * Comité d'organisation d'une activité (lot 10a) : un PCO, un adjoint, des membres de toutes les
+ * délégations. Une même personne peut être PCO de plusieurs activités.
+ */
+export const membreComite = pgTable(
+  "membre_comite",
+  {
+    activiteId: uuid("activite_id").notNull().references(() => activite.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull().references(() => user.id),
+    role: roleComite("role").notNull().default("membre"),
+    ajoutePar: text("ajoute_par").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.activiteId, t.userId] }),
+    uniqueIndex("membre_comite_un_pco").on(t.activiteId).where(sql`${t.role} = 'pco'`),
+    uniqueIndex("membre_comite_un_adjoint").on(t.activiteId).where(sql`${t.role} = 'adjoint'`),
+    index("membre_comite_user_idx").on(t.userId),
+  ],
 );
 
 /** Points en suspens laissés au mandat suivant, par délégation (`cle` : identifiant de la délégation, ou « bureau »). */

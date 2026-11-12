@@ -5,13 +5,14 @@ import { CalendarDays, Lock, MapPin } from "lucide-react";
 import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { FormulaireActivite } from "@/fonctionnalites/activites/FormulaireActivite";
 import { DetacherDocument, RattacherDocument, SupprimerActivite } from "@/fonctionnalites/activites/GestionActivite";
-import { activiteLisible } from "@/fonctionnalites/activites/requetes";
+import { GestionComite } from "@/fonctionnalites/activites/GestionComite";
+import { activiteLisible, candidatsComite, comiteDe } from "@/fonctionnalites/activites/requetes";
 import { dateSaisie, heureSaisie } from "@/fonctionnalites/administratif/mise-en-page";
 import { CarteDocument } from "@/fonctionnalites/documents/CarteDocument";
 import { ChoixFichiers } from "@/fonctionnalites/documents/ChoixFichiers";
 import { libelleVisibilite } from "@/fonctionnalites/documents/partage";
 import { rechercherDocuments } from "@/fonctionnalites/documents/requetes";
-import { estBureau, peutCreerDocuments, peutModifierActivite } from "@/fonctionnalites/organisation/droits";
+import { estBureau, peutComposerComite, peutContribuerActivite, peutCreerDocuments, peutModifierActivite, peutNommerPco, peutSupprimerActivite } from "@/fonctionnalites/organisation/droits";
 import { delegationsDe, mandatCourant } from "@/fonctionnalites/organisation/requetes";
 
 export const metadata: Metadata = { title: "Activité" };
@@ -22,11 +23,16 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
   if (!l) notFound();
   const a = l.a;
   const modifiable = peutModifierActivite(u, a);
+  const contribuable = peutContribuerActivite(u, a);
+  const peutNommer = peutNommerPco(u, a);
+  const peutComposer = peutComposerComite(u, a);
   const bureau = u.estAdministrateur || estBureau(u);
-  const [documents, candidats, delegations] = await Promise.all([
+  const [documents, candidats, delegations, comite, membresDuMandat] = await Promise.all([
     rechercherDocuments(u, { activiteId: a.id }),
-    modifiable ? rechercherDocuments(u, { mandatId: a.mandatId, sansActivite: true }, 50) : [],
+    contribuable ? rechercherDocuments(u, { mandatId: a.mandatId, sansActivite: true }, 50) : [],
     modifiable && bureau ? mandatCourant().then((m) => (m ? delegationsDe(m.sectionId, m.id) : [])) : undefined,
+    comiteDe(a.id, a.mandatId),
+    peutNommer || peutComposer ? candidatsComite(a.mandatId) : [],
   ]);
 
   return (
@@ -85,7 +91,7 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
                 {documents.map((d) => (
                   <li key={d.id} className="flex flex-col gap-2">
                     <CarteDocument d={d} />
-                    {modifiable && <DetacherDocument documentId={d.id} activiteId={a.id} />}
+                    {contribuable && <DetacherDocument documentId={d.id} activiteId={a.id} />}
                   </li>
                 ))}
               </ul>
@@ -95,8 +101,9 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
           </section>
         </div>
 
-        {modifiable && (
-          <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6">
+          <GestionComite activiteId={a.id} comite={comite} candidats={membresDuMandat} peutNommer={peutNommer} peutComposer={peutComposer} />
+          {contribuable && (
             <section aria-labelledby="titre-ajouter" className="flex flex-col gap-4 rounded-l border border-trait bg-surface-relevee p-5 shadow-carte">
               <h2 id="titre-ajouter" className="titre-3 m-0">
                 Ajouter
@@ -107,7 +114,10 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
                 <div className="flex flex-col gap-2">
                   <p className="m-0 text-sm font-semibold">Lettres personnalisées, une par destinataire</p>
                   <div className="flex flex-wrap gap-2">
-                    <Link href={`/rediger?envoi=invitation&activite=${a.id}`} className="flex min-h-11 items-center rounded-m border border-vert-esatic px-4 font-semibold text-vert-esatic no-underline">
+                    <Link
+                      href={`/rediger?envoi=invitation&activite=${a.id}`}
+                      className="flex min-h-11 items-center rounded-m border border-vert-esatic px-4 font-semibold text-vert-esatic no-underline"
+                    >
                       Lettres d&apos;invitation
                     </Link>
                     <Link href={`/rediger?envoi=dons&activite=${a.id}`} className="flex min-h-11 items-center rounded-m border border-vert-esatic px-4 font-semibold text-vert-esatic no-underline">
@@ -120,6 +130,8 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
                 Une affiche ou un document officiel se crée depuis <Link href="/gabarits">Créer</Link> ou <Link href="/rediger">Rédiger</Link>, puis se rattache ici.
               </p>
             </section>
+          )}
+          {modifiable && (
             <details className="rounded-l border border-trait bg-surface-relevee p-5 shadow-carte">
               <summary className="cursor-pointer font-semibold">Modifier la fiche et le bilan</summary>
               <div className="mt-4">
@@ -140,9 +152,9 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
                 />
               </div>
             </details>
-            <SupprimerActivite id={a.id} />
-          </div>
-        )}
+          )}
+          {peutSupprimerActivite(u, a) && <SupprimerActivite id={a.id} />}
+        </div>
       </div>
     </>
   );

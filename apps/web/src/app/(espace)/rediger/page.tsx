@@ -8,7 +8,7 @@ import { signatureDe } from "@/fonctionnalites/administratif/circuit";
 import { texteDuModele, type ModeleEnvoi } from "@/fonctionnalites/administratif/envois";
 import { dateSaisie, heureSaisie } from "@/fonctionnalites/administratif/mise-en-page";
 import { activiteLisible } from "@/fonctionnalites/activites/requetes";
-import { peutCreerDocuments, peutModifierActivite } from "@/fonctionnalites/organisation/droits";
+import { peutContribuerActivite, peutCreerDocuments } from "@/fonctionnalites/organisation/droits";
 import { mandatCourant } from "@/fonctionnalites/organisation/requetes";
 import { MESSAGE_SANS_ROLE } from "@/serveur/reponses";
 
@@ -28,7 +28,7 @@ export default async function PageRediger({ searchParams }: { searchParams: Prom
 
   // Envoi créé depuis une activité : rattaché à elle, et le modèle reprend son titre, sa date et son lieu.
   const activite = modele && p.activite && /^[0-9a-f-]{36}$/.test(p.activite) ? await activiteLisible(p.activite, u) : null;
-  const rattachable = activite && peutModifierActivite(u, activite.a) ? activite.a : null;
+  const rattachable = activite && peutContribuerActivite(u, activite.a) ? activite.a : null;
   const section = modele ? ((await mandatCourant())?.section ?? "") : "";
   const contenuModele =
     modele &&

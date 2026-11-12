@@ -12,6 +12,9 @@
  *   mandat en cours les lit tous ; les membres d'une délégation lisent ceux de leur délégation.
  * - Activités : tout membre avec un rôle en crée pour sa délégation ; l'auteur, le responsable et les
  *   sous-responsables de la délégation et le bureau les modifient. Elles se lisent selon leur visibilité, comme un document publié.
+ *   Comité d'organisation (lot 10a) : le bureau nomme le PCO et son adjoint, qui gèrent l'activité comme son
+ *   auteur ; le PCO (et le bureau) choisit les membres du comité, qui lisent l'activité et y ajoutent documents,
+ *   photos et lettres. La suppression reste à l'auteur, aux responsables de la délégation et au bureau.
  * - Documents administratifs : le président valide et signe ; pendant l'intérim, le vice-président qu'il
  *   a désigné aussi (un seul). Un administrateur de la plateforme ne valide pas : il n'est pas signataire.
  *
@@ -90,23 +93,53 @@ export function peutGererCachet(u: Acteur): boolean {
   return u.estAdministrateur || u.affectation?.role === "president";
 }
 
+/** Place dans le comité d'organisation d'une activité. */
+export type RoleComite = "pco" | "adjoint" | "membre";
+
 export interface RattachementActivite {
   auteurId: string;
   delegationId: string | null;
   visibilite: Visibilite;
   fige?: boolean;
+  /** Place de l'acteur dans le comité de cette activité (`null` ou absent : il n'en fait pas partie). */
+  comite?: RoleComite | null;
 }
 
-/** Une activité se lit comme un document publié de même visibilité. */
+/** Une activité se lit comme un document publié de même visibilité ; les membres de son comité la lisent toujours. */
 export function peutLireActivite(u: Acteur, a: RattachementActivite): boolean {
-  return peutLireDocument(u, { ...a, statut: "publie" });
+  return Boolean(a.comite) || peutLireDocument(u, { ...a, statut: "publie" });
 }
 
-/** Fiche, bilan, documents et photos d'une activité : l'auteur, le responsable et les sous-responsables de sa délégation, le bureau. */
-export function peutModifierActivite(u: Acteur, a: Pick<RattachementActivite, "auteurId" | "delegationId" | "fige">): boolean {
-  if (a.fige) return false;
+/** L'auteur, le responsable et les sous-responsables de la délégation de l'activité, le bureau. */
+function dirigeActivite(u: Acteur, a: Pick<RattachementActivite, "auteurId" | "delegationId">): boolean {
   if (aLaMain(u, a)) return true;
   return dirigeDelegation(u.affectation?.role) && a.delegationId !== null && u.affectation!.delegationId === a.delegationId;
+}
+
+/** Fiche et bilan d'une activité : ceux qui la dirigent, et son PCO et son adjoint. */
+export function peutModifierActivite(u: Acteur, a: Pick<RattachementActivite, "auteurId" | "delegationId" | "fige" | "comite">): boolean {
+  if (a.fige) return false;
+  return a.comite === "pco" || a.comite === "adjoint" || dirigeActivite(u, a);
+}
+
+/** Documents, photos et lettres rattachés à une activité : ceux qui la modifient et tout son comité. */
+export function peutContribuerActivite(u: Acteur, a: Pick<RattachementActivite, "auteurId" | "delegationId" | "fige" | "comite">): boolean {
+  return !a.fige && (Boolean(a.comite) || peutModifierActivite(u, a));
+}
+
+/** Supprimer la fiche : son auteur, les responsables de sa délégation et le bureau (pas le comité). */
+export function peutSupprimerActivite(u: Acteur, a: Pick<RattachementActivite, "auteurId" | "delegationId" | "fige">): boolean {
+  return !a.fige && dirigeActivite(u, a);
+}
+
+/** Nommer, remplacer ou retirer le PCO et son adjoint : le bureau exécutif et les administrateurs. */
+export function peutNommerPco(u: Acteur, a: Pick<RattachementActivite, "fige">): boolean {
+  return !a.fige && (u.estAdministrateur || estBureau(u));
+}
+
+/** Ajouter ou retirer des membres du comité : le PCO, le bureau et les administrateurs. */
+export function peutComposerComite(u: Acteur, a: Pick<RattachementActivite, "fige" | "comite">): boolean {
+  return !a.fige && (a.comite === "pco" || u.estAdministrateur || estBureau(u));
 }
 
 /** Clore le mandat et ouvrir le suivant : le président et les administrateurs. */

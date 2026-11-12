@@ -22,6 +22,7 @@ Date : 30/10/2026. **Plan validé par Kango le 30/10/2026**, puis **révisé le 
 | **6** | Outillage des gabarits dans la plateforme | L'équipe communication publie ses gabarits sans outil local | S | 1 (s'enrichit avec 2) |
 | **7** | Lettres en nombre (invitations, demandes de dons) | Une lettre personnalisée, numérotée et signée par destinataire, validée une seule fois | S | 4, 5 |
 | **9** | Papier à en-tête, modèles de texte, devis d'activité | Des lettres au format de la section ; un devis joint à chaque demande de dons | M | 4, 7 |
+| **10** | Gestion des activités (V3) : comité d'organisation, préparation, budget et dons | Le PCO pilote son activité avec son comité, du premier devis au bilan | M | 5, 7, 9 |
 
 Ordre conseillé : 1 → 2 → 3 → 4 → 5, le lot 6 en parallèle dès que le lot 1 est livré. Tailles relatives (S < M < L), sans durée : l'équipe et sa disponibilité ne sont pas encore connues.
 
@@ -139,6 +140,18 @@ D'après les lettres aux donateurs du Ramadan (lettre, puis devis, pour chaque d
 - 9a (fait le 02/11/2026) : en-tête et pied de page officiels réglables dans Organisation (coordonnées de la section, rattachement), pied répété sur chaque page avec numéro et pagination ; lettre enrichie (salutation, citations, pièces jointes). Import du bureau depuis un fichier CSV (délégations et membres en une fois, liens d'activation à transmettre). Création d'affiches par lot depuis un fichier CSV et les photos (contrôle, aperçu ligne par ligne, ZIP du lot).
 - 9b : modèles de texte par type de document, enregistrés et versionnés (une demande de dons, une invitation…), pour repartir d'un texte validé.
 - 9c : type « Devis » rattaché à une activité : lignes (désignation, quantité, prix unitaire), totaux calculés, versions ; joint en annexe à chaque lettre d'un envoi.
+
+---
+
+## Lot 10 · Gestion des activités (V3)
+
+Une activité est portée par un comité d'organisation, pas seulement par une délégation. Décisions : doc 02 (12/11/2026).
+
+- **10a · Comité d'organisation** : PCO et PCO adjoint nommés par le bureau, comité choisi par le PCO parmi les membres du mandat, toutes délégations ; le PCO et son adjoint gèrent l'activité, le comité y contribue (documents, photos, lettres) ; « Mes comités » dans la liste des activités.
+- 10b · Préparation : tâches avec responsable et échéance, avancement sur la fiche, rappels.
+- 10c · Budget et dons : devis rattaché à l'activité (reprend 9c), suivi des réponses aux lettres et des dons reçus.
+- Écarté : envoi des lettres par e-mail depuis la plateforme.
+- Ensuite : notification à la personne nommée PCO ou ajoutée à un comité.
 
 ---
 

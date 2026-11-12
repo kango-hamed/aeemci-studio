@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  peutComposerComite,
+  peutContribuerActivite,
   peutCreerDocuments,
+  peutLireActivite,
+  peutNommerPco,
+  peutSupprimerActivite,
   peutEcrirePassation,
   peutGererOrganisation,
   peutLireDocument,
@@ -94,6 +99,31 @@ describe("droits", () => {
     expect(peutModifierActivite(membre("membre", "culture"), activite)).toBe(false);
     expect(peutEcrirePassation(membre("sous_responsable_delegation", "culture"), "culture")).toBe(true);
     expect(peutEcrirePassation(membre("sous_responsable_delegation", "culture"), null)).toBe(false);
+  });
+
+  it("comité : le bureau nomme le PCO, le PCO compose, le comité contribue sans supprimer", () => {
+    const activite = { auteurId: "autre", delegationId: "com", visibilite: "delegation" as const, fige: false };
+    const avec = (comite: "pco" | "adjoint" | "membre" | null) => ({ ...activite, comite });
+    const sport = membre("membre", "sport");
+    // Hors de la délégation, le comité lit quand même l'activité.
+    expect(peutLireActivite(sport, avec(null))).toBe(false);
+    expect(peutLireActivite(sport, avec("membre"))).toBe(true);
+    expect(peutModifierActivite(sport, avec("pco"))).toBe(true);
+    expect(peutModifierActivite(sport, avec("adjoint"))).toBe(true);
+    expect(peutModifierActivite(sport, avec("membre"))).toBe(false);
+    expect(peutContribuerActivite(sport, avec("membre"))).toBe(true);
+    expect(peutContribuerActivite(sport, avec(null))).toBe(false);
+    expect(peutSupprimerActivite(sport, avec("pco"))).toBe(false);
+    expect(peutSupprimerActivite(membre("president"), avec(null))).toBe(true);
+    expect(peutComposerComite(sport, avec("pco"))).toBe(true);
+    expect(peutComposerComite(sport, avec("adjoint"))).toBe(false);
+    expect(peutComposerComite(membre("vice_president"), avec(null))).toBe(true);
+    expect(peutNommerPco(sport, avec("pco"))).toBe(false);
+    expect(peutNommerPco(membre("secretaire_general"), avec(null))).toBe(true);
+    expect(peutNommerPco(membre("responsable_delegation", "com"), avec(null))).toBe(false);
+    // Mandat clos : tout est figé.
+    expect(peutModifierActivite(sport, { ...avec("pco"), fige: true })).toBe(false);
+    expect(peutNommerPco(membre("president"), { ...avec(null), fige: true })).toBe(false);
   });
 
   it("suppression définitive : administrateurs seulement, jamais un officiel validé, un mandat clos ou un gabarit utilisé", () => {

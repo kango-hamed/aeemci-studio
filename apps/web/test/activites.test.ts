@@ -118,6 +118,51 @@ describe.skipIf(!url)("activités, passation et archives (Postgres + Chromium)",
     expect((await m.reqActivites.rechercherActivites(com, { texte: "participants" })).map((x) => x.titre)).toEqual(["Conférence de rentrée"]);
   });
 
+  it("comité : le bureau nomme le PCO et l'adjoint, le PCO compose, le comité contribue", async () => {
+    const [r] = await m.reqActivites.rechercherActivites(president, { texte: "réunion interne" });
+    const id = r!.id;
+    const sport = await acteur((await m.gestion.ajouterMembre(president, { nom: "sport", email: "sport@esatic.edu.ci", role: "membre", delegationId: delegationCulture })).userId);
+    const roles = async () => (await m.reqActivites.comiteDe(id, (await m.requetes.mandatCourant())!.id)).map((c) => `${c.nom}:${c.role}`);
+
+    // Seul le bureau nomme ; le PCO peut venir d'une autre délégation.
+    await expect(m.activites.nommerAuComite(responsableCom, id, "pco", culture.id)).rejects.toThrow(/bureau/);
+    expect(await m.reqActivites.activiteLisible(id, culture)).toBeNull();
+    await m.activites.nommerAuComite(president, id, "pco", culture.id);
+    await m.activites.nommerAuComite(vice, id, "adjoint", vice.id);
+    expect((await m.reqActivites.activiteLisible(id, culture))!.a.comite).toBe("pco");
+    await m.activites.modifierActivite(culture, id, { titre: "Réunion interne com", date: "2026-11-02", visibilite: "delegation" });
+
+    // Le PCO compose son comité ; un membre du comité lit et ajoute des photos, sans modifier ni supprimer.
+    await expect(m.activites.ajouterAuComite(sport, id, sport.id)).rejects.toThrow(/introuvable/);
+    await m.activites.ajouterAuComite(culture, id, sport.id);
+    await expect(m.activites.ajouterAuComite(culture, id, sport.id)).rejects.toThrow(/déjà/);
+    expect(await m.activites.activitePourDepot(sport, id)).toMatchObject({ visibilite: "delegation", delegationId: communication });
+    await expect(m.activites.modifierActivite(sport, id, { titre: "X", date: "2026-11-02" })).rejects.toThrow(/Seuls/);
+    await expect(m.activites.supprimerActivite(culture, id)).rejects.toThrow(/Seuls/);
+    expect(await roles()).toEqual(["culture:pco", "vice:adjoint", "sport:membre"]);
+
+    // Le PCO ne nomme ni ne retire l'adjoint ; il retire ses membres.
+    await expect(m.activites.nommerAuComite(culture, id, "adjoint", sport.id)).rejects.toThrow(/bureau/);
+    await expect(m.activites.retirerDuComite(culture, id, vice.id)).rejects.toThrow(/bureau/);
+    await m.activites.retirerDuComite(culture, id, sport.id);
+    expect(await m.reqActivites.activiteLisible(id, sport)).toBeNull();
+
+    // Remplacé, l'ancien PCO reste membre du comité ; un seul PCO par activité.
+    await m.activites.nommerAuComite(president, id, "pco", sport.id);
+    expect(await roles()).toEqual(["sport:pco", "vice:adjoint", "culture:membre"]);
+    expect(await m.activites.modifierActivite(culture, id, { titre: "X", date: "2026-11-02" }).catch((e: Error) => e.message)).toMatch(/Seuls/);
+
+    // Une même personne peut être PCO de deux activités ; « Mes comités » les regroupe.
+    const [atelier] = await m.reqActivites.rechercherActivites(president, { texte: "atelier" });
+    await m.activites.nommerAuComite(president, atelier!.id, "pco", sport.id);
+    const miens = await m.reqActivites.rechercherActivites(sport, { mesComites: true });
+    expect(miens.map((a) => [a.titre, a.monRole, a.pco]).sort()).toEqual([
+      ["Atelier affiches", "pco", "sport"],
+      ["Réunion interne com", "pco", "sport"],
+    ]);
+    await expect(m.activites.nommerAuComite(president, id, "pco", "inconnu")).rejects.toThrow(/mandat/);
+  });
+
   it("passation : points en suspens par le responsable, dossiers selon les droits, PDF", async () => {
     const mandat = (await m.requetes.mandatCourant())!;
     await m.passation.ecrireNote(responsableCom, communication, "Relancer l'imprimeur pour la facture.");

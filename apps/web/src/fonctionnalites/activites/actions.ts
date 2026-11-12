@@ -62,6 +62,26 @@ export async function supprimerActivite(_e: EtatActivite, f: FormData): Promise<
   redirect("/activites");
 }
 
+/** Comité d'organisation : `operation` = pco | adjoint (nommer, `userId` vide pour personne), ajouter, retirer. */
+export async function modifierComite(_e: EtatActivite, f: FormData): Promise<EtatActivite> {
+  const u = await exigerUtilisateur();
+  const activiteId = lire(f, "activiteId");
+  const userId = lire(f, "userId").slice(0, 64);
+  const operation = lire(f, "operation");
+  const echec = await executer(async () => {
+    const id = Id.parse(activiteId);
+    if (operation === "pco" || operation === "adjoint") await gestion.nommerAuComite(u, id, operation, userId || null);
+    else if (!userId) throw new ErreurSaisie("Choisis un membre.");
+    else if (operation === "ajouter") await gestion.ajouterAuComite(u, id, userId);
+    else if (operation === "retirer") await gestion.retirerDuComite(u, id, userId);
+    else throw new ErreurSaisie("Action inconnue.");
+  });
+  if (echec) return echec;
+  revalidatePath(`/activites/${activiteId}`);
+  revalidatePath("/activites");
+  return { ok: true };
+}
+
 /** Rattache un document à l'activité (`activiteId`), ou le détache (`activiteId` vide). */
 export async function rattacherDocument(_e: EtatActivite, f: FormData): Promise<EtatActivite> {
   const u = await exigerUtilisateur();

@@ -31,7 +31,8 @@ export default async function PageActivites({ searchParams }: { searchParams: Pr
   const voitTout = u.estAdministrateur || estBureau(u);
   const { delegation } = await searchParams;
   const delegationId = delegation && /^[0-9a-f-]{36}$/.test(delegation) ? delegation : undefined;
-  const [avenir, passees, delegations] = await Promise.all([
+  const [mesComites, avenir, passees, delegations] = await Promise.all([
+    m ? rechercherActivites(u, { mandatId: m.id, mesComites: true }) : [],
     m ? rechercherActivites(u, { mandatId: m.id, delegationId, quand: "avenir" }) : [],
     m ? rechercherActivites(u, { mandatId: m.id, delegationId, quand: "passees" }) : [],
     m && voitTout ? delegationsDe(m.sectionId, m.id) : [],
@@ -72,6 +73,14 @@ export default async function PageActivites({ searchParams }: { searchParams: Pr
             Filtrer
           </button>
         </form>
+      )}
+      {mesComites.length > 0 && (
+        <section aria-labelledby="titre-comites" className="flex flex-col gap-4">
+          <h2 id="titre-comites" className="titre-2 m-0">
+            Mes comités
+          </h2>
+          <Grille activites={mesComites} passees={false} vide="" />
+        </section>
       )}
       <section aria-labelledby="titre-avenir" className="flex flex-col gap-4">
         <h2 id="titre-avenir" className="titre-2 m-0">
