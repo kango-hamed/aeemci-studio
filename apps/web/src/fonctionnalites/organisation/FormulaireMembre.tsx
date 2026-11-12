@@ -25,13 +25,24 @@ export function FormulaireMembre({ delegations }: { delegations: OptionDelegatio
             </label>
             <input id="ajout-nom" name="nom" required autoComplete="off" className={champ} />
           </div>
+        </div>
+        <div className="flex flex-wrap gap-4">
           <div className="flex min-w-[220px] flex-1 flex-col gap-1.5">
             <label htmlFor="ajout-email" className="text-sm font-semibold">
               Adresse e-mail
             </label>
-            <input id="ajout-email" name="email" type="email" required autoComplete="off" placeholder="prenom.nom@esatic.edu.ci" className={champ} />
+            <input id="ajout-email" name="email" type="email" autoComplete="off" placeholder="prenom.nom@esatic.edu.ci" aria-describedby="aide-contact" className={champ} />
+          </div>
+          <div className="flex min-w-[200px] flex-1 flex-col gap-1.5">
+            <label htmlFor="ajout-telephone" className="text-sm font-semibold">
+              Numéro WhatsApp
+            </label>
+            <input id="ajout-telephone" name="telephone" type="tel" inputMode="tel" autoComplete="off" placeholder="07 00 00 00 00" aria-describedby="aide-contact" className={champ} />
           </div>
         </div>
+        <p id="aide-contact" className="m-0 text-sm text-encre-douce">
+          L&apos;un ou l&apos;autre suffit. Avec le numéro, le bouton WhatsApp ouvre directement sa discussion ; sans e-mail, il donnera le sien en activant son compte.
+        </p>
         <div className="flex flex-wrap gap-4">
           <ChampsPoste prefixe="ajout" delegations={delegations} />
         </div>
@@ -45,7 +56,7 @@ export function FormulaireMembre({ delegations }: { delegations: OptionDelegatio
           {enCours ? "Ajout…" : "Ajouter au mandat"}
         </button>
       </form>
-      {etat.ok && etat.jeton && <LienActivation jeton={etat.jeton} pour={etat.pour} />}
+      {etat.ok && etat.jeton && <LienActivation jeton={etat.jeton} pour={etat.pour} telephone={etat.telephone} />}
       {etat.ok && !etat.jeton && (
         <p role="status" className="m-0 rounded-m bg-fond-succes p-3 text-sm">
           {etat.pour} a retrouvé un rôle dans le mandat. Son compte est déjà actif : il se connecte avec son mot de passe habituel.

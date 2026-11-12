@@ -255,6 +255,15 @@ describe.skipIf(!url)("organisation (Postgres)", () => {
     expect((await m.requetes.membresDuMandat(mandatId)).find((x) => x.nom === "Sanata Kaboré")).toMatchObject({ email: "sanata@esatic.edu.ci", compte: "actif" });
   });
 
+  it("ajoute un membre avec son seul numéro, et le retrouve par ce numéro", async () => {
+    await expect(m.gestion.ajouterMembre(president, { nom: "Sans Contact", email: "", telephone: null, role: "membre", delegationId: culture })).rejects.toThrow(/numéro WhatsApp/);
+    const r = await m.gestion.ajouterMembre(president, { nom: "Adama Gueye", email: "", telephone: "2250703361815", role: "membre", delegationId: culture });
+    expect(r.jeton).toBeTruthy();
+    expect(await m.invitations.lienValide(r.jeton!)).toMatchObject({ nom: "Adama Gueye", emailASaisir: true });
+    expect((await m.requetes.membresDuMandat(mandatId)).find((x) => x.userId === r.userId)).toMatchObject({ telephone: "2250703361815" });
+    await expect(m.gestion.ajouterMembre(president, { nom: "Adama Gueye", email: "", telephone: "2250703361815", role: "membre", delegationId: culture })).rejects.toThrow(/déjà dans le mandat/);
+  });
+
   it("retiré du mandat, un membre garde son compte mais perd son rôle", async () => {
     const r = await m.gestion.ajouterMembre(president, { nom: "Ibrahim Coulibaly", email: "ibrahim@esatic.edu.ci", role: "membre", delegationId: culture });
     const aff = (await m.requetes.membresDuMandat(mandatId)).find((x) => x.userId === r.userId)!;

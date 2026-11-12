@@ -6,6 +6,7 @@ import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import * as gestion from "./gestion";
 import { ErreurImport, lireImport } from "./import-membres";
 import { ROLES } from "./roles";
+import { numeroPropre } from "./telephone";
 
 /** Résultat renvoyé aux formulaires : un message d'erreur, ou le lien à transmettre au membre. */
 export interface EtatAction {
@@ -15,6 +16,8 @@ export interface EtatAction {
   jeton?: string;
   /** Nom du membre concerné par le lien. */
   pour?: string;
+  /** Son numéro : le bouton WhatsApp ouvre alors sa discussion. */
+  telephone?: string | null;
 }
 
 const Poste = z.object({
@@ -24,7 +27,8 @@ const Poste = z.object({
 
 const NouveauMembre = Poste.extend({
   nom: z.string().trim().min(2, "Saisis le nom du membre.").max(100),
-  email: z.string().trim().toLowerCase().pipe(z.email("Saisis une adresse e-mail valide.")),
+  email: z.union([z.literal(""), z.string().trim().toLowerCase().pipe(z.email("Saisis une adresse e-mail valide."))]),
+  telephone: z.string().trim().max(40),
 });
 
 const Id = z.string().min(1).max(64);
@@ -52,9 +56,17 @@ async function executer(op: (acteur: Awaited<ReturnType<typeof exigerUtilisateur
 
 export async function ajouterMembre(_e: EtatAction, f: FormData): Promise<EtatAction> {
   return executer(async (acteur) => {
-    const n = NouveauMembre.parse({ nom: texte(f, "nom"), email: texte(f, "email"), role: texte(f, "role"), delegationId: delegationSaisie(f) });
-    const r = await gestion.ajouterMembre(acteur, n as gestion.NouveauMembre);
-    return { jeton: r.jeton ?? undefined, pour: n.nom };
+    const n = NouveauMembre.parse({
+      nom: texte(f, "nom"),
+      email: texte(f, "email").trim(),
+      telephone: texte(f, "telephone"),
+      role: texte(f, "role"),
+      delegationId: delegationSaisie(f),
+    });
+    const telephone = n.telephone ? numeroPropre(n.telephone) : null;
+    if (n.telephone && !telephone) return { erreur: "Numéro invalide : dix chiffres, ou l'indicatif précédé de + (+225 07 00 00 00 00)." };
+    const r = await gestion.ajouterMembre(acteur, { ...(n as gestion.NouveauMembre), telephone });
+    return { jeton: r.jeton ?? undefined, pour: n.nom, telephone };
   });
 }
 

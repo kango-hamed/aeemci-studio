@@ -98,21 +98,34 @@ function verifierCible(acteur: Acteur, a: { userId: string; role: Role }) {
 
 export interface NouveauMembre extends Poste {
   nom: string;
+  /** Vide si le membre n'a que son numéro : il donnera son e-mail en activant son compte. */
   email: string;
+  /** Forme enregistrée (`numeroPropre`), ou `null`. Le lien d'activation part alors sur WhatsApp. */
+  telephone?: string | null;
 }
 
 /**
- * Ajoute un membre au mandat en cours : crée son compte s'il n'existe pas, ou réaffecte un ancien membre.
- * `jeton` : lien d'activation à lui transmettre, si son compte n'a pas encore de mot de passe.
+ * Ajoute un membre au mandat en cours : crée son compte s'il n'existe pas, ou réaffecte un ancien membre
+ * (retrouvé par son e-mail, ou à défaut par son numéro). `jeton` : lien d'activation à lui transmettre,
+ * si son compte n'a pas encore de mot de passe.
  */
 export async function ajouterMembre(acteur: Acteur, n: NouveauMembre): Promise<{ userId: string; jeton: string | null }> {
   const m = await contexte(acteur);
-  const delegationId = await verifierPoste(acteur, m, n);
   const email = n.email.trim().toLowerCase();
-  const [existant] = await db.select().from(schema.user).where(eq(schema.user.email, email));
+  const telephone = n.telephone || null;
+  if (!email && !telephone) throw new ErreurOrganisation("Saisis l'adresse e-mail du membre, ou à défaut son numéro WhatsApp.");
+  const delegationId = await verifierPoste(acteur, m, n);
+  let existant: typeof schema.user.$inferSelect | undefined;
+  if (email) [existant] = await db.select().from(schema.user).where(eq(schema.user.email, email));
+  else {
+    const memeNumero = await db.select().from(schema.user).where(eq(schema.user.telephone, telephone!));
+    if (memeNumero.length > 1) throw new ErreurOrganisation("Plusieurs comptes portent ce numéro : saisis l'e-mail du membre.");
+    existant = memeNumero[0];
+  }
   let userId: string;
   if (existant) {
     userId = existant.id;
+    if (telephone && !existant.telephone) await db.update(schema.user).set({ telephone }).where(eq(schema.user.id, userId));
     const [deja] = await db
       .select({ id: schema.affectation.id })
       .from(schema.affectation)
@@ -122,7 +135,7 @@ export async function ajouterMembre(acteur: Acteur, n: NouveauMembre): Promise<{
   } else {
     userId = randomUUID();
     await db.transaction(async (tx) => {
-      await tx.insert(schema.user).values({ id: userId, name: n.nom.trim(), email });
+      await tx.insert(schema.user).values({ id: userId, name: n.nom.trim(), email: email || emailProvisoire(userId), telephone });
       await tx.insert(schema.affectation).values({ mandatId: m.id, userId, role: n.role, delegationId });
     });
   }
