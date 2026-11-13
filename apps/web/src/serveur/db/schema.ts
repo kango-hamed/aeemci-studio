@@ -15,6 +15,7 @@
  * du premier administrateur) comme par l'application.
  */
 import type { Gabarit } from "@aeemci-studio/moteur";
+import type { ResultatsTheDebat } from "@/fonctionnalites/activites/the-debat-bilan";
 import { sql } from "drizzle-orm";
 import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
@@ -384,6 +385,10 @@ export const activite = pgTable(
     visibilite: visibiliteDocument("visibilite").notNull().default("section"),
     /** Rappel de la veille envoyé : il ne part qu'une fois, même si la date change ensuite. */
     rappelEnvoyeLe: timestamp("rappel_envoye_le", { withTimezone: true }),
+    /** Édition liée sur la plateforme Thé Débat, et son bilan récupéré (chiffres, thèmes, débatteurs ; aucun numéro). */
+    debatEditionId: text("debat_edition_id"),
+    debatResultats: jsonb("debat_resultats").$type<ResultatsTheDebat>(),
+    debatRecupereLe: timestamp("debat_recupere_le", { withTimezone: true }),
     ...horodatage,
   },
   (t) => [index("activite_mandat_idx").on(t.mandatId, t.date), index("activite_delegation_idx").on(t.delegationId, t.date)],

@@ -84,7 +84,7 @@ export async function creerActivite(u: Acteur, s: SaisieActivite): Promise<{ id:
   return { id: a!.id };
 }
 
-async function activiteModifiable(u: Acteur, id: string) {
+export async function activiteModifiable(u: Acteur, id: string) {
   const l = await activiteLisible(id, u);
   if (!l) throw new ErreurSaisie("Activité introuvable.");
   if (l.a.fige) throw new ErreurSaisie("Cette activité appartient à un mandat clos : elle est en lecture seule.");

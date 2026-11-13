@@ -7,6 +7,7 @@ import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { ErreurSaisie } from "@/fonctionnalites/documents/creer";
 import * as gestion from "./gestion";
 import * as organigramme from "./organigramme";
+import * as theDebat from "./the-debat";
 import { ErreurOrganigramme, lireOrganigramme } from "./organigramme-csv";
 import { mandatCourant } from "@/fonctionnalites/organisation/requetes";
 
@@ -151,4 +152,21 @@ export async function modifierOrganigramme(_e: EtatActivite, f: FormData): Promi
   if (activiteId) revalidatePath(`/activites/${activiteId}`);
   revalidatePath("/activites/equipes");
   return { ok: true };
+}
+
+/** Thé Débat : `operation` = lier (`editionId`, vide pour défaire), recuperer, inserer (dans le bilan). */
+export async function modifierTheDebat(_e: EtatActivite, f: FormData): Promise<EtatActivite> {
+  const u = await exigerUtilisateur();
+  const activiteId = lire(f, "activiteId");
+  const operation = lire(f, "operation");
+  const echec = await executer(async () => {
+    const id = Id.parse(activiteId);
+    if (operation === "lier") await theDebat.lierEdition(u, id, lire(f, "editionId") || null);
+    else if (operation === "recuperer") await theDebat.recupererResultats(u, id);
+    else if (operation === "inserer") await theDebat.insererDansBilan(u, id);
+    else throw new ErreurSaisie("Action inconnue.");
+  });
+  if (echec) return echec;
+  revalidatePath(`/activites/${activiteId}`);
+  return { ok: true, message: operation === "inserer" ? "Texte ajouté au bilan." : operation === "recuperer" ? "Résultats mis à jour." : undefined };
 }

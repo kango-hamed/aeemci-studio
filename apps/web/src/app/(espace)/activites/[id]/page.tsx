@@ -6,6 +6,8 @@ import { exigerUtilisateur } from "@/fonctionnalites/authentification/session";
 import { FormulaireActivite } from "@/fonctionnalites/activites/FormulaireActivite";
 import { DetacherDocument, RattacherDocument, SupprimerActivite } from "@/fonctionnalites/activites/GestionActivite";
 import { GestionComite } from "@/fonctionnalites/activites/GestionComite";
+import { LiaisonTheDebat } from "@/fonctionnalites/activites/LiaisonTheDebat";
+import { editionsTheDebat, theDebatConfigure } from "@/fonctionnalites/activites/the-debat";
 import { Organigramme } from "@/fonctionnalites/activites/OrganigrammeActivite";
 import { nomsEquipesDuMandat, organigrammeDe } from "@/fonctionnalites/activites/organigramme";
 import { activiteLisible, candidatsComite, comiteDe } from "@/fonctionnalites/activites/requetes";
@@ -38,6 +40,8 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
     peutNommer || peutComposer ? candidatsComite(a.mandatId) : [],
   ]);
   const [organigramme, equipesDuMandat] = await Promise.all([organigrammeDe(u, a), gererOrganigramme ? nomsEquipesDuMandat(a.mandatId) : []]);
+  const liaisonDebat = modifiable && !a.fige && theDebatConfigure();
+  const editions = liaisonDebat && !a.debatResultats ? await editionsTheDebat().then((liste) => ({ liste, erreur: null }), (e: Error) => ({ liste: null, erreur: e.message })) : null;
   const equipesDisponibles = equipesDuMandat.filter((q) => !organigramme.equipes.some((x) => x.id === q.id));
 
   return (
@@ -87,6 +91,17 @@ export default async function PageActivite({ params }: { params: Promise<{ id: s
               {a.bilan ?? (a.date < new Date().toISOString().slice(0, 10) ? "Bilan à rédiger : il entre dans le dossier de passation." : "Le bilan se rédige après l'activité.")}
             </p>
           </section>
+          {(a.debatResultats || liaisonDebat) && (
+            <LiaisonTheDebat
+              activiteId={a.id}
+              resultats={a.debatResultats}
+              recupereLe={a.debatRecupereLe?.toISOString() ?? null}
+              gerer={liaisonDebat}
+              urlSite={process.env.THE_DEBAT_URL?.trim() || null}
+              editions={editions?.liste ?? null}
+              erreurEditions={editions?.erreur ?? null}
+            />
+          )}
           <Organigramme activiteId={a.id} o={organigramme} gerer={gererOrganigramme} equipesDisponibles={equipesDisponibles} />
           <section aria-labelledby="titre-documents" className="flex flex-col gap-4">
             <h2 id="titre-documents" className="titre-2 m-0">

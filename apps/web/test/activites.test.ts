@@ -8,7 +8,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import pg from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { migrer } from "../scripts/migrer.ts";
 import { creerAdmin } from "../scripts/creer-admin.ts";
 import type { Acteur } from "@/fonctionnalites/organisation/droits";
@@ -19,6 +19,7 @@ const PDF = Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
 describe.skipIf(!url)("activités, passation et archives (Postgres + Chromium)", () => {
   let m: {
     activites: typeof import("@/fonctionnalites/activites/gestion");
+    theDebat: typeof import("@/fonctionnalites/activites/the-debat");
     organigramme: typeof import("@/fonctionnalites/activites/organigramme");
     pdfComite: typeof import("@/fonctionnalites/activites/organigramme-pdf");
     reqActivites: typeof import("@/fonctionnalites/activites/requetes");
@@ -59,6 +60,7 @@ describe.skipIf(!url)("activités, passation et archives (Postgres + Chromium)",
     process.env.STOCKAGE_DOSSIER = dossierStockage;
     m = {
       activites: await import("@/fonctionnalites/activites/gestion"),
+      theDebat: await import("@/fonctionnalites/activites/the-debat"),
       organigramme: await import("@/fonctionnalites/activites/organigramme"),
       pdfComite: await import("@/fonctionnalites/activites/organigramme-pdf"),
       reqActivites: await import("@/fonctionnalites/activites/requetes"),
@@ -231,6 +233,61 @@ describe.skipIf(!url)("activités, passation et archives (Postgres + Chromium)",
     await m.organigramme.retirerEquipe(sport, id, communication!.id);
     expect((await lire(sport)).equipes.map((q) => q.nom)).toEqual(["Sécurité"]);
     expect((await m.organigramme.equipesDuMandat(sport, mandatId))[0]!.activites.map((a) => a.titre)).toEqual(["Atelier affiches"]);
+  });
+
+  it("Thé Débat : l'activité se lie à une édition, ses résultats se récupèrent et se reportent dans le bilan", async () => {
+    const EDITION = "8d3c2f1e-0000-4000-8000-000000000001";
+    const resultats = {
+      edition: { id: EDITION, titre: "Thé Débat 2026", date: null, lieu: null, statut: "terminee" },
+      vote: { votants: 87, themes: [{ titre: "Réseaux sociaux et foi", voix: 52, retenu: true }] },
+      debatteurs: [{ theme: "Réseaux sociaux et foi", camp: "pour", nom: "Awa Koné", filiere: null }],
+      inscriptions: { validees: 1, listeAttente: 0 },
+      presence: { presents: 142, parQr: 142, parRecherche: 0, ajoutesSurPlace: 0, debatteursPresents: 1 },
+      genereLe: "2026-12-07T20:00:00.000Z",
+    };
+    const appels: { url: string; cle: string | null }[] = [];
+    let statut = 200;
+    vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+      appels.push({ url, cle: new Headers(init?.headers).get("authorization") });
+      return new Response(JSON.stringify(url.includes("edition=") ? resultats : { editions: [{ id: EDITION, titre: "Thé Débat 2026", date: null, statut: "terminee" }] }), { status: statut });
+    });
+    const [r] = await m.reqActivites.rechercherActivites(president, { texte: "réunion interne" });
+    const id = r!.id;
+    try {
+      // Sans configuration : la liaison est refusée avec un message clair.
+      delete process.env.THE_DEBAT_URL;
+      expect(m.theDebat.theDebatConfigure()).toBe(false);
+      await expect(m.theDebat.lierEdition(sport, id, EDITION)).rejects.toThrow(/configurée/);
+      process.env.THE_DEBAT_URL = "https://the-debat.test/";
+      process.env.THE_DEBAT_CLE = "c".repeat(40);
+
+      expect(await m.theDebat.editionsTheDebat()).toHaveLength(1);
+      // Un simple membre du comité ne lie pas ; le PCO, oui.
+      await expect(m.theDebat.lierEdition(culture, id, EDITION)).rejects.toThrow(/Seuls/);
+      await m.theDebat.lierEdition(sport, id, EDITION);
+      expect(appels.at(-1)).toEqual({ url: `https://the-debat.test/api/bilan?edition=${EDITION}`, cle: `Bearer ${"c".repeat(40)}` });
+      const lue = (await m.reqActivites.activiteLisible(id, culture))!.a;
+      expect(lue.debatEditionId).toBe(EDITION);
+      expect(lue.debatResultats?.presence.presents).toBe(142);
+
+      // Reporté à la suite du bilan déjà écrit.
+      await m.activites.modifierActivite(sport, id, { titre: "Réunion interne com", date: "2026-11-02", visibilite: "delegation", bilan: "Belle soirée." });
+      await m.theDebat.insererDansBilan(sport, id);
+      const bilan = (await m.reqActivites.activiteLisible(id, sport))!.a.bilan!;
+      expect(bilan.startsWith("Belle soirée.\n\nParticipation : 142 présents")).toBe(true);
+      expect(bilan).toContain("pour, Awa Koné ; contre, personne.");
+
+      // Clé refusée par Thé Débat : message clair, rien ne change.
+      statut = 401;
+      await expect(m.theDebat.recupererResultats(sport, id)).rejects.toThrow(/clé partagée/);
+      statut = 200;
+      await m.theDebat.lierEdition(sport, id, null);
+      expect((await m.reqActivites.activiteLisible(id, sport))!.a.debatResultats).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+      delete process.env.THE_DEBAT_URL;
+      delete process.env.THE_DEBAT_CLE;
+    }
   });
 
   it("passation : points en suspens par le responsable, dossiers selon les droits, PDF", async () => {

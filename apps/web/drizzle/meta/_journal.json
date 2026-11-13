@@ -120,6 +120,13 @@
       "when": 1794504271289,
       "tag": "0016_organigramme_activite",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794506317858,
+      "tag": "0017_liaison_the_debat",
+      "breakpoints": true
     }
   ]
 }
