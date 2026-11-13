@@ -85,6 +85,11 @@ export async function retirerDuMandat(_e: EtatAction, f: FormData): Promise<Etat
   return executer((acteur) => gestion.retirerDuMandat(acteur, Id.parse(texte(f, "affectationId"))));
 }
 
+/** Suppression définitive d'un compte sans rôle (administrateurs). */
+export async function supprimerCompte(_e: EtatAction, f: FormData): Promise<EtatAction> {
+  return executer((acteur) => gestion.supprimerCompte(acteur, texte(f, "id").slice(0, 64), texte(f, "confirmation")));
+}
+
 export async function lienPourMembre(_e: EtatAction, f: FormData): Promise<EtatAction> {
   return executer(async (acteur) => ({ jeton: await gestion.lienPourMembre(acteur, Id.parse(texte(f, "userId"))), pour: texte(f, "nom") }));
 }

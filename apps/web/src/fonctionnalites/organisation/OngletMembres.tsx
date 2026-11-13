@@ -6,9 +6,11 @@ import { simplifier } from "@/fonctionnalites/csv";
 import type { OptionDelegation } from "./ChampsPoste";
 import { FormulaireMembre } from "./FormulaireMembre";
 import { ImportMembres } from "./ImportMembres";
+import { supprimerCompte } from "./actions";
 import { LigneMembre } from "./LigneMembre";
 import type { AncienMembre, MembreDuMandat } from "./requetes";
 import { LIBELLES_ROLES } from "./roles";
+import { SuppressionDefinitive } from "./SuppressionDefinitive";
 import { coordonnee } from "./telephone";
 
 type Panneau = "ajout" | "import" | null;
@@ -144,6 +146,17 @@ export function OngletMembres(p: { membres: MembreDuMandat[]; anciens: AncienMem
                 <li key={a.userId} className="flex flex-col rounded-m border border-trait p-3">
                   <span className="font-semibold">{a.nom}</span>
                   <span className="text-sm break-all text-encre-douce">{coordonnee(a.email, a.telephone)}</span>
+                  {p.administrateur && (
+                    <div className="mt-2">
+                      <SuppressionDefinitive
+                        id={a.userId}
+                        quoi="ce compte"
+                        consequences="Pour un doublon ou un compte créé par erreur : le compte, ses sessions et ses liens d'activation disparaissent."
+                        refus={a.refusSuppression}
+                        action={supprimerCompte}
+                      />
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  refusSuppressionCompte,
   peutComposerComite,
   peutContribuerActivite,
   peutCreerDocuments,
@@ -145,5 +146,15 @@ describe("droits", () => {
     expect(refusSuppressionGabarit({ actif: true, publie: false, documents: 0 })).toBeNull();
     expect(refusSuppressionGabarit({ actif: true, publie: true, documents: 0 })).toMatch(/Retire/);
     expect(refusSuppressionGabarit({ actif: false, publie: true, documents: 3 })).toMatch(/3 documents/);
+  });
+
+  it("un compte ne se supprime que s'il n'a rien laissé", () => {
+    const rien = { documents: 0, activites: 0, comites: 0, mandats: 0, signature: false };
+    expect(refusSuppressionCompte(rien)).toBeNull();
+    expect(refusSuppressionCompte({ ...rien, mandats: 2 })).toMatch(/2 mandats/);
+    expect(refusSuppressionCompte({ ...rien, documents: 1 })).toMatch(/1 document porte son nom/);
+    expect(refusSuppressionCompte({ ...rien, activites: 3 })).toMatch(/3 activités portent/);
+    expect(refusSuppressionCompte({ ...rien, comites: 1 })).toMatch(/comité/);
+    expect(refusSuppressionCompte({ ...rien, signature: true })).toMatch(/signature/);
   });
 });

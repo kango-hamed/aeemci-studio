@@ -2,6 +2,7 @@ import "server-only";
 import { and, asc, count, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 import { db, schema } from "@/serveur/db";
 import { identiteDe, type IdentiteSection, type SaisieIdentite } from "./identite";
+import { refusSuppressionCompte, type TracesCompte } from "./droits";
 import type { Role } from "./roles";
 
 export interface AffectationCourante {
@@ -114,6 +115,26 @@ export interface AncienMembre {
   nom: string;
   email: string;
   telephone: string | null;
+  /** Ce qui empêche de supprimer le compte (`null` : un administrateur peut le supprimer). */
+  refusSuppression: string | null;
+}
+
+/** Colonnes de ce qu'un compte a laissé, à sélectionner avec `schema.user`. */
+const colonnesTraces = {
+  documents: sql<number>`(select count(*)::int from document d where d.auteur_id = "user"."id" or d.valide_par_id = "user"."id")`,
+  activites: sql<number>`(select count(*)::int from activite a where a.auteur_id = "user"."id")`,
+  comites: sql<number>`(select count(*)::int from membre_comite mc where mc.user_id = "user"."id")`,
+  mandats: sql<number>`(select count(*)::int from affectation af where af.user_id = "user"."id")`,
+  signature: sql<boolean>`exists (select 1 from signature s where s.user_id = "user"."id")`,
+};
+
+/** Ce qu'un compte a laissé dans la section (`null` : compte introuvable). */
+export async function tracesCompte(userId: string): Promise<(TracesCompte & { nom: string; email: string; telephone: string | null; estAdministrateur: boolean }) | null> {
+  const [t] = await db
+    .select({ nom: schema.user.name, email: schema.user.email, telephone: schema.user.telephone, estAdministrateur: schema.user.estAdministrateur, ...colonnesTraces })
+    .from(schema.user)
+    .where(eq(schema.user.id, userId));
+  return t ?? null;
 }
 
 /** État du compte : actif dès qu'un mot de passe existe ; sinon, selon le dernier lien remis. */
@@ -163,9 +184,10 @@ export async function membresDuMandat(mandatId: string): Promise<MembreDuMandat[
 /** Comptes sans rôle dans le mandat (anciens membres) : ils gardent la lecture de leurs documents. */
 export async function anciensMembres(mandatId: string): Promise<AncienMembre[]> {
   const affectes = db.select({ id: schema.affectation.userId }).from(schema.affectation).where(eq(schema.affectation.mandatId, mandatId));
-  return db
-    .select({ userId: schema.user.id, nom: schema.user.name, email: schema.user.email, telephone: schema.user.telephone })
+  const lignes = await db
+    .select({ userId: schema.user.id, nom: schema.user.name, email: schema.user.email, telephone: schema.user.telephone, ...colonnesTraces })
     .from(schema.user)
     .where(and(notInArray(schema.user.id, affectes), eq(schema.user.estAdministrateur, false)))
     .orderBy(asc(schema.user.name));
+  return lignes.map(({ documents, activites, comites, mandats, signature, ...l }) => ({ ...l, refusSuppression: refusSuppressionCompte({ documents, activites, comites, mandats, signature }) }));
 }

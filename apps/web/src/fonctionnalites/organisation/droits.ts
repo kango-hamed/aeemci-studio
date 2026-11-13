@@ -170,7 +170,7 @@ export function peutEcrirePassation(u: Acteur, delegationId: string | null): boo
 }
 
 /**
- * Suppression définitive d'un document ou d'un gabarit : les administrateurs de la plateforme seulement.
+ * Suppression définitive d'un document, d'un gabarit ou d'un compte sans rôle : les administrateurs de la plateforme seulement.
  * Les autres masquent (brouillon, visibilité « Bureau exécutif », gabarit non proposé aux membres).
  */
 export function peutSupprimerDefinitivement(u: Acteur): boolean {
@@ -198,6 +198,29 @@ export function refusSuppressionGabarit(g: { actif: boolean; publie: boolean; do
   if (g.documents > 0)
     return `${g.documents} document${g.documents > 1 ? "s ont été faits" : " a été fait"} avec ce gabarit et en dépend${g.documents > 1 ? "ent" : ""} : supprime-les d'abord, ou retire simplement le gabarit des membres.`;
   if (g.actif && g.publie) return "Retire d'abord le gabarit des membres (décoche « Proposé aux membres » dans la fiche).";
+  return null;
+}
+
+/** Ce qu'un compte a laissé dans la section : documents, activités, comités, rôles passés, signature. */
+export interface TracesCompte {
+  documents: number;
+  activites: number;
+  comites: number;
+  mandats: number;
+  signature: boolean;
+}
+
+/**
+ * Ce qui interdit de supprimer un compte sans rôle (`null` : rien). Seuls les comptes qui n'ont rien laissé
+ * se suppriment (doublon, compte créé par erreur) : un ancien membre reste, son nom signe l'historique.
+ */
+export function refusSuppressionCompte(t: TracesCompte): string | null {
+  const s = (n: number) => (n > 1 ? "s" : "");
+  if (t.mandats) return `Ce compte a eu un rôle dans ${t.mandats > 1 ? `${t.mandats} mandats` : "un mandat"} : son nom reste dans l'historique de la section.`;
+  if (t.documents) return `${t.documents} document${s(t.documents)} porte${t.documents > 1 ? "nt" : ""} son nom (auteur ou validation) : le compte reste.`;
+  if (t.activites) return `${t.activites} activité${s(t.activites)} porte${t.activites > 1 ? "nt" : ""} son nom : le compte reste.`;
+  if (t.comites) return `Ce compte fait partie de ${t.comites > 1 ? `${t.comites} comités` : "un comité"} d'organisation : retire-le d'abord du comité.`;
+  if (t.signature) return "Ce compte a une signature enregistrée : le compte reste.";
   return null;
 }
 

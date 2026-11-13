@@ -286,6 +286,27 @@ describe.skipIf(!url)("organisation (Postgres)", () => {
     await m.gestion.modifierPoste(president, aIbrahim.affectationId, { role: "responsable_delegation", delegationId: culture });
   });
 
+  it("un administrateur supprime un doublon sans rôle ; jamais un compte qui a un rôle", async () => {
+    const doublon = await m.gestion.ajouterMembre(president, { nom: "Doublon Kone", email: "", telephone: "2250102030405", role: "membre", delegationId: culture });
+    const admin: Acteur = { ...president, estAdministrateur: true };
+    // Un rôle dans le mandat en cours : on le retire d'abord.
+    await expect(m.gestion.supprimerCompte(admin, doublon.userId, "SUPPRIMER")).rejects.toThrow(/rôle dans le mandat en cours/);
+    const aff = (await m.requetes.membresDuMandat(mandatId)).find((x) => x.userId === doublon.userId)!;
+    await m.gestion.retirerDuMandat(president, aff.affectationId);
+    expect((await m.requetes.anciensMembres(mandatId)).find((a) => a.userId === doublon.userId)?.refusSuppression).toBeNull();
+    await expect(m.gestion.supprimerCompte(president, doublon.userId, "SUPPRIMER")).rejects.toThrow(/administrateur/);
+    await expect(m.gestion.supprimerCompte(admin, doublon.userId, "oui")).rejects.toThrow(/SUPPRIMER/);
+    await expect(m.gestion.supprimerCompte(admin, admin.id, "SUPPRIMER")).rejects.toThrow(/propre compte/);
+    await m.gestion.supprimerCompte(admin, doublon.userId, " supprimer ");
+    expect((await m.requetes.anciensMembres(mandatId)).find((a) => a.userId === doublon.userId)).toBeUndefined();
+    await expect(m.gestion.supprimerCompte(admin, doublon.userId, "SUPPRIMER")).rejects.toThrow(/introuvable/);
+    const c = new pg.Client({ connectionString: url });
+    await c.connect();
+    const { rows } = await c.query("select quoi, libelle from journal_suppression where objet_id = $1", [doublon.userId]);
+    await c.end();
+    expect(rows).toEqual([{ quoi: "compte", libelle: expect.stringMatching(/^Doublon Kone \(.*05\)$/) }]);
+  });
+
   it("lecture des documents : sa délégation, pas celle des autres ; le bureau voit tout", async () => {
     const c = new pg.Client({ connectionString: url });
     await c.connect();

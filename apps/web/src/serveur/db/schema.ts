@@ -519,7 +519,7 @@ export const journalSuppression = pgTable(
   "journal_suppression",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    quoi: text("quoi").$type<"document" | "gabarit">().notNull(),
+    quoi: text("quoi").$type<"document" | "gabarit" | "compte">().notNull(),
     objetId: uuid("objet_id").notNull(),
     libelle: text("libelle").notNull(),
     parId: text("par_id").references(() => user.id, { onDelete: "set null" }),

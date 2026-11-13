@@ -2,13 +2,14 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { and, count, eq, inArray, isNull, ne } from "drizzle-orm";
 import { db, schema } from "@/serveur/db";
-import { peutGererOrganisation, peutToucherAuPresident, type Acteur } from "./droits";
+import { MOT_CONFIRMATION, peutGererOrganisation, peutSupprimerDefinitivement, peutToucherAuPresident, refusSuppressionCompte, type Acteur } from "./droits";
 import { cleDelegation, type LigneImport } from "./import-membres";
 import { LIMITES_IDENTITE, lignesEntete, type SaisieIdentite } from "./identite";
 import { envoyerLienParCourriel, nouveauLien } from "./invitations";
-import { mandatCourant, type MandatCourant } from "./requetes";
+import { journaliserSuppression } from "./journal";
+import { mandatCourant, tracesCompte, type MandatCourant } from "./requetes";
 import { estRoleBureau, type Role } from "./roles";
-import { emailProvisoire } from "./telephone";
+import { emailProvisoire, estEmailProvisoire, numeroAffiche } from "./telephone";
 
 /**
  * Gestion de l'organisation par le bureau exécutif : comptes, rôles du mandat en cours, délégations,
@@ -480,4 +481,31 @@ export async function importerMembres(acteur: Acteur, lignes: LigneImport[]): Pr
     );
   }
   return resultat;
+}
+
+/**
+ * Supprime définitivement un compte sans rôle qui n'a rien laissé (doublon, compte créé par erreur) :
+ * administrateurs seulement, mot de confirmation recopié, inscrit au journal des suppressions. Ses
+ * sessions, son mot de passe et ses liens d'activation partent avec lui.
+ */
+export async function supprimerCompte(acteur: Acteur, userId: string, confirmation: string): Promise<void> {
+  if (!peutSupprimerDefinitivement(acteur)) throw new ErreurOrganisation("Seul un administrateur supprime un compte.");
+  const m = await contexte(acteur);
+  if (userId === acteur.id) throw new ErreurOrganisation("Tu ne peux pas supprimer ton propre compte.");
+  const t = await tracesCompte(userId);
+  if (!t) throw new ErreurOrganisation("Compte introuvable.");
+  if (t.estAdministrateur) throw new ErreurOrganisation("Un compte administrateur ne se supprime pas ici.");
+  const [role] = await db
+    .select({ id: schema.affectation.id })
+    .from(schema.affectation)
+    .where(and(eq(schema.affectation.mandatId, m.id), eq(schema.affectation.userId, userId)));
+  if (role) throw new ErreurOrganisation("Ce membre a un rôle dans le mandat en cours : retire-le d'abord du mandat.");
+  const refus = refusSuppressionCompte(t);
+  if (refus) throw new ErreurOrganisation(refus);
+  if (confirmation.trim().toUpperCase() !== MOT_CONFIRMATION) throw new ErreurOrganisation(`Écris ${MOT_CONFIRMATION} pour confirmer.`);
+  const contact = estEmailProvisoire(t.email) ? (t.telephone ? numeroAffiche(t.telephone) : "sans e-mail") : t.email;
+  await db.transaction(async (tx) => {
+    await journaliserSuppression(tx, "compte", userId, `${t.nom} (${contact})`, acteur.id);
+    await tx.delete(schema.user).where(eq(schema.user.id, userId));
+  });
 }
