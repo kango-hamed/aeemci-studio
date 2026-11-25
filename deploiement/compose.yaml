@@ -13,10 +13,12 @@ services:
     # (puis relancé par l'application), et non Caddy ou le système. t3.micro : MEMOIRE_APP=800m dans .env.
     mem_limit: ${MEMOIRE_APP:-1600m}
     memswap_limit: ${MEMOIRE_APP_SWAP:-2600m}
-    # Vivant si le serveur répond en 10 s (même « base injoignable ») ; `mise-a-jour.sh` redémarre
-    # l'application restée « unhealthy » (bloquée sans être tombée).
+    # Vivant si le serveur répond 200 en 10 s. Mode léger (`?base=non`) : la base n'est pas interrogée,
+    # pour que Neon se mette en veille (doc 10, « Réglages et coûts ») ; une panne de la base ne rend donc
+    # pas l'application « unhealthy », seule une configuration incomplète (503) ou un serveur bloqué.
+    # `mise-a-jour.sh` redémarre l'application restée « unhealthy ».
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/sante',{signal:AbortSignal.timeout(10000)}).then(()=>process.exit(0),()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/sante?base=non',{signal:AbortSignal.timeout(10000)}).then((r)=>process.exit(r.ok?0:1),()=>process.exit(1))"]
       interval: 30s
       timeout: 15s
       retries: 3
